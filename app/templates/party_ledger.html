@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Party Ledger · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Accounting / Party Ledger{% endblock %}
+
+{% block content %}
+<div class="accounting-page">
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">ACCOUNTING / PARTY ACCOUNTS</div>
+    <h1>Party Ledger</h1>
+    <p>Party account activity and running-balance design preview.</p>
+  </div>
+  <a class="back-link" href="/accounting">Back to Accounting</a>
+</div>
+
+<div class="notice warning">
+  <strong>Read-only design preview</strong>
+  <p>No party transactions or balances are connected. An unconfigured opening balance will be shown as “Not configured”, never assumed to be zero.</p>
+</div>
+
+<section class="module-placeholder">
+  <div class="eyebrow">LEDGER SUMMARY</div>
+  <h2>Account overview</h2>
+  <div class="module-grid accounting-grid">
+    <div class="module-card accounting-tile">
+      <h3>Party</h3>
+      <p>No party selected</p>
+    </div>
+    <div class="module-card accounting-tile">
+      <h3>Opening balance</h3>
+      <p>Not loaded</p>
+    </div>
+    <div class="module-card accounting-tile">
+      <h3>Current balance</h3>
+      <p>Not calculated</p>
+    </div>
+  </div>
+</section>
+
+<section class="module-placeholder">
+  <div class="eyebrow">TRANSACTION HISTORY</div>
+  <h2>Ledger entries</h2>
+  <p>When a verified financial source is available, the ledger will show dated entries, document references, debit, credit, running balance and Dr/Cr.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Document / Details</th>
+          <th>Debit</th>
+          <th>Credit</th>
+          <th>Running balance</th>
+          <th>Dr/Cr</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="6">No financial records loaded in this preview.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="module-placeholder">
+  <div class="eyebrow">DISPLAY FORMATS</div>
+  <h2>Planned ledger formats</h2>
+  <p>Modern premium · Urdu with unchanged digits · English + Urdu · English only · A4 print/PDF-ready.</p>
+</section>
+
+</div>
+{% endblock %}

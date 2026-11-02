@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Accounting · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Accounting{% endblock %}
+
+{% block content %}
+<div class="accounting-page">
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">FINANCE & ACCOUNTS</div>
+    <h1>Accounting</h1>
+    <p>Financial records, party balances and document review.</p>
+  </div>
+  <a class="back-link" href="/">Back to overview</a>
+</div>
+
+<div class="notice warning">
+  <strong>Read-only design preview</strong>
+  <p>
+    Financial data is not connected to this screen yet. No live balances,
+    transactions or opening balances are displayed. No financial records
+    can be changed here.
+  </p>
+</div>
+
+<div class="module-grid accounting-grid">
+  <section class="module-card accounting-tile">
+    <div class="module-top">
+      <div class="module-icon">B</div>
+      <span class="module-status">Not connected</span>
+    </div>
+    <h3>Bills & Documents</h3>
+    <p>Separate bill layouts, document review and print-ready formats.</p>
+    <div class="module-status">Implementation pending</div>
+  </section>
+
+  <section class="module-card accounting-tile">
+    <div class="module-top">
+      <div class="module-icon">PL</div>
+      <span class="module-status">Not connected</span>
+    </div>
+    <h3>Party Ledger</h3>
+    <p>Opening balance, dated debit and credit entries, running balance and Dr/Cr.</p>
+    <div class="module-status">Source tables require verification</div>
+  </section>
+
+  <section class="module-card accounting-tile">
+    <div class="module-top">
+      <div class="module-icon">P</div>
+      <span class="module-status">Planned</span>
+    </div>
+    <h3>Payments & PDC Cheques</h3>
+    <p>Future payment tracking and post-dated cheque review.</p>
+    <div class="module-status">Not implemented</div>
+  </section>
+
+  <section class="module-card accounting-tile">
+    <div class="module-top">
+      <div class="module-icon">R</div>
+      <span class="module-status">Planned</span>
+    </div>
+    <h3>Accounting Reports</h3>
+    <p>Future account summaries and financial reporting after verification.</p>
+    <div class="module-status">Not implemented</div>
+  </section>
+</div>
+
+<div class="bottom-note">
+  <div class="note-icon">i</div>
+  <div>
+    <strong>Financial data protection</strong>
+    <p>
+      An unconfigured opening balance must remain marked as not configured,
+      not be assumed to be zero. Bills and party ledgers will remain separate.
+      Financial posting is not available in this preview.
+    </p>
+  </div>
+</div>
+
+</div>
+{% endblock %}

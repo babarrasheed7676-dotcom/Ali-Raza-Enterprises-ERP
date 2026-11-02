@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{{ module.name }} · {{ app_name }}{% endblock %}
+{% block breadcrumb %}{{ module.name }}{% endblock %}
+{% block content %}
+<div class="page-heading"><div><div class="eyebrow">BUSINESS MODULE</div><h1>{{ module.name }}</h1><p>{{ module.description }}.</p></div><a class="back-link" href="/">← Back to overview</a></div>
+<div class="module-placeholder"><div class="placeholder-icon">{{ module.icon }}</div><div class="eyebrow">FOUNDATION STAGE</div><h2>This module is being prepared</h2><p>Before enabling forms or transactions, we will map this module to the verified PostgreSQL tables, constraints and existing business functions. This avoids duplicate business logic and protects posted records.</p><div class="placeholder-status"><span class="status-dot"></span>{{ module.status }}</div><a class="primary-link" href="/">Return to overview</a></div>
+{% endblock %}

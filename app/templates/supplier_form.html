@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}New Supplier ? {{ app_name }}{% endblock %}
+{% block breadcrumb %}Purchasing / New Supplier{% endblock %}
+{% block content %}
+<style>
+.supplier-wrap{max-width:1050px;margin:auto;display:grid;gap:18px}
+.supplier-head h1{margin:4px 0 6px;font-size:27px}
+.supplier-head p,.supplier-note{color:var(--muted,#8490a2);font-size:13px}
+.supplier-card{border:1px solid var(--border,#263449);border-radius:13px;padding:20px;background:var(--surface,#111c2b)}
+.supplier-card h2{font-size:16px;margin:0 0 16px}
+.supplier-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.supplier-field{display:grid;gap:6px}
+.supplier-field.full{grid-column:1/-1}
+.supplier-field label{font-size:12px;color:var(--muted,#8490a2)}
+.supplier-field input,.supplier-field textarea,.supplier-field select{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--border,#263449);border-radius:8px;background:var(--bg,#0b1422);color:inherit;font:inherit}
+.supplier-field textarea{min-height:85px;resize:vertical}
+.supplier-actions{display:flex;gap:10px;flex-wrap:wrap}
+.supplier-actions button,.supplier-actions a{padding:11px 16px;border:1px solid var(--border,#263449);border-radius:8px;text-decoration:none;color:inherit;background:var(--surface,#111c2b);cursor:pointer}
+.supplier-actions button{background:var(--accent,#2563eb);border-color:var(--accent,#2563eb);color:white}
+.supplier-alert{padding:13px 16px;border:1px solid var(--border,#263449);border-radius:9px}
+.supplier-alert.error{border-color:#b45353}
+.supplier-alert.success{border-color:#27865b}
+.supplier-alert ul{margin:8px 0 0;padding-left:20px}
+@media(max-width:650px){.supplier-grid{grid-template-columns:1fr}.supplier-field.full{grid-column:auto}.supplier-card{padding:15px}}
+</style>
+
+<div class="supplier-wrap">
+  <div class="supplier-head">
+    <div class="eyebrow">PURCHASING ? MASTER DATA</div>
+    <h1>New Supplier</h1>
+    <p>Enter supplier identity and financial profile details.</p>
+  </div>
+
+  {% if errors %}
+  <div class="supplier-alert error" role="alert">
+    <strong>Please correct these details:</strong>
+    <ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  
+
+  <form method="post" action="/modules/purchasing/suppliers/new" class="supplier-wrap">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <section class="supplier-card">
+      <h2>Supplier Information</h2>
+      <div class="supplier-grid">
+        <div class="supplier-field">
+          <label for="supplier_code">Supplier Code *</label>
+          <input id="supplier_code" name="supplier_code" maxlength="50" required value="{{ form.get('supplier_code','') }}">
+        </div>
+        <div class="supplier-field">
+          <label for="supplier_name">Supplier Name *</label>
+          <input id="supplier_name" name="supplier_name" maxlength="200" required value="{{ form.get('supplier_name','') }}">
+        </div>
+        <div class="supplier-field">
+          <label for="phone">Phone</label>
+          <input id="phone" name="phone" maxlength="50" value="{{ form.get('phone','') }}">
+        </div>
+        <div class="supplier-field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" maxlength="254" value="{{ form.get('email','') }}">
+        </div>
+        <div class="supplier-field">
+          <label for="tax_number">Tax Number</label>
+          <input id="tax_number" name="tax_number" maxlength="100" value="{{ form.get('tax_number','') }}">
+        </div>
+        <div class="supplier-field full">
+          <label for="address">Address</label>
+          <textarea id="address" name="address" maxlength="2000">{{ form.get('address','') }}</textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="supplier-card">
+      <h2>Financial Profile</h2>
+      <div class="supplier-grid">
+        <div class="supplier-field">
+          <label for="credit_limit">Credit Limit</label>
+          <input id="credit_limit" name="credit_limit" type="number" min="0" step="0.000001" value="{{ form.get('credit_limit','0') }}">
+        </div>
+        <div class="supplier-field">
+          <label for="payment_terms_days">Payment Terms (Days)</label>
+          <input id="payment_terms_days" name="payment_terms_days" type="number" min="0" max="3650" step="1" value="{{ form.get('payment_terms_days','0') }}">
+        </div>
+        <div class="supplier-field">
+          <label for="default_currency_code">Default Currency</label>
+          <input id="default_currency_code" name="default_currency_code" maxlength="3" value="{{ form.get('default_currency_code','PKR') }}">
+        </div>
+        <div class="supplier-field">
+          <label for="opening_balance">Opening Balance</label>
+          <input id="opening_balance" name="opening_balance" type="number" min="0" step="0.000001" value="{{ form.get('opening_balance','0') }}">
+        </div>
+        <div class="supplier-field">
+          <label for="opening_balance_type">Opening Balance Type</label>
+          <select id="opening_balance_type" name="opening_balance_type">
+            <option value="" {% if not form.get('opening_balance_type') %}selected{% endif %}>Not set</option>
+            <option value="DEBIT" {% if form.get('opening_balance_type') == 'DEBIT' %}selected{% endif %}>Debit</option>
+            <option value="CREDIT" {% if form.get('opening_balance_type') == 'CREDIT' %}selected{% endif %}>Credit</option>
+          </select>
+        </div>
+      </div>
+      <p class="supplier-note">Tax withholding and credit-allowed flags will be included in the approved save workflow after their business defaults are confirmed.</p>
+    </section>
+
+    <div class="supplier-alert">
+      <strong>Validation-only phase:</strong>
+      This form does not create or update database records. Duplicate supplier-code verification and audit logging are deferred until the save workflow is approved.
+    </div>
+
+    <div class="supplier-actions">
+      <button type="submit">Save Supplier</button>
+      <a href="/modules/purchasing?section=suppliers">Back to Suppliers</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Configuration · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Configuration{% endblock %}
+{% block content %}
+<section class="section-heading">
+  <div>
+    <h2>Existing Master Data - Read Only</h2>
+    <p>Live preview of existing database records. 50 rows per page per category.</p>
+  </div>
+</section>
+{% if master_data.error %}
+<div class="config-notice">
+  <div class="config-notice-icon">!</div>
+  <div><strong>Master data unavailable</strong><p>{{ master_data.error }} No database records were changed.</p></div>
+</div>
+{% else %}
+<div class="config-grid">
+  {% for key, title in [
+    ("brands", "Brands"),
+    ("units", "Units"),
+    ("shades", "Shades"),
+    ("variants", "Item Variants")
+  ] %}
+  <article class="config-card">
+    <h2>{{ title }}</h2>
+    <p>{{ master_data.pagination[key].total }} total records · {{ master_data[key]|length }} shown</p>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+          {% if key == "brands" %}
+            <th>Code</th><th>Name</th><th>Active</th>
+          {% elif key == "units" %}
+            <th>Code</th><th>Name</th><th>Type</th><th>Decimals</th><th>Active</th>
+          {% elif key == "shades" %}
+            <th>Brand</th><th>Shade Code</th><th>Shade</th><th>Category</th><th>Active</th>
+          {% else %}
+            <th>Item</th><th>Variant Code</th><th>Variant</th><th>Brand</th><th>Shade</th><th>Unit</th><th>Active</th>
+          {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+        {% for row in master_data[key] %}
+          <tr>
+          {% if key == "brands" %}
+            <td>{{ row.code }}</td><td>{{ row.name }}</td><td>{{ row.is_active }}</td>
+          {% elif key == "units" %}
+            <td>{{ row.code }}</td><td>{{ row.name }}</td><td>{{ row.unit_type }}</td><td>{{ row.decimal_places }}</td><td>{{ row.is_active }}</td>
+          {% elif key == "shades" %}
+            <td>{{ row.brand_name or "?" }}</td><td>{{ row.shade_code }}</td><td>{{ row.shade_name }}</td><td>{{ row.category_name or "?" }}</td><td>{{ row.is_active }}</td>
+          {% else %}
+            <td>{{ row.item_code }} - {{ row.item_name }}</td><td>{{ row.variant_code }}</td>{% set display_variant_name = row.variant_name %}
+            {% if row.shade_name %}
+              {% set repeated_shade = ' - ' ~ row.shade_name ~ ' - ' ~ row.shade_name %}
+              {% set display_variant_name = display_variant_name.replace(repeated_shade, ' - ' ~ row.shade_name) %}
+            {% endif %}
+            <td>{{ display_variant_name }}</td><td>{{ row.brand_name or "?" }}</td><td>{{ row.shade_code or "?" }} {{ row.shade_name or "" }}</td><td>{{ row.unit_code or "?" }}</td><td>{{ row.is_active }}</td>
+          {% endif %}
+          </tr>
+        {% else %}
+          <tr><td colspan="7">No records found.</td></tr>
+        {% endfor %}
+        </tbody>
+            </table>
+    </div>
+    {% set pg = master_data.pagination[key] %}
+    <div style="display:flex; gap:12px; align-items:center; justify-content:center; margin:16px 0; flex-wrap:wrap;">
+      {% if pg.page > 1 %}
+        <a href="/configuration?brands_page={{ pg.page - 1 if key == 'brands' else master_data.pagination['brands'].page }}&units_page={{ pg.page - 1 if key == 'units' else master_data.pagination['units'].page }}&shades_page={{ pg.page - 1 if key == 'shades' else master_data.pagination['shades'].page }}&variants_page={{ pg.page - 1 if key == 'variants' else master_data.pagination['variants'].page }}">← Previous</a>
+      {% endif %}
+      <span>Page {{ pg.page }} of {{ pg.pages }}</span>
+      {% if pg.page < pg.pages %}
+        <a href="/configuration?brands_page={{ pg.page + 1 if key == 'brands' else master_data.pagination['brands'].page }}&units_page={{ pg.page + 1 if key == 'units' else master_data.pagination['units'].page }}&shades_page={{ pg.page + 1 if key == 'shades' else master_data.pagination['shades'].page }}&variants_page={{ pg.page + 1 if key == 'variants' else master_data.pagination['variants'].page }}">Next →</a>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% endif %}
+
+
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">SYSTEM RULES & MASTER DATA</div>
+    <h1>Flexible Configuration</h1>
+    <p>Designed to add future products, brands, shades, units, measurements and packaging rules without hard-coding each new product.</p>
+  </div>
+  <a class="back-link" href="/">← Back to overview</a>
+</div>
+<div class="config-notice">
+  <div class="config-notice-icon">i</div>
+  <div><strong>Design scaffold — read-only</strong><p>This page documents the planned configuration structure. It does not save settings or change PostgreSQL. Save/approval actions will be enabled only after the database model, permissions, audit history and validation tests are ready.</p></div>
+</div>
+<div class="config-principles">
+  <div><span class="config-number">01</span><strong>Data-driven</strong><p>New product types and attributes should be master data, not new Python code.</p></div>
+  <div><span class="config-number">02</span><strong>Versioned</strong><p>Keep effective dates and rule history; do not silently change rules used by posted transactions.</p></div>
+  <div><span class="config-number">03</span><strong>Permission-controlled</strong><p>Every change needs a recorded user, approval where required, and an audit trail.</p></div>
+</div>
+<div class="section-heading"><div><h2>Configuration areas</h2><p>Initial product-specific defaults plus a reusable framework for future products.</p></div><span class="muted-count">{{ configuration_groups|length }} areas</span></div>
+<div class="config-grid">
+{% for group in configuration_groups %}
+  <article class="config-card">
+    <div class="config-card-top"><span class="config-symbol">{% if loop.index == 1 %}◆{% elif loop.index == 2 %}⚖{% elif loop.index == 3 %}◈{% elif loop.index == 4 %}⇄{% elif loop.index == 5 %}∑{% else %}✓{% endif %}</span><span class="config-tag">{{ group.tag }}</span></div>
+    <h2>{{ group.title }}</h2><p>{{ group.description }}</p>
+    <ul>{% for example in group.examples %}<li>{{ example }}</li>{% endfor %}</ul>
+  </article>
+{% endfor %}
+</div>
+<section class="nalki-packaging-section">
+  <div class="section-heading">
+    <div>
+      <h2>Nalki Packaging Reference</h2>
+      <p>Visual reference only; no stock or database changes.</p>
+    </div>
+  </div>
+  <div class="nalki-packaging-grid">
+    <article class="nalki-packaging-card">
+      <div class="nalki-packaging-icon" role="img" aria-label="Small box containing 10 Nalki pieces"><img src="/static/nalki_small_box_realistic.png" alt="Realistic small box containing 10 Nalki pieces"></div>
+      <div class="nalki-packaging-quantity">10 PC</div>
+      <h3>Small Box</h3>
+      <p>10 individual Nalki pieces per small box.</p>
+    </article>
+    <article class="nalki-packaging-card">
+      <div class="nalki-packaging-icon nalki-packaging-icon-large" role="img" aria-label="Finished box containing 100 Nalki pieces"><img src="/static/nalki_finished_box_realistic.png" alt="Realistic finished box containing 100 Nalki pieces"></div>
+      <div class="nalki-packaging-quantity">100 PC</div>
+      <h3>Finished Box</h3>
+      <p>100 individual Nalki pieces: 10 small boxes of 10 pieces each.</p>
+    </article>
+  </div>
+</section>
+
+<div class="config-rule-conflict"><strong>Policy decision to preserve</strong><p>An earlier instruction says Nalki must not have Party Stock; a later discussion mentions a controlled, authorized PARTY-stock option. The system must not silently choose between these. The policy must be explicitly confirmed before that option can be enabled.</p></div>
+<style>
+.nalki-packaging-section { margin: 28px 0; }
+.nalki-packaging-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+.nalki-packaging-card {
+  padding: 22px;
+  border: 1px solid var(--border-color, #d7dce2);
+  border-radius: 16px;
+  text-align: center;
+  background: var(--card-bg, rgba(127,127,127,.035));
+}
+.nalki-packaging-icon {
+  width: 142px;
+  height: 126px;
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nalki-packaging-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.nalki-packaging-icon-large { width: 164px; height: 126px; }
+.nalki-packaging-quantity {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  margin: 4px 0 8px;
+}
+.nalki-packaging-card h3 { margin: 6px 0; }
+.nalki-packaging-card p { margin-bottom: 0; }
+</style>
+{% endblock %}
+
+

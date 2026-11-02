@@ -1,0 +1,115 @@
+﻿{% extends "base.html" %}
+{% block title %}HR & Payroll · {{ app_name }}{% endblock %}
+{% block breadcrumb %}HR & Payroll{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">PEOPLE & OPERATIONS</div>
+    <h1>HR & Payroll</h1>
+    <p>Employee records, attendance, payroll and production labour costing.</p>
+  </div>
+  <a class="back-link" href="/">Back to overview</a>
+</div>
+
+<style>
+.hr-intro {
+  padding: 20px;
+  margin: 18px 0 24px;
+  border: 1px solid var(--border, #d9dee7);
+  border-radius: 14px;
+}
+.hr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.hr-card {
+  border: 1px solid var(--border, #d9dee7);
+  border-radius: 12px;
+  padding: 18px;
+  min-height: 130px;
+}
+.hr-card h3 { margin: 8px 0; }
+.hr-card p { line-height: 1.5; }
+.hr-state {
+  display: inline-block;
+  padding: 4px 9px;
+  border-radius: 20px;
+  background: #edf0f5;
+  font-size: 12px;
+  font-weight: 600;
+}
+.hr-muted { opacity: .8; }
+</style>
+
+<section class="hr-intro">
+  <div class="eyebrow">IMPLEMENTATION STATUS</div>
+  <h2>HR foundation dashboard</h2>
+  <p>
+    This dedicated page is the starting point for the HR module.
+    Employee records, attendance and payroll transactions are not yet enabled.
+    They will be connected only after the database structure and business rules
+    have been reviewed.
+  </p>
+  <span class="hr-state">Dashboard shell created · Data not connected</span>
+</section>
+
+<div class="hr-grid">
+  <section class="hr-card">
+    <div class="eyebrow">01 · PEOPLE</div>
+    <h3>Employee Master</h3>
+    <p class="hr-muted">Employee profiles, departments, designations, joining dates and employment status.</p>
+    <span class="hr-state">Planned</span>
+  </section>
+
+  <section class="hr-card">
+    <div class="eyebrow">02 · TIME</div>
+    <h3>Attendance & Shifts</h3>
+    <p class="hr-muted">Daily attendance, shift assignments, late arrivals, absences and overtime.</p>
+    <span class="hr-state">Planned</span>
+  </section>
+
+  <section class="hr-card">
+    <div class="eyebrow">03 · LEAVE</div>
+    <h3>Leave Management</h3>
+    <p class="hr-muted">Leave requests, approvals and employee leave balances.</p>
+    <span class="hr-state">Planned</span>
+  </section>
+
+  <section class="hr-card">
+    <div class="eyebrow">04 · PAYROLL</div>
+    <h3>Salary & Payslips</h3>
+    <p class="hr-muted">Salary, overtime, deductions, payroll periods and payslips.</p>
+    <span class="hr-state">Planned</span>
+  </section>
+
+  <section class="hr-card">
+    <div class="eyebrow">05 · EMPLOYEE FINANCE</div>
+    <h3>Advances & Loans</h3>
+    <p class="hr-muted">Employee advances, repayments and outstanding balances.</p>
+    <span class="hr-state">Planned</span>
+  </section>
+
+  <section class="hr-card">
+    <div class="eyebrow">06 · FACTORY COSTING</div>
+    <h3>Labour Costing</h3>
+    <p class="hr-muted">Labour cost allocation for Baby Cone, Large Cone/Dyeing and Nalki according to their separate costing rules.</p>
+    <span class="hr-state">Planned</span>
+  </section>
+
+  <section class="hr-card">
+    <div class="eyebrow">07 · CONTROL</div>
+    <h3>HR Reports & Audit</h3>
+    <p class="hr-muted">Attendance summaries, payroll reports, access permissions and change history.</p>
+    <span class="hr-state">Planned</span>
+  </section>
+
+  <section class="hr-card">
+    <div class="eyebrow">08 · EMPLOYEE RECORDS</div>
+    <h3>Documents & Reviews</h3>
+    <p class="hr-muted">Employee documents, performance reviews and disciplinary records.</p>
+    <span class="hr-state">Planned</span>
+  </section>
+</div>
+{% endblock %}

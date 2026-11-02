@@ -1,0 +1,23 @@
+ALI RAZA ENTERPRISES ERP — READ-ONLY DASHBOARD ASSISTANT PATCH
+
+Files in this patch:
+  app/assistant.py
+  app/main.py
+  app/templates/dashboard.html
+  app/static/app.css
+  README.md
+
+INSTALLATION
+1. Stop the running ERP server (close its PowerShell/terminal window with Ctrl+C).
+2. Make a copy of the four existing files listed above before replacing them.
+3. Extract this ZIP directly into the existing project folder — the folder that contains run_windows.bat — and allow folder paths to merge/overwrite.
+4. Do not replace or edit .env. This patch does not contain .env, database credentials, SQL migrations, or database files.
+5. Start the ERP with run_windows.bat and open http://127.0.0.1:8000/.
+6. Use the new “ERP Inventory Assistant” card on the dashboard.
+
+SCOPE AND SAFETY
+- Assistant answers only fixed, read-only inventory questions.
+- It uses existing parameterized SELECT helpers; no generated SQL and no external AI API.
+- It does not create/update/delete records or post stock/accounting transactions.
+- Keep the app local on 127.0.0.1. Authentication and role enforcement are not yet implemented; do not expose it to the factory LAN.
+- No database reset, schema change, migration, or live database connection was performed during this patch build/test.

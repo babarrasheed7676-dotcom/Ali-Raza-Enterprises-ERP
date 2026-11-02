@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Bills & Documents · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Accounting / Bills{% endblock %}
+
+{% block content %}
+<div class="accounting-page">
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">ACCOUNTING / DOCUMENTS</div>
+    <h1>Bills & Documents</h1>
+    <p>Bill layout and print-format design preview.</p>
+  </div>
+  <a class="back-link" href="/accounting">Back to Accounting</a>
+</div>
+
+<div class="notice warning">
+  <strong>Design preview only</strong>
+  <p>No live bills or financial records are loaded. Creating, saving, posting and printing real documents are not enabled.</p>
+</div>
+
+<section class="module-placeholder">
+  <div class="eyebrow">FORMAT OPTIONS</div>
+  <h2>Choose a bill design</h2>
+  <div class="module-grid accounting-grid">
+    <div class="module-card accounting-tile">
+      <div class="module-icon">M</div>
+      <h3>Modern</h3>
+      <p>Premium branded layout with clear document totals and a tidy item table.</p>
+      <span class="module-status">Design planned</span>
+    </div>
+    <div class="module-card accounting-tile">
+      <div class="module-icon">اردو</div>
+      <h3>Urdu</h3>
+      <p>Urdu labels with digits kept unchanged and Nastaliq typography support.</p>
+      <span class="module-status">Design planned</span>
+    </div>
+    <div class="module-card accounting-tile">
+      <div class="module-icon">EN/UR</div>
+      <h3>English + Urdu</h3>
+      <p>Bilingual labels for convenient use by office staff and customers.</p>
+      <span class="module-status">Design planned</span>
+    </div>
+    <div class="module-card accounting-tile">
+      <div class="module-icon">EN</div>
+      <h3>English only</h3>
+      <p>A clear English document layout.</p>
+      <span class="module-status">Design planned</span>
+    </div>
+    <div class="module-card accounting-tile">
+      <div class="module-icon">A4</div>
+      <h3>Simple print-friendly</h3>
+      <p>Ink-conscious layout intended for A4 paper and PDF export.</p>
+      <span class="module-status">Design planned</span>
+    </div>
+  </div>
+</section>
+
+</div>
+{% endblock %}

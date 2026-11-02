@@ -1,0 +1,94 @@
+
+{% extends "base.html" %}
+
+{% block title %}Inventory | {{ app_name }}{% endblock %}
+{% block breadcrumb %}Inventory{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <div class="eyebrow">LIVE DATABASE VIEW</div>
+        <h1>Inventory Stock</h1>
+        <p>Read-only view of existing stock balances.</p>
+    </div>
+    <a class="back-link" href="/">← Dashboard</a>
+</div>
+
+<div class="module-placeholder">
+    <div class="eyebrow">STOCK RECORDS</div>
+    <h2>{{ total }} matching records</h2>
+
+    <form method="get" action="/inventory">
+        <input
+            type="search"
+            name="q"
+            value="{{ q }}"
+            placeholder="Search item, variant, shade, brand, location or party"
+            maxlength="100"
+        >
+        <button type="submit">Search</button>
+        <a href="/inventory">Clear</a>
+    </form>
+</div>
+
+<div style="overflow-x:auto; margin-top:20px;">
+<table>
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Variant</th>
+            <th>Brand</th>
+            <th>Shade</th>
+            <th>Location</th>
+            <th>Ownership</th>
+            <th>Party</th>
+            <th>Qty</th>
+            <th>Unit</th>
+            <th>Avg. Cost</th>
+            <th>Total Value</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+        <tr>
+            <td>{{ r.item_code }} — {{ r.item_name }}</td>
+            <td>{{ r.variant_code }}</td>
+            <td>{{ r.brand_name or "—" }}</td>
+            <td>
+                {% if r.shade_code %}
+                    {{ r.shade_code }} — {{ r.shade_name }}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+            <td>{{ r.location_name }}</td>
+            <td>{{ r.ownership_name or "—" }}</td>
+            <td>{{ r.owner_party or "—" }}</td>
+            <td>{{ "{:,.3f}".format(r.quantity) }}</td>
+            <td>{{ r.unit_code or "—" }}</td>
+            <td>Rs {{ "{:,.2f}".format(r.average_unit_cost) }}</td>
+            <td>Rs {{ "{:,.2f}".format(r.total_value) }}</td>
+        </tr>
+    {% else %}
+        <tr>
+            <td colspan="11">No matching stock records found.</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<div style="display:flex; gap:12px; align-items:center; margin-top:20px;">
+    {% if page > 1 %}
+        <a href="/inventory?q={{ q | urlencode }}&page={{ page - 1 }}">← Previous</a>
+    {% endif %}
+    <span>Page {{ page }} of {{ pages }}</span>
+    {% if page < pages %}
+        <a href="/inventory?q={{ q | urlencode }}&page={{ page + 1 }}">Next →</a>
+    {% endif %}
+</div>
+
+<p style="margin-top:16px;">
+    This page is read-only. It does not post, approve, transfer, or modify stock.
+</p>
+{% endblock %}
