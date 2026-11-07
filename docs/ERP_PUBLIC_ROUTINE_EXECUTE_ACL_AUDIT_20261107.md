@@ -21,6 +21,7 @@ All 46 application routines have the PostgreSQL default PUBLIC EXECUTE ACL. The 
 - A future least-privilege runtime role will need USAGE on the application schemas. Because PUBLIC EXECUTE is inherited by all roles, granting schema USAGE without first addressing the routine ACL would expose EXECUTE on all 46 routines to that runtime role.
 - That includes dormant Sales & Dispatch and packing FG-transfer routines as well as stock approval/posting routines. It would defeat an intended narrow EXECUTE allowlist even if explicit GRANT statements name only a few routines.
 - The PUBLIC EXECUTE entries are default PostgreSQL function ACLs, not evidence that PUBLIC can currently read or modify application tables. Table, sequence, and schema PUBLIC ACL checks returned zero rows.
+- A separate database-wide owner/scope check found 212 additional routines in the public schema, all postgres-owned and with PUBLIC EXECUTE. No other non-system schema outside the eight application schemas and public was found in that inventory. A global default-privilege change for postgres therefore has a wider effect than the ERP schemas and must preserve the public-schema default explicitly.
 
 ## Required design controls — proposal only, not executed
 
@@ -28,10 +29,11 @@ Before granting application schema USAGE to a future runtime role:
 
 1. Revoke EXECUTE on existing application routines from PUBLIC in all eight application schemas.
 2. Add a GLOBAL owner-specific ALTER DEFAULT PRIVILEGES rule (without IN SCHEMA) so future functions created by the migration/object-owner identity do not receive PUBLIC EXECUTE by default. PostgreSQL documents that per-schema REVOKE cannot remove a privilege granted by the global default.
-3. Explicitly grant EXECUTE only on the non-trigger routines proven necessary for reachable application routes. Current route evidence identifies core.get_next_document_no, inventory.approve_stock_document, and inventory.post_stock_document for purchase receipt/return workflows; even these remain subject to restored-database tests.
-4. Do not grant direct EXECUTE on trigger functions to the runtime role merely because they are attached to tables. Existing triggers were created by the owner identity. Confirm trigger firing after PUBLIC EXECUTE revocation on a restored test database before staged migration.
-5. Keep all trigger creation/alteration rights with the migration identity. The runtime role must not receive schema CREATE or TRIGGER rights.
-6. Re-run ACL checks after the staged migration and prove that the runtime role can execute only the approved routines, while dormant Sales/Dispatch and packing transfer functions are denied.
+3. Because postgres currently owns 212 public-schema routines with PUBLIC EXECUTE, preserve the existing public-schema default explicitly after the global revoke with an owner-specific per-schema GRANT for public, then verify all non-ERP schemas. Do not apply a global default change without this blast-radius control.
+4. Explicitly grant EXECUTE only on the non-trigger routines proven necessary for reachable application routes. Current route evidence identifies core.get_next_document_no, inventory.approve_stock_document, and inventory.post_stock_document for purchase receipt/return workflows; even these remain subject to restored-database tests.
+5. Do not grant direct EXECUTE on trigger functions to the runtime role merely because they are attached to tables. Existing triggers were created by the owner identity. Confirm trigger firing after PUBLIC EXECUTE revocation on a restored test database before staged migration.
+6. Keep all trigger creation/alteration rights with the migration identity. The runtime role must not receive schema CREATE or TRIGGER rights.
+7. Re-run ACL checks after the staged migration and prove that the runtime role can execute only the approved routines, while dormant Sales/Dispatch and packing transfer functions are denied.
 
 ## PostgreSQL behavior to validate in staging
 
