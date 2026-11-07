@@ -10,8 +10,9 @@
  {% if saved %}<div class="dy-alert"><strong>Draft saved:</strong> {{ ref }}. Yarn input, shade output and consumption evidence are saved; stock has not moved. <a href="/modules/production/dyeing/{{ saved_order_id }}">Open Dyeing detail</a>.{% if pending_conversion_count %}<br><strong>{{ pending_conversion_count }} dye/chemical line(s) need approved unit conversion.</strong>{% endif %}{% if blocked_conversion_count %}<br><strong>{{ blocked_conversion_count }} dye/chemical line(s) are blocked by base-unit precision.</strong>{% endif %}</div>{% endif %}
  {% if error %}<div class="dy-alert warn"><strong>Could not save:</strong> {{ error }}</div>{% endif %}
  <div class="dy-alert warn"><strong>DRAFT ONLY — no stock posting or reservation.</strong><br>Current RAW_STORE/PURCHASE OWN yarn balance is shown in the item list. The current stock list may be empty; saving a DRAFT does not create stock. Approval/posting will be blocked until eligible stock, batches (where required), conversion and costing controls are available.</div>
- <form method="post" action="/modules/production/dyeing/new" id="dyeing-form">
+ <form method="post" action="/modules/production/dyeing/new" id="dyeing-form" data-smart-entry="dyeing">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save DRAFT</span></div><div class="smart-entry-status" id="smartEntryStatus" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
   <section class="dy-card">
    <div class="dy-kicker">01 / ORDER DETAILS</div>
    <div class="dy-grid" style="margin-top:12px">

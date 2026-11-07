@@ -61,7 +61,13 @@
     form.addEventListener("keydown", event => {
       if (event.ctrlKey && event.key === "Enter") {
         event.preventDefault();
-        form.requestSubmit();
+        const submitter = form.querySelector('button[type="submit"],input[type="submit"]');
+        if (submitter?.disabled) {
+          announce("Save is disabled until this form's setup requirements are ready.");
+          return;
+        }
+        if (submitter) form.requestSubmit(submitter);
+        else form.requestSubmit();
         return;
       }
       if (event.altKey && event.key.toLowerCase() === "n" && addButton) {

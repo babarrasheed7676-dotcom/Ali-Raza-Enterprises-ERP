@@ -36,15 +36,16 @@ Date: 2026-11-08
 - Enabled the shared keyboard contract on New Supplier: Enter advances ordinary input fields; Ctrl+Enter uses native browser validation and the existing supplier-save endpoint.
 - Enabled the shared keyboard contract on Purchase Return: Alt+N adds a return line and focuses its item selector; Ctrl+Enter uses the existing DRAFT-only save endpoint.
 - Enabled the shared keyboard contract on General Journal: Alt+N invokes its existing Add line button; Ctrl+Enter submits through the existing journal DRAFT endpoint; account and party selects retain native selection behavior.
+- Enabled keyboard-first navigation on Big Cone and Dyeing DRAFT forms: Enter advances ordinary input fields; Ctrl+Enter invokes existing server validation and DRAFT save. Their current machine/source selectors and multi-group line controls are left unchanged.
 - Goods Receipt now declares its add-line button and line container through data attributes; repeat-last-item and duplicate-item notice remain receipt-specific adapters.
 - No service, route, permission, schema or accounting rules changed.
 
 ## Verification after Phase 2
 - `node --check app/static/smart-entry.js`: passed.
-- Jinja compilation: `base.html`, `purchasing.html`, `supplier_form.html`, `journal_entry.html` all passed.
+- Jinja compilation: `base.html`, `purchasing.html`, `supplier_form.html`, `journal_entry.html`, `big_cone_draft.html`, `dyeing_draft.html` all passed.
 - Existing ERP health: `{"app":"ok","database":true}`.
 - Static JavaScript and CSS served HTTP 200.
 - No supplier, journal, receipt or other business document was submitted; no server restart.
 
 ## Next rollout
-Apply the shared engine to purchase returns, production drafts, packing and inventory after reviewing each form's dynamic row behavior and module-specific validation. Accounting forms require extra care: the engine must not calculate or alter debit/credit values, and the existing server-side balance/period guards remain authoritative.
+Continue the rollout to remaining production drafts, packing and inventory after reviewing each form's dynamic row behavior and module-specific validation. Accounting forms require extra care: the engine must not calculate or alter debit/credit values, and the existing server-side balance/period guards remain authoritative.
