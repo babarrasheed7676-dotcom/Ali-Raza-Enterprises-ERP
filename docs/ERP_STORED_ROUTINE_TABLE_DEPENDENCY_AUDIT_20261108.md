@@ -127,3 +127,9 @@ A single consistent `REPEATABLE READ, READ ONLY` snapshot counted the ten routin
 The stock ledger is reached by the protected purchasing stock-posting workflow through `inventory.post_stock_document`; preserve its routine-required INSERT/SELECT/UPDATE access only as validated in restored staging. Reservation and Sales relations have existing rows but no current protected Sales & Dispatch route; do not grant the runtime role access to them merely because stored routines reference them. Packing FG transfer/labour relations also contain existing records, including POSTED transfer rows, but `production.post_packing_fg_transfer` has no protected app route; preserve the records and keep runtime EXECUTE excluded. `production.packing_material_consumption` is currently empty.
 
 Counts were used only to establish presence/absence; no row contents were read or changed.
+
+## Current trigger enabled-state snapshot
+
+A read-only catalog check of the 44 non-internal triggers across the eight application schemas returned one state group: **44 enabled for origin sessions (`tgenabled = 'O'`)**, attached to **33 distinct trigger functions**. No disabled/replica-only/always-only trigger was found. None of the 44 trigger rows referenced a SECURITY DEFINER function (`prosecdef = false` for all attached trigger functions).
+
+This confirms catalog enablement and invoker mode only. It does not prove that each trigger's cross-table SELECT succeeds under a restricted runtime role after PUBLIC EXECUTE changes; that still requires restored-staging tests.
