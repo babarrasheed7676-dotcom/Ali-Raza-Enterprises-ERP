@@ -82,17 +82,18 @@
         <tbody>
         {% for order in data.source_orders %}
           {% for line in order.lines %}
+          {% set line_form = form.line_values.get(line.source_line_id|string, {}) %}
           <tr data-source-order-id="{{ order.id }}">
             <td>{{ order.dyeing_no }}<input type="hidden" name="source_dyeing_output_line_id" value="{{ line.source_line_id }}"></td>
             <td><strong>#{{ line.line_no }} · {{ line.item_code }}</strong><br>{{ line.item_name }}<br><small>{{ line.variant_code }}</small></td>
             <td>{{ line.batch_no or "No batch" }}</td>
             <td>{{ line.ownership_code }}{% if line.party_name %}<br>{{ line.party_name }}{% endif %}</td>
             <td>{{ line.available_kg }}</td>
-            <td><input name="input_quantity_kg" type="number" min="0.001" max="{{ line.available_kg }}" step="0.001" placeholder="KG"></td>
-            <td><input name="input_cones" type="number" min="0" step="0.001" placeholder="Optional"></td>
-            <td><input name="output_quantity_kg" type="number" min="0.001" step="0.001" placeholder="KG"></td>
-            <td><input name="output_cones" type="number" min="0" step="0.001" placeholder="Optional"></td>
-            <td><select name="destination_type"><option value="BABY_CONE">Baby Cone</option><option value="NALKI">Nalki</option><option value="DIRECT_SALE">Direct Sale</option><option value="OTHER">Other / Conversion</option></select></td>
+            <td><input name="input_quantity_kg" type="number" min="0.001" max="{{ line.available_kg }}" step="0.001" placeholder="KG" value="{{ line_form.input_quantity_kg or '' }}"></td>
+            <td><input name="input_cones" type="number" min="0" step="0.001" placeholder="Optional" value="{{ line_form.input_cones or '' }}"></td>
+            <td><input name="output_quantity_kg" type="number" min="0.001" step="0.001" placeholder="KG" value="{{ line_form.output_quantity_kg or '' }}"></td>
+            <td><input name="output_cones" type="number" min="0" step="0.001" placeholder="Optional" value="{{ line_form.output_cones or '' }}"></td>
+            <td><select name="destination_type"><option value="BABY_CONE" {% if line_form.destination_type == 'BABY_CONE' or not line_form.destination_type %}selected{% endif %}>Baby Cone</option><option value="NALKI" {% if line_form.destination_type == 'NALKI' %}selected{% endif %}>Nalki</option><option value="DIRECT_SALE" {% if line_form.destination_type == 'DIRECT_SALE' %}selected{% endif %}>Direct Sale</option><option value="OTHER" {% if line_form.destination_type == 'OTHER' %}selected{% endif %}>Other / Conversion</option></select></td>
           </tr>
           {% endfor %}
         {% else %}

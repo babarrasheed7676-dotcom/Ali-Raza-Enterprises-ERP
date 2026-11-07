@@ -1578,6 +1578,11 @@ async def big_cone_draft_save(request: Request):
             "destination_type": destinations[index],
         })
     form["lines"] = lines
+    form["line_values"] = {
+        str(line["source_dyeing_output_line_id"]): line
+        for line in lines
+        if str(line.get("source_dyeing_output_line_id") or "").isdigit()
+    }
 
     result = None
     if not errors:
