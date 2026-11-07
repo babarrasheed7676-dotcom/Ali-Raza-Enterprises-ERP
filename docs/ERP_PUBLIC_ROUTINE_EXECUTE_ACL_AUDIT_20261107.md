@@ -27,7 +27,7 @@ All 46 application routines have the PostgreSQL default PUBLIC EXECUTE ACL. The 
 Before granting application schema USAGE to a future runtime role:
 
 1. Revoke EXECUTE on existing application routines from PUBLIC in all eight application schemas.
-2. Add owner-specific ALTER DEFAULT PRIVILEGES rules so future functions created by the migration/object-owner identity do not receive PUBLIC EXECUTE by default.
+2. Add a GLOBAL owner-specific ALTER DEFAULT PRIVILEGES rule (without IN SCHEMA) so future functions created by the migration/object-owner identity do not receive PUBLIC EXECUTE by default. PostgreSQL documents that per-schema REVOKE cannot remove a privilege granted by the global default.
 3. Explicitly grant EXECUTE only on the non-trigger routines proven necessary for reachable application routes. Current route evidence identifies core.get_next_document_no, inventory.approve_stock_document, and inventory.post_stock_document for purchase receipt/return workflows; even these remain subject to restored-database tests.
 4. Do not grant direct EXECUTE on trigger functions to the runtime role merely because they are attached to tables. Existing triggers were created by the owner identity. Confirm trigger firing after PUBLIC EXECUTE revocation on a restored test database before staged migration.
 5. Keep all trigger creation/alteration rights with the migration identity. The runtime role must not receive schema CREATE or TRIGGER rights.
@@ -35,7 +35,13 @@ Before granting application schema USAGE to a future runtime role:
 
 ## PostgreSQL behavior to validate in staging
 
-The design relies on separating schema USAGE, routine EXECUTE, and trigger invocation. The runtime role should not need direct EXECUTE on a trigger function merely to cause an already-installed trigger to fire during permitted table DML; nevertheless, this must be demonstrated on a restored copy using the target PostgreSQL version before changing the live ACLs.
+The design relies on separating schema USAGE, routine EXECUTE, and trigger invocation. PostgreSQL documents that the role creating a trigger must have EXECUTE on its trigger function, and that a trigger runs as the role that queued the event unless the function is SECURITY DEFINER. Do not assume that the catalog ACL alone proves the exact EXECUTE requirement for DML against an existing trigger: demonstrate trigger firing after PUBLIC EXECUTE is revoked on a restored copy using the target PostgreSQL version before changing live ACLs.
+
+Official PostgreSQL 18 references:
+- https://www.postgresql.org/docs/current/ddl-priv.html (built-in PUBLIC EXECUTE default for functions/procedures)
+- https://www.postgresql.org/docs/current/sql-alterdefaultprivileges.html (global defaults and per-schema REVOKE limitation)
+- https://www.postgresql.org/docs/current/sql-createtrigger.html (EXECUTE required to create a trigger)
+- https://www.postgresql.org/docs/current/trigger-definition.html (trigger execution role)
 
 ## Status
 
