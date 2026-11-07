@@ -93,8 +93,17 @@
    {% else %}
     <div class="dy-stat"><small>Process overhead per output KG</small><strong>Not available</strong><span class="dy-muted">No positive dyed-thread output quantity.</span></div>
    {% endif %}
-   {% set process_balance_kg = (detail.order.actual_input_quantity_kg or 0) - (detail.order.actual_output_quantity_kg or 0) %}
-   <div class="dy-stat"><small>Unreconciled input / output balance</small><strong>{{ '%.3f'|format(process_balance_kg) }} KG</strong><span class="dy-muted">Calculated difference only; not recorded as measured wastage.</span></div>
+   {% if detail.order.wastage_quantity_kg is not none %}
+    <div class="dy-stat"><small>Recorded measured wastage</small><strong>{{ '%.3f'|format(detail.order.wastage_quantity_kg) }} KG</strong><span class="dy-muted">Stored value; verify its measurement evidence before approval.</span></div>
+   {% else %}
+    <div class="dy-stat"><small>Recorded measured wastage</small><strong>Not recorded</strong><span class="dy-muted">No measured wastage value is stored for this order.</span></div>
+   {% endif %}
+   {% if detail.order.actual_input_quantity_kg is not none and detail.order.actual_output_quantity_kg is not none %}
+    {% set process_balance_kg = detail.order.actual_input_quantity_kg - detail.order.actual_output_quantity_kg %}
+    <div class="dy-stat"><small>Unreconciled input / output balance</small><strong>{{ '%.3f'|format(process_balance_kg) }} KG</strong><span class="dy-muted">Calculated difference only; not recorded as measured wastage.</span></div>
+   {% else %}
+    <div class="dy-stat"><small>Unreconciled input / output balance</small><strong>Not available</strong><span class="dy-muted">Input or output total has not been recorded.</span></div>
+   {% endif %}
   </div>
  </section>
  <div class="dy-callout"><strong>Control status:</strong> This page is read-only. The Dyeing order remains DRAFT-only; no stock balance, stock ledger or inventory valuation was changed. Output batch identities will be generated at posting and linked to the source raw-yarn batch. Approval/posting is not enabled in this phase.</div>
