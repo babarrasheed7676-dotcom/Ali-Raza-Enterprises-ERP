@@ -202,7 +202,8 @@
       <span id="shadeUsageMessage" role="status" aria-live="polite"></span>
     </div>
   </div>
-  <form id="masterDataForm" data-csrf="{{ csrf_token }}">
+  <form id="masterDataForm" data-csrf="{{ csrf_token }}" data-smart-entry="configuration-master">
+    <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save Master Data</span></div><div class="smart-entry-status" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
     <div class="config-form-grid">
       <label>Record type
         <select id="masterRecordType">
@@ -253,7 +254,8 @@
 </div>
 <section class="config-editor config-card">
   <div class="section-heading"><div><h2>Create configuration draft</h2><p>Choose a configuration type and complete its guided fields. The generated JSON is available for review; saving creates a new numbered DRAFT version.</p></div></div>
-  <form id="configurationDraftForm" data-csrf="{{ csrf_token }}">
+  <form id="configurationDraftForm" data-csrf="{{ csrf_token }}" data-smart-entry="configuration-draft">
+    <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save DRAFT</span></div><div class="smart-entry-status" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
     <div class="config-form-grid">
       <label>Configuration type
         <select id="configType" required>
