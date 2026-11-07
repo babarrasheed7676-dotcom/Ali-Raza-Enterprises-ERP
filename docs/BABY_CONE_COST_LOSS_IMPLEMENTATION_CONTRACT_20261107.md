@@ -114,3 +114,20 @@ A read-only review of existing services shows why their current costing code can
 - Baby Cone differs from both: it has a child cost-line table with five allowed types, optional quantity/rate, required amount, and a header with only labour/electricity/machine totals. There is no verified mapping for MAINTENANCE or OTHER, and no confirmed method to roll up child rows to the header.
 
 Implementation conclusion: reuse only the general decimal-validation and transaction/audit patterns after review. Do not reuse Dyeing's six-field taxonomy, Big Cone's three-field taxonomy, or either module's header sum as Baby Cone's business rule without explicit ARE costing approval.
+
+## Critical DB privilege finding — blocks treating triggers as a security boundary
+
+A separate read-only live connection check confirmed:
+
+- `current_user = postgres` and `session_user = postgres` for the application's configured DSN.
+- The three Baby Cone parent/cost/loss tables are owned by `postgres`.
+- The connected role has TRIGGER and TRUNCATE privileges on those tables.
+
+Consequently, even if the proposed DRAFT guard triggers are applied, the current application connection can disable or alter them and can bypass ordinary database safeguards. The proposal is defence-in-depth only until a dedicated least-privilege runtime role is designed and tested. Do not apply the trigger proposal and call it secure while the app still connects as the table-owning superuser.
+
+Required separate security milestone before relying on DB guards:
+1. Inventory every SQL operation and required privilege across all ERP modules, reports, assistant, and background jobs.
+2. Design a non-superuser runtime role with no table ownership, no DDL, no TRIGGER/ALTER privileges, and only required schema/table/sequence/function privileges.
+3. Test all modules against a restored database copy using that role; include migrations as a separately controlled owner/admin path.
+4. Stage DSN change with verified secret handling, backup, health check, and immediate rollback to the preserved prior DSN.
+5. Do not modify the live role, passwords, DSN, ownership, or grants as part of the Baby Cone cost/loss work without a separately scoped explicit approval.
