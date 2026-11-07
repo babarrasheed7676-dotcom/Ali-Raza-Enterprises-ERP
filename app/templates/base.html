@@ -15,13 +15,14 @@
     <div class="nav-label">BUSINESS MODULES</div>
     <a class="nav-link" href="/inventory">▦ <span>Inventory</span></a>
     <a class="nav-link" href="/modules/production">⚙ <span>Production</span></a>
-    <a class="nav-link" href="/modules/packing">▣ <span>Packing</span></a>
+    <a class="nav-link {% if request.url.path.startswith("/modules/packing") %}active{% endif %}" href="/modules/packing">▣ <span>Packing</span></a>
     <a class="nav-link" href="/modules/sales-dispatch">⇢ <span>Sales & Dispatch</span></a>
     <a class="nav-link" href="/modules/purchasing">＋ <span>Purchasing</span></a>
     <a class="nav-link" href="/accounting">▤ <span>Accounting</span></a>
     <a class="nav-link" href="/modules/reports">▥ <span>Reports</span></a>
 <a class="nav-link {% if request.url.path == '/modules/hr-payroll' %}active{% endif %}" href="/modules/hr-payroll">👥 <span>HR &amp; Payroll</span></a>
     <a class="nav-link {% if request.url.path == '/configuration' %}active{% endif %}" href="/configuration">⚙ <span>Configuration</span></a>
+    <a class="nav-link" href="/modules/ownership-requests">? <span>PARTY Use Requests</span></a>
     <div class="sidebar-bottom"><span class="local-dot"></span><span>Local development</span><small>v0.1.0 · Foundation</small></div>
   </aside>
   <main class="main-content">

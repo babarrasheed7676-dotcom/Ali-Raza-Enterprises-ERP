@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Production · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Production{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">PRODUCTION CONTROL</div>
+    <h1>Production Overview</h1>
+    <p>Process-wise status and setup readiness. Dyeing material DRAFT entry and Baby Cone measurement DRAFT capture are available; measurement does not post stock.</p>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    {% if can_create_dyeing %}<a class="btn btn-primary" href="/modules/production/dyeing/new">+ New Dyeing Draft</a><a class="btn btn-secondary" href="/modules/production/baby-cone/measurements">Baby Cone Measurement</a>{% endif %}
+    <a class="back-link" href="/">&#8592; Back to overview</a>
+  </div>
+</div>
+
+<style>
+.production-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:20px 0}
+.production-metric,.production-panel{border:1px solid var(--border,#d9dee7);border-radius:14px;padding:17px;background:var(--surface,#fff)}
+.production-metric .value{font-size:28px;font-weight:750;letter-spacing:-.03em;margin-top:7px}
+.production-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,1fr);gap:16px;align-items:start}
+.production-table{width:100%;border-collapse:collapse}
+.production-table th,.production-table td{padding:11px 9px;border-bottom:1px solid var(--border,#d9dee7);text-align:left;vertical-align:top}
+.production-table th{font-size:12px;color:var(--muted,#64748b);font-weight:650}
+.production-status{display:inline-flex;gap:5px;flex-wrap:wrap;margin:2px 5px 2px 0;padding:4px 8px;border-radius:20px;background:var(--surface-muted,#eef1f5);font-size:11px}
+.production-stage{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border,#d9dee7)}
+.production-stage:last-child{border-bottom:0}
+.production-stage-number{min-width:26px;height:26px;border-radius:8px;background:var(--surface-muted,#eef1f5);display:grid;place-items:center;font-size:12px;font-weight:700}
+.production-warning{padding:14px 16px;border:1px solid var(--border,#d9dee7);border-left:4px solid #c18b32;border-radius:12px;margin:16px 0}
+.production-muted{color:var(--muted,#64748b)}
+@media(max-width:850px){.production-grid{grid-template-columns:1fr}.production-table{font-size:13px}}
+</style>
+
+<div class="production-metrics">
+  <section class="production-metric"><div class="eyebrow">PRODUCTION PLANS</div><div class="value">{{ data.production_order_count }}</div><div class="production-muted">Company records</div></section>
+  <section class="production-metric"><div class="eyebrow">EXECUTIONS</div><div class="value">{{ data.executions }}</div><div class="production-muted">Linked to production plans</div></section>
+  <section class="production-metric"><div class="eyebrow">RECIPES</div><div class="value">{{ data.recipes }}</div><div class="production-muted">Versioned process recipes</div></section>
+  <section class="production-metric"><div class="eyebrow">ACTIVE PROCESS STAGES</div><div class="value">{{ data.active_process_stages }}</div><div class="production-muted">Workflow stages, not warehouses</div></section>
+</div>
+
+{% if not data.setup_ready %}
+<div class="production-warning">
+  <strong>Production setup is not ready for transaction entry.</strong>
+  <div class="production-muted">Active machines: {{ data.active_machines }} · Active departments: {{ data.active_departments }}. Machine and department masters must be verified before enabling production forms. No sample machine or department has been inserted.</div>
+</div>
+{% endif %}
+
+<section class="production-panel" style="margin:16px 0">
+  <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+    <div><div class="eyebrow">DYEING DOCUMENT REGISTER</div><h2 style="margin:5px 0">Recent Dyeing drafts & orders</h2><p class="production-muted" style="margin:0">Latest 10 company records ? read-only ? no stock movement</p></div>
+    {% if can_create_dyeing %}<a class="btn btn-secondary" href="/modules/production/dyeing/new">+ New Dyeing Draft</a>{% endif %}
+  </div>
+  <div style="overflow-x:auto;margin-top:12px"><table class="production-table" style="min-width:760px">
+    <thead><tr><th>Document</th><th>Date</th><th>Status</th><th>Lines</th><th>Conversion exceptions</th><th>Evidence</th></tr></thead>
+    <tbody>{% for order in data.recent_dyeing_orders %}
+      <tr><td><strong>{{ order.dyeing_no }}</strong></td><td>{{ order.dyeing_date }}</td><td><span class="production-status">{{ order.status }}</span></td><td>{{ order.line_count }}</td>
+      <td>{% if order.pending_conversion_count %}<span class="production-status">Pending {{ order.pending_conversion_count }}</span>{% endif %}{% if order.blocked_conversion_count %}<span class="production-status">Precision blocked {{ order.blocked_conversion_count }}</span>{% endif %}{% if order.missing_snapshot_count %}<span class="production-status">Missing snapshot {{ order.missing_snapshot_count }}</span>{% endif %}{% if not order.pending_conversion_count and not order.blocked_conversion_count and not order.missing_snapshot_count %}<span class="production-muted">None</span>{% endif %}</td>
+      <td><a href="/modules/production/dyeing/{{ order.id }}">View evidence ?</a></td></tr>
+    {% else %}<tr><td colspan="6" class="production-muted">No Dyeing orders have been saved yet.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<div class="production-grid">
+  <section class="production-panel">
+    <div class="eyebrow">PROCESS ACTIVITY</div>
+    <h2>Orders by process</h2>
+    <table class="production-table">
+      <thead><tr><th>Process</th><th>Records</th><th>Status breakdown</th></tr></thead>
+      <tbody>
+      {% for process in data.processes %}
+        <tr>
+          <td><strong>{{ process.label }}</strong></td>
+          <td>{{ process.total }}</td>
+          <td>{% if process.statuses %}{% for item in process.statuses %}<span class="production-status">{{ item.status }} · {{ item.count }}</span>{% endfor %}{% else %}<span class="production-muted">No records</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="production-muted">Outside labeling is a Nalki workflow stage. Nalki source must be Large Cone, never Baby Cone. One physical godown is used across process stages.</p>
+  </section>
+
+  <section class="production-panel">
+    <div class="eyebrow">VERIFIED WORKFLOW MASTER</div>
+    <h2>Active process stages</h2>
+    {% for stage in data.process_stages %}
+      <div class="production-stage"><span class="production-stage-number">{{ stage.sequence_no }}</span><div><strong>{{ stage.name }}</strong><div class="production-muted">{{ stage.code }}</div></div></div>
+    {% else %}
+      <p class="production-muted">No active process stages configured.</p>
+    {% endfor %}
+    <div class="production-stage"><span class="production-stage-number">!</span><div><strong>Production targets: {{ data.targets }}</strong><div class="production-muted">Read-only count; no target entry enabled.</div></div></div>
+  </section>
+</div>
+{% endblock %}

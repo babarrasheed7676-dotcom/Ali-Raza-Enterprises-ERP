@@ -80,7 +80,7 @@ class PackagingRule(EffectivePeriod):
         return self
 
 
-class BabyConeMeasurement(ConfigurationModel):
+class BabyConeMeasurement(EffectivePeriod):
     variant_code: str = Field(min_length=1, max_length=60)
     gross_weight_grams: Decimal = Field(gt=0)
     empty_core_tare_grams: Decimal = Field(ge=0)
@@ -133,4 +133,87 @@ class ProcessCostRule(EffectivePeriod):
     waste_allowance_percent: Decimal = Field(
         default=Decimal("0"), ge=0, le=100
     )
+    active: bool = True
+
+
+
+class AttributeDefinition(EffectivePeriod):
+    """Reusable, typed attribute definition for products and production records."""
+
+    code: str = Field(min_length=1, max_length=60)
+    label: str = Field(min_length=1, max_length=120)
+    data_type: Literal["text", "integer", "decimal", "boolean", "date", "choice"]
+    scope: Literal["product", "variant", "batch", "production_order"]
+    required: bool = False
+    allowed_values: list[str] = Field(default_factory=list)
+    decimal_places: int = Field(default=3, ge=0, le=6)
+    active: bool = True
+
+    @model_validator(mode="after")
+    def validate_allowed_values(self):
+        if self.data_type == "choice" and not self.allowed_values:
+            raise ValueError("Choice attributes require at least one allowed value")
+        if self.data_type != "choice" and self.allowed_values:
+            raise ValueError("Allowed values are only valid for choice attributes")
+        if len(set(self.allowed_values)) != len(self.allowed_values):
+            raise ValueError("Allowed values must be unique")
+        return self
+
+
+class UnitConversion(EffectivePeriod):
+    """Directed conversion: quantity in from_unit becomes quantity in to_unit."""
+
+    from_unit_code: str = Field(min_length=1, max_length=30)
+    to_unit_code: str = Field(min_length=1, max_length=30)
+    factor: Decimal = Field(gt=0)
+    rounding_places: int = Field(default=3, ge=0, le=6)
+    active: bool = True
+
+    @model_validator(mode="after")
+    def validate_units_differ(self):
+        if self.from_unit_code.casefold() == self.to_unit_code.casefold():
+            raise ValueError("Conversion source and target units must differ")
+        return self
+
+
+class MeasurementProfile(EffectivePeriod):
+    profile_code: str = Field(min_length=1, max_length=60)
+    variant_code: str = Field(min_length=1, max_length=60)
+    method: Literal["weight_per_length", "piece_weight", "manual"]
+    tolerance_percent: Decimal = Field(default=Decimal("0"), ge=0, le=100)
+    requires_operator: bool = True
+    requires_approval: bool = False
+    active: bool = True
+
+
+class ProcessRouteStep(ConfigurationModel):
+    sequence_no: int = Field(ge=1)
+    process_code: str = Field(min_length=1, max_length=60)
+    input_product_type: str = Field(min_length=1, max_length=80)
+    output_product_type: str = Field(min_length=1, max_length=80)
+    optional: bool = False
+
+
+class ProcessRoute(EffectivePeriod):
+    route_code: str = Field(min_length=1, max_length=60)
+    route_name: str = Field(min_length=1, max_length=120)
+    product_type: str = Field(min_length=1, max_length=80)
+    steps: list[ProcessRouteStep] = Field(min_length=1)
+    active: bool = True
+
+    @model_validator(mode="after")
+    def validate_step_sequence(self):
+        numbers = [step.sequence_no for step in self.steps]
+        if len(numbers) != len(set(numbers)):
+            raise ValueError("Process route step numbers must be unique")
+        if sorted(numbers) != numbers:
+            raise ValueError("Process route steps must be in sequence order")
+        return self
+
+
+class ConfigurationApprovalPolicy(EffectivePeriod):
+    config_type: str = Field(min_length=1, max_length=60)
+    required_role_code: str = Field(min_length=1, max_length=60)
+    minimum_approvals: int = Field(default=1, ge=1, le=5)
+    separate_requester_approver: bool = True
     active: bool = True

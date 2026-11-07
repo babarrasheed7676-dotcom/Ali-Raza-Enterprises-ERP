@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}New Dyeing Draft - {{ app_name }}{% endblock %}
+{% block breadcrumb %}Production / Dyeing / New Draft{% endblock %}
+{% block content %}
+<style>
+.dy-wrap{max-width:1320px;margin:0 auto}.dy-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}.dy-head h1{margin:4px 0 8px}.dy-muted{color:var(--muted,#64748b)}.dy-card{background:var(--surface,#fff);border:1px solid var(--border,#d9dee7);border-radius:15px;padding:20px;margin:14px 0;box-shadow:0 10px 30px rgba(15,23,42,.06)}.dy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.dy-field{display:flex;flex-direction:column;gap:6px;min-width:0}.dy-field label{font-size:12px;font-weight:750;color:var(--muted,#64748b)}.dy-field input,.dy-field select{width:100%;min-height:42px;border:1px solid var(--border,#cbd5e1);border-radius:9px;padding:9px 11px;background:var(--surface,#fff);color:var(--text,#172033)}.dy-line{display:grid;grid-template-columns:minmax(190px,1.3fr) minmax(145px,.9fr) minmax(145px,.9fr) minmax(180px,1.2fr) minmax(125px,.8fr) 38px;gap:10px;align-items:end;padding:14px 0;border-bottom:1px solid var(--border,#e2e8f0)}.dy-line.output{grid-template-columns:minmax(110px,.65fr) minmax(150px,.9fr) minmax(150px,.9fr) minmax(260px,1.8fr) minmax(130px,.9fr) 38px}.dy-line.chemical{grid-template-columns:minmax(160px,1.15fr) minmax(145px,1fr) minmax(150px,1fr) minmax(95px,.7fr) minmax(90px,.65fr) minmax(105px,.75fr) minmax(140px,1fr) minmax(130px,.9fr) 38px}.dy-line:last-child{border-bottom:0}.dy-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 14px;border-radius:9px;border:1px solid var(--border,#cbd5e1);font-weight:750;text-decoration:none;background:var(--surface,#fff);color:var(--text,#172033);cursor:pointer}.dy-btn.primary{background:var(--primary,#243b63);color:white;border-color:var(--primary,#243b63)}.dy-remove{height:40px;width:38px;border:1px solid var(--border,#cbd5e1);border-radius:9px;background:transparent;cursor:pointer;color:var(--muted,#64748b)}.dy-alert{padding:13px 15px;border-radius:10px;margin:12px 0;background:var(--surface-muted,#f1f5f9);border:1px solid var(--border,#cbd5e1)}.dy-alert.warn{border-left:4px solid #c18b32}.dy-section-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.dy-section-head h2{margin:5px 0}.dy-section-head p{margin:0}.dy-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--muted,#64748b)}.dy-hint{font-size:11px;line-height:1.4;color:var(--muted,#64748b)}.dy-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 30px}.dy-pill{display:inline-flex;padding:5px 9px;border-radius:20px;background:var(--surface-muted,#eef2f7);font-size:11px;font-weight:800}.dy-stock{font-size:12px;color:var(--muted,#64748b);margin-top:5px}.dy-line-title{font-size:13px;font-weight:800;margin:14px 0 0;color:var(--text,#172033)}@media(max-width:1000px){.dy-line,.dy-line.output,.dy-line.chemical{grid-template-columns:repeat(2,minmax(0,1fr))}.dy-remove{width:100%}}@media(max-width:620px){.dy-grid{grid-template-columns:1fr}.dy-head{display:block}.dy-card{padding:14px}}
+</style>
+<div class="dy-wrap">
+ <div class="dy-head"><div><div class="dy-kicker">PRODUCTION / DYEING</div><h1>New Dyeing Draft</h1><p class="dy-muted">Capture raw yarn, exact dyed-thread output shade, and dye/chemical consumption. Every movement remains DRAFT-only at this stage.</p></div><a class="back-link" href="/modules/production">← Production overview</a></div>
+ {% if saved %}<div class="dy-alert"><strong>Draft saved:</strong> {{ ref }}. Yarn input, shade output and consumption evidence are saved; stock has not moved. <a href="/modules/production/dyeing/{{ saved_order_id }}">Open Dyeing detail</a>.{% if pending_conversion_count %}<br><strong>{{ pending_conversion_count }} dye/chemical line(s) need approved unit conversion.</strong>{% endif %}{% if blocked_conversion_count %}<br><strong>{{ blocked_conversion_count }} dye/chemical line(s) are blocked by base-unit precision.</strong>{% endif %}</div>{% endif %}
+ {% if error %}<div class="dy-alert warn"><strong>Could not save:</strong> {{ error }}</div>{% endif %}
+ <div class="dy-alert warn"><strong>DRAFT ONLY — no stock posting or reservation.</strong><br>Current RAW_STORE/PURCHASE OWN yarn balance is shown in the item list. The current stock list may be empty; saving a DRAFT does not create stock. Approval/posting will be blocked until eligible stock, batches (where required), conversion and costing controls are available.</div>
+ <form method="post" action="/modules/production/dyeing/new" id="dyeing-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <section class="dy-card">
+   <div class="dy-kicker">01 / ORDER DETAILS</div>
+   <div class="dy-grid" style="margin-top:12px">
+    <div class="dy-field"><label for="dyeing_date">Dyeing date</label><input id="dyeing_date" type="date" name="dyeing_date" value="{{ today }}" required></div>
+    <div class="dy-field"><label for="remarks">Remarks (optional)</label><input id="remarks" name="remarks" maxlength="1000" placeholder="Batch / process / production notes"></div>
+   </div>
+   <div class="dy-stock">One physical godown: {{ data.raw_store.name }}. Process stages distinguish PURCHASE and DYEING; no separate warehouse is created.</div>
+  </section>
+
+  <section class="dy-card">
+   <div class="dy-section-head"><div><div class="dy-kicker">02 / RAW YARN INPUT</div><h2>Raw / Fresh Thread</h2><p class="dy-muted">OWN yarn only · KG · RAW_STORE / PURCHASE stage.</p></div><button type="button" class="dy-btn" id="add-material">+ Add yarn input</button></div>
+   <div id="material-lines">
+    <div class="dy-line material">
+     <div class="dy-field"><label>Yarn variant</label><select name="material_item_variant_id" required><option value="">Select YARN variant</option>{% for item in data.raw_yarn_items %}<option value="{{ item.item_variant_id }}">{{ item.item_code }} · {{ item.variant_name }} · {{ item.available_quantity_kg }} KG available</option>{% endfor %}</select></div>
+     <div class="dy-field"><label>Quantity (KG)</label><input name="material_quantity_kg" type="number" min="0.000001" step="0.000001" placeholder="Input KG" required></div>
+     <div class="dy-field"><label>Batch (optional in DRAFT)</label><select name="material_batch_id"><option value="">Not assigned yet</option>{% for batch in data.yarn_batches %}<option value="{{ batch.batch_id }}">{{ batch.batch_no }} · {{ batch.variant_code }}</option>{% endfor %}</select></div>
+     <div class="dy-field"><label>Line notes</label><input name="material_notes" maxlength="200" placeholder="Optional"></div>
+     <div class="dy-field"><label>Current OWN stock</label><span class="dy-pill">RAW_STORE balance checked on save</span></div>
+     <button type="button" class="dy-remove" aria-label="Remove yarn input" onclick="removeDyeingRow(this,'material-lines')">×</button>
+    </div>
+   </div>
+   <template id="material-template"><div class="dy-line material">
+    <div class="dy-field"><label>Yarn variant</label><select name="material_item_variant_id" required><option value="">Select YARN variant</option>{% for item in data.raw_yarn_items %}<option value="{{ item.item_variant_id }}">{{ item.item_code }} · {{ item.variant_name }} · {{ item.available_quantity_kg }} KG available</option>{% endfor %}</select></div>
+    <div class="dy-field"><label>Quantity (KG)</label><input name="material_quantity_kg" type="number" min="0.000001" step="0.000001" placeholder="Input KG" required></div>
+    <div class="dy-field"><label>Batch (optional in DRAFT)</label><select name="material_batch_id"><option value="">Not assigned yet</option>{% for batch in data.yarn_batches %}<option value="{{ batch.batch_id }}">{{ batch.batch_no }} · {{ batch.variant_code }}</option>{% endfor %}</select></div>
+    <div class="dy-field"><label>Line notes</label><input name="material_notes" maxlength="200" placeholder="Optional"></div>
+    <div class="dy-field"><label>Current OWN stock</label><span class="dy-pill">RAW_STORE balance checked on save</span></div>
+    <button type="button" class="dy-remove" aria-label="Remove yarn input" onclick="removeDyeingRow(this,'material-lines')">×</button>
+   </div></template>
+   {% if not data.raw_yarn_items %}<div class="dy-alert warn">No active YARN variants with KG base unit are configured. Do not substitute another item; configure the correct yarn master first.</div>{% endif %}
+   {% if not data.yarn_batches %}<p class="dy-hint">No eligible OWN raw-yarn batches with positive RAW_STORE/PURCHASE balance are currently available. Batch may remain unassigned in DRAFT, but batch-controlled posting must not proceed until a valid received batch is available.</p>{% endif %}
+  </section>
+
+  <section class="dy-card">
+   <div class="dy-section-head"><div><div class="dy-kicker">03 / DYED THREAD OUTPUT</div><h2>Finished Dyeing Output</h2><p class="dy-muted">Every output references its raw-yarn input and the quantity consumed from that line. Output KG is recorded separately.</p></div><button type="button" class="dy-btn" id="add-output">+ Add output line</button></div>
+   <div id="output-lines">
+    <div class="dy-line output">
+     <div class="dy-field"><label>Source yarn input</label><select name="output_source_line_no" required><option value="1">Input line #1</option></select></div>
+     <div class="dy-field"><label>Yarn consumed (KG)</label><input name="output_source_quantity_kg" type="number" min="0.000001" step="0.000001" placeholder="Source KG" required></div>
+     <div class="dy-field"><label>Output quantity (KG)</label><input name="output_quantity_kg" type="number" min="0.000001" step="0.000001" placeholder="Dyed KG" required></div>
+     <div class="dy-field"><label>Brand / shade</label><select name="output_actual_shade_id" required><option value="">Select exact shade</option>{% for group in data.shade_groups %}<optgroup label="{{ group.brand_name }}">{% for shade in group.shades %}<option value="{{ shade.shade_id }}">{{ shade.shade_code }} · {{ shade.shade_name }}</option>{% endfor %}</optgroup>{% endfor %}</select></div>
+     <div class="dy-field"><label>Line notes</label><input name="output_notes" maxlength="200" placeholder="Optional"></div>
+     <button type="button" class="dy-remove" aria-label="Remove output line" onclick="removeDyeingRow(this,'output-lines')">×</button>
+    </div>
+   </div>
+   <template id="output-template"><div class="dy-line output">
+    <div class="dy-field"><label>Source yarn input</label><select name="output_source_line_no" required><option value="1">Input line #1</option></select></div>
+    <div class="dy-field"><label>Yarn consumed (KG)</label><input name="output_source_quantity_kg" type="number" min="0.000001" step="0.000001" placeholder="Source KG" required></div>
+    <div class="dy-field"><label>Output quantity (KG)</label><input name="output_quantity_kg" type="number" min="0.000001" step="0.000001" placeholder="Dyed KG" required></div>
+    <div class="dy-field"><label>Brand / shade</label><select name="output_actual_shade_id" required><option value="">Select exact shade</option>{% for group in data.shade_groups %}<optgroup label="{{ group.brand_name }}">{% for shade in group.shades %}<option value="{{ shade.shade_id }}">{{ shade.shade_code }} · {{ shade.shade_name }}</option>{% endfor %}</optgroup>{% endfor %}</select></div>
+    <div class="dy-field"><label>Line notes</label><input name="output_notes" maxlength="200" placeholder="Optional"></div>
+    <button type="button" class="dy-remove" aria-label="Remove output line" onclick="removeDyeingRow(this,'output-lines')">×</button>
+   </div></template>
+   <p class="dy-hint">For each output, enter the input line number and the part of that input consumed. Multiple shade outputs may reference one input line; total consumed KG cannot exceed that input line. No assumed input/output weight equality is applied.</p>
+  </section>
+
+  <section class="dy-card">
+   <div class="dy-section-head"><div><div class="dy-kicker">04 / DYES & CHEMICALS</div><h2>Process Consumption</h2><p class="dy-muted">Actual unit and ownership are retained; alternate-unit conversion remains independently controlled.</p></div><button type="button" class="dy-btn" id="add-chemical">+ Add material</button></div>
+   <div id="chemical-lines">
+    <div class="dy-line chemical">
+     <div class="dy-field"><label>Dye / chemical</label><select name="item_variant_id" required><option value="">Select dye / chemical</option>{% for item in data["items"] %}<option value="{{ item.item_variant_id }}" data-base-unit-code="{{ item.base_unit_code }}" data-track-batch="{{ 1 if item.track_batch else 0 }}">{{ item.category_name }} · {{ item.variant_name }} (base {{ item.base_unit_code }})</option>{% endfor %}</select></div>
+     <div class="dy-field"><label>Batch / lot</label><select name="batch_id"><option value="">Not assigned in DRAFT</option>{% for batch in data.chemical_batches %}<option value="{{ batch.batch_id }}" data-variant-id="{{ batch.item_variant_id }}" data-ownership-type-id="{{ batch.ownership_type_id }}" data-owner-party-id="{{ batch.owner_party_id or '' }}">{{ batch.batch_no }} · {{ batch.variant_code }} · {{ batch.ownership_code }}{% if batch.party_name %} · {{ batch.party_name }}{% endif %} · {{ batch.available_quantity }} available</option>{% endfor %}</select><div class="dy-hint">Required for traceable posting.</div></div>
+     <div class="dy-field"><label>Raw Yarn input source</label><select name="source_line_no" required><option value="1">Input line #1</option></select><div class="dy-hint">Links this dye/chemical to one exact fiber input.</div></div>
+     <div class="dy-field"><label>Quantity</label><input name="quantity" type="number" min="0.000001" step="0.000001" placeholder="Quantity" required></div>
+     <div class="dy-field"><label>Unit</label><select name="unit_id" required>{% for unit in data.units %}<option value="{{ unit.id }}" data-unit-code="{{ unit.code }}" {% if unit.code == 'KG' %}selected{% endif %}>{{ unit.code }}</option>{% endfor %}</select><div class="dy-hint">Conversion checked on save.</div></div>
+     <div class="dy-field"><label>Ownership</label><select name="ownership_type_id" required>{% for owner in data.ownership_types %}<option value="{{ owner.id }}" {% if owner.code == 'OWN' %}selected{% endif %}>{{ owner.name }}</option>{% endfor %}</select></div>
+     <div class="dy-field"><label>Party owner (PARTY only)</label><select name="owner_party_id"><option value="">Not applicable</option>{% for party in data.parties %}<option value="{{ party.id }}">{{ party.party_name }} ({{ party.party_code }})</option>{% endfor %}</select></div>
+     <div class="dy-field"><label>Line notes</label><input name="notes" maxlength="200" placeholder="Optional"></div>
+     <button type="button" class="dy-remove" aria-label="Remove dye/chemical line" onclick="removeDyeingRow(this,'chemical-lines')">×</button>
+    </div>
+   </div>
+   <template id="chemical-template"><div class="dy-line chemical">
+     <div class="dy-field"><label>Dye / chemical</label><select name="item_variant_id" required><option value="">Select dye / chemical</option>{% for item in data["items"] %}<option value="{{ item.item_variant_id }}" data-base-unit-code="{{ item.base_unit_code }}" data-track-batch="{{ 1 if item.track_batch else 0 }}">{{ item.category_name }} · {{ item.variant_name }} (base {{ item.base_unit_code }})</option>{% endfor %}</select></div>
+    <div class="dy-field"><label>Batch / lot</label><select name="batch_id"><option value="">Not assigned in DRAFT</option>{% for batch in data.chemical_batches %}<option value="{{ batch.batch_id }}" data-variant-id="{{ batch.item_variant_id }}" data-ownership-type-id="{{ batch.ownership_type_id }}" data-owner-party-id="{{ batch.owner_party_id or '' }}">{{ batch.batch_no }} · {{ batch.variant_code }} · {{ batch.ownership_code }}{% if batch.party_name %} · {{ batch.party_name }}{% endif %} · {{ batch.available_quantity }} available</option>{% endfor %}</select><div class="dy-hint">Required for traceable posting.</div></div>
+     <div class="dy-field"><label>Raw Yarn input source</label><select name="source_line_no" required><option value="1">Input line #1</option></select><div class="dy-hint">Links this dye/chemical to one exact fiber input.</div></div>
+     <div class="dy-field"><label>Quantity</label><input name="quantity" type="number" min="0.000001" step="0.000001" placeholder="Quantity" required></div>
+    <div class="dy-field"><label>Unit</label><select name="unit_id" required>{% for unit in data.units %}<option value="{{ unit.id }}" data-unit-code="{{ unit.code }}" {% if unit.code == 'KG' %}selected{% endif %}>{{ unit.code }}</option>{% endfor %}</select><div class="dy-hint">Conversion checked on save.</div></div>
+    <div class="dy-field"><label>Ownership</label><select name="ownership_type_id" required>{% for owner in data.ownership_types %}<option value="{{ owner.id }}" {% if owner.code == 'OWN' %}selected{% endif %}>{{ owner.name }}</option>{% endfor %}</select></div>
+    <div class="dy-field"><label>Party owner (PARTY only)</label><select name="owner_party_id"><option value="">Not applicable</option>{% for party in data.parties %}<option value="{{ party.id }}">{{ party.party_name }} ({{ party.party_code }})</option>{% endfor %}</select></div>
+    <div class="dy-field"><label>Line notes</label><input name="notes" maxlength="200" placeholder="Optional"></div>
+    <button type="button" class="dy-remove" aria-label="Remove dye/chemical line" onclick="removeDyeingRow(this,'chemical-lines')">×</button>
+   </div></template>
+   <p class="dy-hint">Each dye/chemical line links to one exact raw-Yarn input. When one material is used across different fiber inputs, add separate lines for each source so Cotton/Polyester/PC costs are not averaged together. PARTY material use still requires its separate request, approval and locked-rate workflow.</p>
+  </section>
+  <section class="dy-card">
+   <div class="dy-section-head"><div><div class="dy-kicker">05 / PROCESS COSTS</div><h2>Actual Dyeing Salary & Overheads</h2><p class="dy-muted">Enter actual amounts in company currency (PKR). These values are captured in DRAFT; they are not estimates or automatic tariffs.</p></div><span class="dy-pill">PKR · DRAFT ONLY</span></div>
+   <div class="dy-grid" style="margin-top:14px">
+    <div class="dy-field"><label for="labour_cost">Labour / salary (PKR)</label><input id="labour_cost" name="labour_cost" type="number" min="0" step="0.000001" value="0" required></div>
+    <div class="dy-field"><label for="machine_cost">Machine / running cost (PKR)</label><input id="machine_cost" name="machine_cost" type="number" min="0" step="0.000001" value="0" required></div>
+    <div class="dy-field"><label for="electricity_cost">Electricity cost (PKR)</label><input id="electricity_cost" name="electricity_cost" type="number" min="0" step="0.000001" value="0" required></div>
+    <div class="dy-field"><label for="water_cost">Water cost (PKR)</label><input id="water_cost" name="water_cost" type="number" min="0" step="0.000001" value="0" required></div>
+    <div class="dy-field"><label for="boiler_fuel_cost">Boiler / fuel cost (PKR)</label><input id="boiler_fuel_cost" name="boiler_fuel_cost" type="number" min="0" step="0.000001" value="0" required></div>
+    <div class="dy-field"><label for="drying_cost">Drying cost (PKR)</label><input id="drying_cost" name="drying_cost" type="number" min="0" step="0.000001" value="0" required></div>
+   </div>
+   <p class="dy-hint">Total process cost is the sum of these six entered amounts. Zero is only a saved value—not an inferred free process. Before posting, yarn/chemical stock valuation and allocation of process costs to the dyed output must be verified. No cost-per-KG or fiber averaging is assumed.</p>
+  </section>
+  <div class="dy-actions"><a class="dy-btn" href="/modules/production">Cancel</a><button class="dy-btn primary" type="submit">Save Dyeing Draft</button></div>
+ </form>
+</div>
+<script>
+function syncChemicalBatchChoices(row){
+ const variant=row.querySelector('[name="item_variant_id"]')?.value||'';
+ const ownership=row.querySelector('[name="ownership_type_id"]')?.value||'';
+ const party=row.querySelector('[name="owner_party_id"]')?.value||'';
+ const select=row.querySelector('[name="batch_id"]');
+ if(!select)return;
+ for(const option of select.options){
+  if(!option.value){option.hidden=false;option.disabled=false;continue;}
+  const valid=option.dataset.variantId===variant &&
+   option.dataset.ownershipTypeId===ownership &&
+   (option.dataset.ownerPartyId||'')===party;
+  option.hidden=!valid;option.disabled=!valid;
+ }
+ if(select.selectedOptions.length && select.selectedOptions[0].disabled)select.value='';
+}
+function syncSourceLineChoices(){
+ const rows=[...document.querySelectorAll('#material-lines .dy-line.material')];
+ ['output_source_line_no','source_line_no'].forEach(fieldName=>{
+  document.querySelectorAll('[name="'+fieldName+'"]').forEach(select=>{
+   const previous=select.value;
+   select.innerHTML='';
+   rows.forEach((row,index)=>{
+    const item=row.querySelector('[name="material_item_variant_id"]');
+    const selected=item?.selectedOptions?.[0];
+    const option=document.createElement('option');
+    option.value=String(index+1);
+    option.textContent='Input line #'+(index+1)+(selected&&selected.value?' · '+selected.textContent:' · select yarn variant');
+    select.appendChild(option);
+   });
+   if(rows.some((row,index)=>String(index+1)===previous))select.value=previous;
+   else if(rows.length)select.value='1';
+  });
+ });
+}
+function removeDyeingRow(button,containerId){
+ const rows=document.querySelectorAll('#'+containerId+' .dy-line');
+ if(rows.length<=1){alert('At least one line is required.');return;}
+ button.closest('.dy-line').remove();
+ if(containerId==='material-lines')syncSourceLineChoices();
+}
+function addDyeingRow(templateId,containerId){
+ const template=document.getElementById(templateId);
+ document.getElementById(containerId).appendChild(template.content.cloneNode(true));
+ syncSourceLineChoices();
+ if(containerId==='chemical-lines'){
+  const rows=document.querySelectorAll('#chemical-lines .dy-line.chemical');
+  syncChemicalBatchChoices(rows[rows.length-1]);
+ }
+}
+document.getElementById('material-lines').addEventListener('change',event=>{
+ if(event.target.matches('[name="material_item_variant_id"]'))syncSourceLineChoices();
+});
+document.getElementById('chemical-lines').addEventListener('change',event=>{
+ if(event.target.matches('[name="item_variant_id"],[name="ownership_type_id"],[name="owner_party_id"]')){
+  syncChemicalBatchChoices(event.target.closest('.dy-line.chemical'));
+ }
+});
+document.querySelectorAll('#chemical-lines .dy-line.chemical').forEach(syncChemicalBatchChoices);
+document.getElementById('add-material').addEventListener('click',()=>addDyeingRow('material-template','material-lines'));
+document.getElementById('add-output').addEventListener('click',()=>addDyeingRow('output-template','output-lines'));
+document.getElementById('add-chemical').addEventListener('click',()=>addDyeingRow('chemical-template','chemical-lines'));
+syncSourceLineChoices();
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}General Journal · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Accounting / General Journal{% endblock %}
+
+{% block content %}
+<div class="accounting-page">
+  <div class="page-heading">
+    <div>
+      <div class="eyebrow">ACCOUNTING / GENERAL LEDGER</div>
+      <h1>General Journal</h1>
+      <p>Controlled manual journal: DRAFT → APPROVED → POSTED.</p>
+    </div>
+    <a class="back-link" href="/accounting">Back to Accounting</a>
+  </div>
+
+  {% if action_message %}
+  <div class="notice success"><strong>{{ action_message }}</strong> {{ saved_ref }}</div>
+  {% endif %}
+  {% if errors %}
+  <div class="notice warning"><strong>Journal save nahi hua</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>
+  {% endif %}
+
+  {% if period_setup %}
+  <div class="notice {% if period_setup.open_fiscal_year_count > 0 and period_setup.open_period_count > 0 %}success{% else %}warning{% endif %}">
+    <strong>Fiscal Year / Accounting Period setup</strong>
+    <p>Fiscal Years: {{ period_setup.fiscal_year_count }} total ({{ period_setup.open_fiscal_year_count }} open) · Accounting Periods: {{ period_setup.period_count }} total ({{ period_setup.open_period_count }} open).</p>
+    {% if period_setup.open_fiscal_year_count == 0 or period_setup.open_period_count == 0 %}
+    <p><strong>Journal saving blocked:</strong> Company ke liye open Fiscal Year aur Accounting Period configure karna baqi hai. Business-approved start/end dates ke baghair koi date ya period create nahi kiya jayega.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+  <div class="notice warning">
+    <strong>Accounting period control</strong>
+    <p>Entry date ka exactly one open Fiscal Year / Accounting Period hona zaroori hai. Period missing ya closed ho to save block hoga. Control accounts ke liye matching Party selection required hai.</p>
+  </div>
+
+  <form method="post" action="/accounting/journal" class="module-placeholder" id="journal-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="eyebrow">JOURNAL HEADER</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="entry-date">Entry date</label>
+        <input id="entry-date" name="entry_date" type="date" required value="{{ form.entry_date if form else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Document number</label>
+        <input type="text" value="Auto allocated on successful DRAFT save" disabled>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="entry-description">Description / narration</label>
+      <textarea id="entry-description" name="description" rows="2" maxlength="2000" placeholder="Journal ka reason / narration">{{ form.description if form else '' }}</textarea>
+    </div>
+
+    <div class="eyebrow">JOURNAL LINES (2–20)</div>
+    <p>Dropdown mein sirf verified posting accounts hain. Customer/Supplier control accounts par matching Party ID lazmi hai. Har line par Debit ya Credit mein se sirf aik amount positive ho.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Line</th><th>Account</th><th>Party ID (optional)</th><th>Debit (PKR)</th><th>Credit (PKR)</th><th>Description</th></tr></thead>
+        <tbody id="journal-lines">
+          {% set current_lines = form.lines if form and form.lines else [{}, {}] %}
+          {% for line in current_lines %}
+          <tr>
+            <td class="line-number">{{ loop.index }}</td>
+            <td>
+              <select name="account_id" required aria-label="Account">
+                <option value="">Select account…</option>
+                {% for account in accounts %}
+                <option value="{{ account.id }}" {% if line.account_id|string == account.id|string %}selected{% endif %}>{{ account.account_code }} · {{ account.account_name }}{% if account.is_control %} · Party required{% endif %}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <select name="party_id" aria-label="Party">
+                <option value="">No party</option>
+                {% for party in parties %}
+                <option value="{{ party.id }}" {% if line.party_id|string == party.id|string %}selected{% endif %}>{{ party.party_code }} · {{ party.party_name }} · {{ party.party_type }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td><input name="debit" type="number" min="0" step="0.000001" value="{{ line.debit or '' }}" aria-label="Debit"></td>
+            <td><input name="credit" type="number" min="0" step="0.000001" value="{{ line.credit or '' }}" aria-label="Credit"></td>
+            <td><input name="line_description" type="text" maxlength="500" value="{{ line.description or '' }}" aria-label="Line description"></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="secondary-button" id="add-journal-line">Add line</button>
+      <button type="submit">Save Draft</button>
+    </div>
+    <p><small>Save sirf DRAFT create karta hai. Balanced totals, active posting accounts, company ownership, party-control mapping aur open period server par dobara validate honge.</small></p>
+  </form>
+
+  <section class="module-placeholder">
+    <div class="eyebrow">RECENT JOURNALS</div>
+    {% if journals %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Journal No.</th><th>Date</th><th>Status</th><th>Debit</th><th>Credit</th><th>Action</th></tr></thead>
+        <tbody>
+        {% for journal in journals %}
+          <tr>
+            <td>{{ journal.journal_no }}</td>
+            <td>{{ journal.entry_date }}</td>
+            <td>{{ journal.status }}</td>
+            <td>{{ "%.2f"|format(journal.debit_total) }}</td>
+            <td>{{ "%.2f"|format(journal.credit_total) }}</td>
+            <td>
+              {% if journal.status == "DRAFT" and can_approve %}
+              <form method="post" action="/accounting/journal/{{ journal.id }}/approve">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Approve</button>
+              </form>
+              {% elif journal.status == "APPROVED" and can_post %}
+              <form method="post" action="/accounting/journal/{{ journal.id }}/post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Post</button>
+              </form>
+              {% elif journal.status == "POSTED" %}
+              <span>Posted · immutable</span>
+              {% else %}
+              <span>Permission / next step required</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p>Abhi koi journal record nahi. Is screen ne koi sample ya fake entry create nahi ki.</p>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+(() => {
+  const body = document.getElementById("journal-lines");
+  const add = document.getElementById("add-journal-line");
+  const accounts = {{ accounts|tojson }};
+  const parties = {{ parties|tojson }};
+  if (!body || !add) return;
+
+  function makeInput(name, type, label, step, min) {
+    const input = document.createElement("input");
+    input.name = name;
+    input.type = type;
+    input.setAttribute("aria-label", label);
+    if (step) input.step = step;
+    if (min !== null) input.min = min;
+    if (name === "line_description") input.maxLength = 500;
+    return input;
+  }
+
+  add.addEventListener("click", () => {
+    if (body.rows.length >= 20) return;
+    const row = body.insertRow();
+    const index = body.rows.length;
+    const numberCell = row.insertCell();
+    numberCell.className = "line-number";
+    numberCell.textContent = String(index);
+
+    const accountCell = row.insertCell();
+    const select = document.createElement("select");
+    select.name = "account_id";
+    select.required = true;
+    select.setAttribute("aria-label", "Account");
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select account…";
+    select.appendChild(placeholder);
+    accounts.forEach((account) => {
+      const option = document.createElement("option");
+      option.value = String(account.id);
+      option.textContent = account.account_code + " · " + account.account_name +
+        (account.is_control ? " · Party required" : "");
+      select.appendChild(option);
+    });
+    accountCell.appendChild(select);
+
+    const partyCell = row.insertCell();
+    const partySelect = document.createElement("select");
+    partySelect.name = "party_id";
+    partySelect.setAttribute("aria-label", "Party");
+    const noParty = document.createElement("option");
+    noParty.value = "";
+    noParty.textContent = "No party";
+    partySelect.appendChild(noParty);
+    parties.forEach((party) => {
+      const option = document.createElement("option");
+      option.value = String(party.id);
+      option.textContent = party.party_code + " · " + party.party_name + " · " + party.party_type;
+      partySelect.appendChild(option);
+    });
+    partyCell.appendChild(partySelect);
+
+    [["debit","number","Debit","0.000001","0"],
+     ["credit","number","Credit","0.000001","0"],["line_description","text","Line description",null,null]]
+      .forEach(([name,type,label,step,min]) => {
+        const cell = row.insertCell();
+        cell.appendChild(makeInput(name,type,label,step,min));
+      });
+  });
+})();
+</script>
+{% endblock %}

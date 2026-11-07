@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Accounting Reports · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Accounting / Reports{% endblock %}
+
+{% block content %}
+<div class="accounting-page">
+  <div class="page-heading">
+    <div>
+      <div class="eyebrow">ACCOUNTING / GENERAL LEDGER</div>
+      <h1>Trial Balance & Account Ledger</h1>
+      <p>Read-only reports generated from posted journal entries.</p>
+    </div>
+    <a class="back-link" href="/accounting">Back to Accounting</a>
+  </div>
+
+  <div class="notice warning">
+    <strong>Opening balances are not configured in the GL account master</strong>
+    <p>Figures below show posted journal movements for the selected date range only. They are not a complete brought-forward or statutory trial balance. Reversed journals remain included with their posted reversal journals so the historical audit trail nets correctly. Draft and approved journals are excluded.</p>
+  </div>
+
+  <section class="module-placeholder">
+    <div class="eyebrow">REPORT FILTERS</div>
+    <form method="get" action="/accounting/reports">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="start-date">From date</label>
+          <input id="start-date" type="date" name="start_date" required value="{{ report.start_date }}">
+        </div>
+        <div class="form-group">
+          <label for="end-date">To date</label>
+          <input id="end-date" type="date" name="end_date" required value="{{ report.end_date }}">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit">Run Trial Balance</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="module-placeholder">
+    <div class="eyebrow">TRIAL BALANCE · MOVEMENT BASIS</div>
+    <p>Period: {{ report.start_date }} to {{ report.end_date }} · Journals included: {{ report.journal_count }}</p>
+    <div class="module-grid accounting-grid">
+      <div class="module-card accounting-tile">
+        <h3>Net Debit Balances</h3>
+        <p>{{ "{:,.2f}".format(report.debit_balance_total) }} PKR</p>
+      </div>
+      <div class="module-card accounting-tile">
+        <h3>Net Credit Balances</h3>
+        <p>{{ "{:,.2f}".format(report.credit_balance_total) }} PKR</p>
+      </div>
+      <div class="module-card accounting-tile">
+        <h3>Movement Debits</h3>
+        <p>{{ "{:,.2f}".format(report.movement_debit_total) }} PKR</p>
+      </div>
+      <div class="module-card accounting-tile">
+        <h3>Movement Credits</h3>
+        <p>{{ "{:,.2f}".format(report.movement_credit_total) }} PKR</p>
+      </div>
+    </div>
+    {% if report.journal_count == 0 %}
+    <div class="notice warning">
+      <strong>No posted journal activity in this date range</strong>
+      <p>Account rows are shown for reference only. No actual balances can be inferred until journals are posted and opening balances are configured.</p>
+    </div>
+    {% else %}
+    <div class="notice {% if report.is_balanced %}success{% else %}warning{% endif %}">
+      <strong>{% if report.is_balanced %}Movement trial balance agrees{% else %}Movement trial balance does not agree{% endif %}</strong>
+      <p>Net debit balances and net credit balances are {% if report.is_balanced %}equal{% else %}not equal{% endif %}. This check does not certify opening balances or periods outside the selected date range.</p>
+    </div>
+    {% endif %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Account Code</th><th>Account Name</th><th>Debit Movement</th><th>Credit Movement</th><th>Net Balance</th><th>Dr / Cr</th><th>Ledger</th></tr>
+        </thead>
+        <tbody>
+        {% for row in report.rows %}
+          <tr>
+            <td>{{ row.account_code }}</td>
+            <td>{{ row.account_name }}</td>
+            <td>{{ "{:,.2f}".format(row.debit) }}</td>
+            <td>{{ "{:,.2f}".format(row.credit) }}</td>
+            <td>{{ "{:,.2f}".format(row.closing_balance) }}</td>
+            <td>{{ row.balance_type }}</td>
+            <td><a href="/accounting/reports?start_date={{ report.start_date }}&end_date={{ report.end_date }}&account_id={{ row.account_id }}">Open ledger</a></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7">No posting accounts found for this company.</td></tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="2">Period movement totals</th>
+            <th>{{ "{:,.2f}".format(report.movement_debit_total) }}</th>
+            <th>{{ "{:,.2f}".format(report.movement_credit_total) }}</th>
+            <th>—</th>
+            <th colspan="2">Movement only</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  {% if selected_ledger %}
+  <section class="module-placeholder">
+    <div class="eyebrow">ACCOUNT LEDGER</div>
+    <h2>{{ selected_ledger.account.account_code }} · {{ selected_ledger.account.account_name }}</h2>
+    <p>{{ selected_ledger.running_basis }}</p>
+    <p>Period debits: {{ "{:,.2f}".format(selected_ledger.period_debit) }} PKR · Period credits: {{ "{:,.2f}".format(selected_ledger.period_credit) }} PKR</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Journal No.</th><th>Status</th><th>Details</th><th>Party</th><th>Debit</th><th>Credit</th><th>Running Movement</th><th>Dr / Cr</th></tr>
+        </thead>
+        <tbody>
+        {% for row in selected_ledger.rows %}
+          <tr>
+            <td>{{ row.entry_date }}</td>
+            <td>{{ row.journal_no }}</td>
+            <td>{{ row.status }}</td>
+            <td>{{ row.line_description or row.journal_description or "—" }}</td>
+            <td>{{ (row.party_code ~ " · " ~ row.party_name) if row.party_id else "—" }}</td>
+            <td>{{ "{:,.2f}".format(row.debit) }}</td>
+            <td>{{ "{:,.2f}".format(row.credit) }}</td>
+            <td>{{ "{:,.2f}".format(row.running_movement) }}</td>
+            <td>{{ row.running_type }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="9">No posted journal movements for this account in the selected period.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

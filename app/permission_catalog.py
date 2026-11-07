@@ -50,6 +50,7 @@ PERMISSIONS = {
     "configuration.view": ("Configuration", "View ERP configuration"),
     "configuration.create": ("Configuration", "Create configuration records"),
     "configuration.history.view": ("Configuration", "View configuration history"),
+    "configuration.approve": ("Configuration", "Approve or reject submitted configuration versions"),
 
     "hr.view": ("HR & Payroll", "View HR records"),
     "hr.create": ("HR & Payroll", "Create HR records"),
@@ -84,14 +85,17 @@ ROLES = {
 # Proposed starting matrix. This is not an authorization grant until
 # separately reviewed, approved and seeded into the database.
 ROLE_PERMISSIONS = {
-    "OWNER": frozenset(PERMISSIONS),
+    "OWNER": frozenset(PERMISSIONS) - frozenset({
+        "configuration.view", "configuration.create",
+        "configuration.history.view", "configuration.approve",
+    }),
 
     "ERP_ADMIN": frozenset({
         "inventory.view", "production.view", "packing.view",
         "sales.view", "dispatch.view", "purchasing.view",
         "accounting.view", "accounting.bills.view",
         "accounting.party_ledger.view", "reports.view",
-        "configuration.view", "configuration.history.view",
+        "configuration.view", "configuration.create", "configuration.history.view", "configuration.approve",
         "hr.view", "hr.payroll.view",
         "security.users.manage", "audit.view",
     }),
@@ -141,7 +145,6 @@ ROLE_PERMISSIONS = {
         "sales.view", "dispatch.view", "purchasing.view",
         "accounting.view", "accounting.bills.view",
         "accounting.party_ledger.view", "reports.view",
-        "configuration.view", "configuration.history.view",
         "hr.view", "hr.payroll.view", "audit.view",
     }),
 }

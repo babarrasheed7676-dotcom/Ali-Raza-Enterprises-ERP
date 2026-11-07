@@ -17,17 +17,42 @@ def opening_balance_status(balance):
     }
 
 
-def calculate_running_balance(opening_balance, transactions):
-    """Calculate balances for an explicitly supplied test/read-only ledger."""
+def calculate_running_balance(
+    opening_balance,
+    transactions,
+    opening_balance_type,
+):
+    """Calculate a ledger balance using the opening balance's Dr/Cr direction."""
     if opening_balance is None:
         raise ValueError("Opening balance is not configured")
 
-    balance = Decimal(str(opening_balance))
+    try:
+        opening_amount = Decimal(str(opening_balance))
+    except (TypeError, ValueError, ArithmeticError):
+        raise ValueError("Opening balance must be a valid number")
+
+    if not opening_amount.is_finite() or opening_amount < 0:
+        raise ValueError("Opening balance must be a non-negative finite number")
+
+    direction = str(opening_balance_type or "").strip().upper()
+    if direction not in ("DEBIT", "CREDIT"):
+        raise ValueError("Opening balance type must be DEBIT or CREDIT")
+
+    balance = opening_amount if direction == "DEBIT" else -opening_amount
     results = []
 
     for transaction in transactions:
-        debit = Decimal(str(transaction.get("debit", 0)))
-        credit = Decimal(str(transaction.get("credit", 0)))
+        if not hasattr(transaction, "get"):
+            raise ValueError("Each ledger transaction must be a mapping")
+
+        try:
+            debit = Decimal(str(transaction.get("debit", 0)))
+            credit = Decimal(str(transaction.get("credit", 0)))
+        except (TypeError, ValueError, ArithmeticError):
+            raise ValueError("Transaction debit and credit must be valid numbers")
+
+        if not debit.is_finite() or not credit.is_finite():
+            raise ValueError("Debit and credit must be finite numbers")
 
         if debit < 0 or credit < 0:
             raise ValueError("Debit and credit must not be negative")

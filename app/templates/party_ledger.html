@@ -4,69 +4,124 @@
 
 {% block content %}
 <div class="accounting-page">
-<div class="page-heading">
-  <div>
-    <div class="eyebrow">ACCOUNTING / PARTY ACCOUNTS</div>
-    <h1>Party Ledger</h1>
-    <p>Party account activity and running-balance design preview.</p>
-  </div>
-  <a class="back-link" href="/accounting">Back to Accounting</a>
-</div>
-
-<div class="notice warning">
-  <strong>Read-only design preview</strong>
-  <p>No party transactions or balances are connected. An unconfigured opening balance will be shown as “Not configured”, never assumed to be zero.</p>
-</div>
-
-<section class="module-placeholder">
-  <div class="eyebrow">LEDGER SUMMARY</div>
-  <h2>Account overview</h2>
-  <div class="module-grid accounting-grid">
-    <div class="module-card accounting-tile">
-      <h3>Party</h3>
-      <p>No party selected</p>
+  <div class="page-heading">
+    <div>
+      <div class="eyebrow">ACCOUNTING / PARTY ACCOUNTS</div>
+      <h1>Party Ledger</h1>
+      <p>Company-scoped party master, opening balance and posted General Ledger activity.</p>
     </div>
-    <div class="module-card accounting-tile">
-      <h3>Opening balance</h3>
-      <p>Not loaded</p>
-    </div>
-    <div class="module-card accounting-tile">
-      <h3>Current balance</h3>
-      <p>Not calculated</p>
-    </div>
+    <a class="back-link" href="/accounting">Back to Accounting</a>
   </div>
-</section>
 
-<section class="module-placeholder">
-  <div class="eyebrow">TRANSACTION HISTORY</div>
-  <h2>Ledger entries</h2>
-  <p>When a verified financial source is available, the ledger will show dated entries, document references, debit, credit, running balance and Dr/Cr.</p>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Document / Details</th>
-          <th>Debit</th>
-          <th>Credit</th>
-          <th>Running balance</th>
-          <th>Dr/Cr</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td colspan="6">No financial records loaded in this preview.</td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="notice success">
+    <strong>Posted General Ledger activity connected</strong>
+    <p>This screen combines verified party opening-balance data with posted and reversed journal lines tagged to the selected party. Draft and approved journals are excluded. Invoice allocations remain separate from the General Ledger.</p>
   </div>
-</section>
 
-<section class="module-placeholder">
-  <div class="eyebrow">DISPLAY FORMATS</div>
-  <h2>Planned ledger formats</h2>
-  <p>Modern premium · Urdu with unchanged digits · English + Urdu · English only · A4 print/PDF-ready.</p>
-</section>
+  {% if ledger.parties %}
+  <section class="module-placeholder">
+    <div class="eyebrow">SELECT PARTY</div>
+    <form method="get" action="/accounting/party-ledger">
+      <label for="party_id">Customer / Supplier</label>
+      <select id="party_id" name="party_id" onchange="this.form.submit()">
+        {% for party in ledger.parties %}
+        <option value="{{ party.id }}" {% if party.id == selected_party_id %}selected{% endif %}>
+          {{ party.party_code }} — {{ party.party_name }} ({{ party.party_type }})
+        </option>
+        {% endfor %}
+      </select>
+      <noscript><button type="submit">Open ledger</button></noscript>
+    </form>
+  </section>
 
+  {% if ledger.selected_party %}
+  <section class="module-placeholder">
+    <div class="eyebrow">PARTY SUMMARY</div>
+    <h2>{{ ledger.selected_party.party_name }}</h2>
+    <div class="module-grid accounting-grid">
+      <div class="module-card accounting-tile">
+        <h3>Party Code</h3>
+        <p>{{ ledger.selected_party.party_code }}</p>
+      </div>
+      <div class="module-card accounting-tile">
+        <h3>Party Type</h3>
+        <p>{{ ledger.selected_party.party_type }}</p>
+      </div>
+      <div class="module-card accounting-tile">
+        <h3>Opening Balance</h3>
+        <p>{{ ledger.selected_party.opening_display }}</p>
+      </div>
+      <div class="module-card accounting-tile">
+        <h3>Opening Status</h3>
+        <p>{{ ledger.selected_party.opening_balance_label }}</p>
+      </div>
+    </div>
+    <p>
+      Currency: {{ ledger.selected_party.default_currency_code or "Not configured" }}
+      · Master status: {{ "Active" if ledger.selected_party.is_active else "Inactive" }}
+    </p>
+  </section>
+  {% else %}
+  <div class="notice warning">
+    The selected party does not exist in this company or is not available.
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="notice warning">
+    <strong>No party master records found</strong>
+    <p>
+      No customer or supplier party records are currently available for this company.
+      Create a party through the authorized master-data workflow before viewing its ledger.
+    </p>
+  </div>
+  {% endif %}
+
+  <section class="module-placeholder">
+    <div class="eyebrow">TRANSACTION HISTORY</div>
+    <h2>Posted ledger entries</h2>
+    <p>{{ ledger.activity_message }}</p>
+    <p>Period debits: {{ "{:,.2f}".format(ledger.debit_total) }} PKR · Period credits: {{ "{:,.2f}".format(ledger.credit_total) }} PKR</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Journal No.</th>
+            <th>Status</th>
+            <th>Account</th>
+            <th>Details</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th>Running balance / movement</th>
+            <th>Dr/Cr</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for row in ledger.rows %}
+          <tr>
+            <td>{{ row.entry_date }}</td>
+            <td>{{ row.journal_no }}</td>
+            <td>{{ row.status }}</td>
+            <td>{{ row.account_code }} · {{ row.account_name }}</td>
+            <td>{{ row.line_description or row.journal_description or "—" }}</td>
+            <td>{{ "{:,.2f}".format(row.debit) }}</td>
+            <td>{{ "{:,.2f}".format(row.credit) }}</td>
+            <td>
+              {% if row.running_balance is not none %}
+                {{ "{:,.2f}".format(row.running_balance) }}
+              {% else %}
+                {{ "{:,.2f}".format(row.movement_running) }} (movement)
+              {% endif %}
+            </td>
+            <td>{{ row.running_type if row.running_balance is not none else row.movement_running_type }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="9">No posted journal transactions are linked to this party for the current ledger history.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>
 {% endblock %}

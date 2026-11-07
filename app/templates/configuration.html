@@ -1,11 +1,49 @@
 {% extends "base.html" %}
-{% block title %}Configuration · {{ app_name }}{% endblock %}
+{% block title %}Configuration Â· {{ app_name }}{% endblock %}
 {% block breadcrumb %}Configuration{% endblock %}
 {% block content %}
+<div class="configuration-page">
+  <section class="configuration-hero">
+    <div class="configuration-hero-copy">
+      <span class="configuration-kicker">ALI RAZA ENTERPRISES · CONTROL CENTER</span>
+      <h1>Configuration Studio</h1>
+      <p>Master data, product identity, measurement standards and controlled business rules — organized in one professional workspace.</p>
+      <div class="configuration-hero-pills">
+        <span>✦ Audited master data</span><span>◈ Version-controlled rules</span><span>✓ Approval protected</span>
+      </div>
+    </div>
+    <div class="configuration-orbit are-gear-stage" aria-hidden="true">
+      <div class="are-gear-halo"></div>
+      <svg class="are-config-gear" viewBox="0 0 240 240" role="presentation">
+        <defs>
+          <linearGradient id="areGearMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4fffe"/><stop offset=".18" stop-color="#74e5d6"/><stop offset=".43" stop-color="#168f91"/><stop offset=".68" stop-color="#07515f"/><stop offset=".86" stop-color="#39c6ba"/><stop offset="1" stop-color="#e5fffa"/></linearGradient>
+          <linearGradient id="areGearFace" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#eaffff"/><stop offset=".24" stop-color="#55d6c9"/><stop offset=".58" stop-color="#147c88"/><stop offset="1" stop-color="#082d47"/></linearGradient>
+          <radialGradient id="areGearCore" cx=".28" cy=".2" r=".9"><stop offset="0" stop-color="#245a75"/><stop offset=".55" stop-color="#102c49"/><stop offset="1" stop-color="#061626"/></radialGradient>
+          <filter id="areGearShadow" x="-40%" y="-40%" width="180%" height="190%"><feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur"/><feOffset dy="8" result="offset"/><feComponentTransfer><feFuncA type="linear" slope=".55"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g filter="url(#areGearShadow)">
+          <polygon class="are-gear-side" points="120.00,38.00 127.72,38.36 130.45,20.55 135.64,21.23 155.84,26.64 160.67,28.65 154.14,45.44 161.00,48.99 161.00,48.99 167.50,53.16 178.78,39.10 182.93,42.29 197.71,57.07 200.90,61.22 186.84,72.50 191.01,79.00 191.01,79.00 194.56,85.86 211.35,79.33 213.36,84.16 218.77,104.36 219.45,109.55 201.64,112.28 202.00,120.00 202.00,120.00 201.64,127.72 219.45,130.45 218.77,135.64 213.36,155.84 211.35,160.67 194.56,154.14 191.01,161.00 191.01,161.00 186.84,167.50 200.90,178.78 197.71,182.93 182.93,197.71 178.78,200.90 167.50,186.84 161.00,191.01 161.00,191.01 154.14,194.56 160.67,211.35 155.84,213.36 135.64,218.77 130.45,219.45 127.72,201.64 120.00,202.00 120.00,202.00 112.28,201.64 109.55,219.45 104.36,218.77 84.16,213.36 79.33,211.35 85.86,194.56 79.00,191.01 79.00,191.01 72.50,186.84 61.22,200.90 57.07,197.71 42.29,182.93 39.10,178.78 53.16,167.50 48.99,161.00 48.99,161.00 45.44,154.14 28.65,160.67 26.64,155.84 21.23,135.64 20.55,130.45 38.36,127.72 38.00,120.00 38.00,120.00 38.36,112.28 20.55,109.55 21.23,104.36 26.64,84.16 28.65,79.33 45.44,85.86 48.99,79.00 48.99,79.00 53.16,72.50 39.10,61.22 42.29,57.07 57.07,42.29 61.22,39.10 72.50,53.16 79.00,48.99 79.00,48.99 85.86,45.44 79.33,28.65 84.16,26.64 104.36,21.23 109.55,20.55 112.28,38.36 120.00,38.00" transform="translate(0 7)" fill="#041a2c" stroke="#03111f" stroke-width="5"/>
+          <polygon points="120.00,38.00 127.72,38.36 130.45,20.55 135.64,21.23 155.84,26.64 160.67,28.65 154.14,45.44 161.00,48.99 161.00,48.99 167.50,53.16 178.78,39.10 182.93,42.29 197.71,57.07 200.90,61.22 186.84,72.50 191.01,79.00 191.01,79.00 194.56,85.86 211.35,79.33 213.36,84.16 218.77,104.36 219.45,109.55 201.64,112.28 202.00,120.00 202.00,120.00 201.64,127.72 219.45,130.45 218.77,135.64 213.36,155.84 211.35,160.67 194.56,154.14 191.01,161.00 191.01,161.00 186.84,167.50 200.90,178.78 197.71,182.93 182.93,197.71 178.78,200.90 167.50,186.84 161.00,191.01 161.00,191.01 154.14,194.56 160.67,211.35 155.84,213.36 135.64,218.77 130.45,219.45 127.72,201.64 120.00,202.00 120.00,202.00 112.28,201.64 109.55,219.45 104.36,218.77 84.16,213.36 79.33,211.35 85.86,194.56 79.00,191.01 79.00,191.01 72.50,186.84 61.22,200.90 57.07,197.71 42.29,182.93 39.10,178.78 53.16,167.50 48.99,161.00 48.99,161.00 45.44,154.14 28.65,160.67 26.64,155.84 21.23,135.64 20.55,130.45 38.36,127.72 38.00,120.00 38.00,120.00 38.36,112.28 20.55,109.55 21.23,104.36 26.64,84.16 28.65,79.33 45.44,85.86 48.99,79.00 48.99,79.00 53.16,72.50 39.10,61.22 42.29,57.07 57.07,42.29 61.22,39.10 72.50,53.16 79.00,48.99 79.00,48.99 85.86,45.44 79.33,28.65 84.16,26.64 104.36,21.23 109.55,20.55 112.28,38.36 120.00,38.00" fill="url(#areGearMetal)" stroke="#d5fff8" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="120" cy="120" r="77" fill="url(#areGearFace)" stroke="#d5fff8" stroke-width="3"/>
+          <circle cx="120" cy="120" r="66" fill="url(#areGearCore)" stroke="#70e8d9" stroke-width="2"/>
+          <circle cx="120" cy="120" r="58" fill="none" stroke="#b7fff3" stroke-opacity=".35" stroke-width="1.5"/>
+          <path d="M77 78 Q120 54 163 78" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="4" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <div class="are-gear-label"><strong>ARE</strong><span>CONFIG</span></div>
+      <i class="orbit-node orbit-node-one"></i><i class="orbit-node orbit-node-two"></i><i class="orbit-node orbit-node-three"></i>
+    </div>
+    <div class="configuration-hero-footer">
+      <div><strong>{{ master_data.pagination['brands'].total }}</strong><span>Brands</span></div>
+      <div><strong>{{ master_data.pagination['shades'].total }}</strong><span>Shades</span></div>
+      <div><strong>{{ master_data.pagination['units'].total }}</strong><span>Units</span></div>
+      <div><strong>{{ master_data.pagination['variants'].total }}</strong><span>Variants</span></div>
+    </div>
+  </section>
 <section class="section-heading">
   <div>
-    <h2>Existing Master Data - Read Only</h2>
-    <p>Live preview of existing database records. 50 rows per page per category.</p>
+    <h2>Master Data</h2>
+    <p>Existing database records with audited create/edit controls. 50 rows per page per category.</p>
   </div>
 </section>
 {% if master_data.error %}
@@ -23,7 +61,7 @@
   ] %}
   <article class="config-card">
     <h2>{{ title }}</h2>
-    <p>{{ master_data.pagination[key].total }} total records · {{ master_data[key]|length }} shown</p>
+    <p>{{ master_data.pagination[key].total }} total records Â· {{ master_data[key]|length }} shown</p>
     <div style="overflow-x:auto">
       <table>
         <thead>
@@ -33,10 +71,11 @@
           {% elif key == "units" %}
             <th>Code</th><th>Name</th><th>Type</th><th>Decimals</th><th>Active</th>
           {% elif key == "shades" %}
-            <th>Brand</th><th>Shade Code</th><th>Shade</th><th>Category</th><th>Active</th>
+            <th>Brand</th><th>Shade Code</th><th>Shade</th><th>Usage</th><th>Active</th>
           {% else %}
             <th>Item</th><th>Variant Code</th><th>Variant</th><th>Brand</th><th>Shade</th><th>Unit</th><th>Active</th>
           {% endif %}
+            {% if can_edit_master_data %}<th>Action</th>{% endif %}
           </tr>
         </thead>
         <tbody>
@@ -56,9 +95,10 @@
             {% endif %}
             <td>{{ display_variant_name }}</td><td>{{ row.brand_name or "?" }}</td><td>{{ row.shade_code or "?" }} {{ row.shade_name or "" }}</td><td>{{ row.unit_code or "?" }}</td><td>{{ row.is_active }}</td>
           {% endif %}
+            {% if can_edit_master_data %}<td><button type="button" class="master-edit-row" data-master-kind="{{ key[:-1] if key != 'variants' else 'variant' }}" data-master-id="{{ row.id }}">Edit</button></td>{% endif %}
           </tr>
         {% else %}
-          <tr><td colspan="7">No records found.</td></tr>
+          <tr><td colspan="8">No records found.</td></tr>
         {% endfor %}
         </tbody>
             </table>
@@ -66,11 +106,11 @@
     {% set pg = master_data.pagination[key] %}
     <div style="display:flex; gap:12px; align-items:center; justify-content:center; margin:16px 0; flex-wrap:wrap;">
       {% if pg.page > 1 %}
-        <a href="/configuration?brands_page={{ pg.page - 1 if key == 'brands' else master_data.pagination['brands'].page }}&units_page={{ pg.page - 1 if key == 'units' else master_data.pagination['units'].page }}&shades_page={{ pg.page - 1 if key == 'shades' else master_data.pagination['shades'].page }}&variants_page={{ pg.page - 1 if key == 'variants' else master_data.pagination['variants'].page }}">← Previous</a>
+        <a href="/configuration?brands_page={{ pg.page - 1 if key == 'brands' else master_data.pagination['brands'].page }}&units_page={{ pg.page - 1 if key == 'units' else master_data.pagination['units'].page }}&shades_page={{ pg.page - 1 if key == 'shades' else master_data.pagination['shades'].page }}&variants_page={{ pg.page - 1 if key == 'variants' else master_data.pagination['variants'].page }}">â† Previous</a>
       {% endif %}
       <span>Page {{ pg.page }} of {{ pg.pages }}</span>
       {% if pg.page < pg.pages %}
-        <a href="/configuration?brands_page={{ pg.page + 1 if key == 'brands' else master_data.pagination['brands'].page }}&units_page={{ pg.page + 1 if key == 'units' else master_data.pagination['units'].page }}&shades_page={{ pg.page + 1 if key == 'shades' else master_data.pagination['shades'].page }}&variants_page={{ pg.page + 1 if key == 'variants' else master_data.pagination['variants'].page }}">Next →</a>
+        <a href="/configuration?brands_page={{ pg.page + 1 if key == 'brands' else master_data.pagination['brands'].page }}&units_page={{ pg.page + 1 if key == 'units' else master_data.pagination['units'].page }}&shades_page={{ pg.page + 1 if key == 'shades' else master_data.pagination['shades'].page }}&variants_page={{ pg.page + 1 if key == 'variants' else master_data.pagination['variants'].page }}">Next â†’</a>
       {% endif %}
     </div>
   </article>
@@ -78,19 +118,250 @@
 </div>
 {% endif %}
 
+{% if can_edit_master_data and not master_data.error %}
+<div class="config-grid">
+  {% for key, title, kind in [
+    ("yarn_counts", "Yarn Counts", "YARN_COUNT"),
+    ("fiber_types", "Fiber Types", "FIBER_TYPE"),
+    ("shade_categories", "Shade Categories", "SHADE_CATEGORY")
+  ] %}
+  <article class="config-card">
+    <h2>{{ title }}</h2>
+    <p>{{ master_data[key]|length }} records</p>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Code</th><th>Name</th><th>Active</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for row in master_data[key] %}
+        <tr><td>{{ row.code }}</td><td>{{ row.name }}</td><td>{{ row.is_active }}</td>
+        <td><button type="button" class="master-edit-row" data-master-kind="{{ kind }}" data-master-id="{{ row.id }}">Edit</button></td></tr>
+      {% else %}
+        <tr><td colspan="4">No records found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </article>
+  {% endfor %}
+</div>
+{% endif %}
 
+{% if can_edit_master_data and not master_data.error %}
+<div class="config-grid">
+  <article class="config-card">
+    <h2>Item Categories</h2>
+    <p>{{ master_data.item_categories|length }} company categories · hierarchical parent/child structure</p>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Code</th><th>Name</th><th>Parent</th><th>Active</th>{% if can_edit_master_data %}<th>Action</th>{% endif %}</tr></thead>
+      <tbody>
+      {% for row in master_data.item_categories %}
+        <tr><td>{{ row.code }}</td><td>{{ row.name }}</td><td>{% for parent in master_data.item_categories %}{% if parent.id == row.parent_category_id %}{{ parent.name }}{% endif %}{% endfor %}{{ "—" if not row.parent_category_id }}</td><td>{{ row.is_active }}</td>{% if can_edit_master_data %}<td><button type="button" class="master-edit-row" data-master-kind="ITEM_CATEGORY" data-master-id="{{ row.id }}">Edit</button></td>{% endif %}</tr>
+      {% else %}<tr><td colspan="5">No item categories found.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </article>
+  <article class="config-card">
+    <h2>Items</h2>
+    <p>{{ master_data['items']|length }} company items · identity and stock-tracking fields protected after creation</p>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Base unit</th><th>Batch</th><th>Shade</th><th>Ownership</th><th>Stock</th><th>Active</th>{% if can_edit_master_data %}<th>Action</th>{% endif %}</tr></thead>
+      <tbody>
+      {% for row in master_data['items'] %}
+        <tr><td>{{ row.item_code }}</td><td>{{ row.item_name }}</td><td>{{ row.category_name }}</td><td>{{ row.base_unit_code }}</td><td>{{ row.track_batch }}</td><td>{{ row.track_shade }}</td><td>{{ row.track_ownership }}</td><td>{{ row.is_stock_item }}</td><td>{{ row.is_active }}</td>{% if can_edit_master_data %}<td><button type="button" class="master-edit-row" data-master-kind="ITEM" data-master-id="{{ row.id }}">Edit</button></td>{% endif %}</tr>
+      {% else %}<tr><td colspan="10">No items found.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </article>
+</div>
+{% endif %}
+
+{% if can_edit_master_data %}
+<section class="config-card master-editor" id="masterDataEditor">
+  <div class="section-heading"><div><h2 id="masterEditorTitle">Add / Edit Master Data</h2><p>All changes are audited. No hard deletes. Existing codes and stock identities are protected; new variants require a complete item, unit and tracking-dimension definition.</p></div></div>
+  <div class="config-notice" id="shadeUsagePicker" style="margin:12px 0">
+    <h3>Assign Ladies / Gents / Common to an existing shade</h3>
+    <p>Search by shade code or name, select the shade from the list, choose its usage and save. You can change this later.</p>
+    <div class="config-form-grid">
+      <label>Find shade
+        <input id="shadeUsageSearch" type="search" placeholder="Search shade code, name or brand">
+      </label>
+      <label>Select shade
+        <select id="shadeUsageSelect" size="6" required><option value="">Loading shades…</option></select>
+      </label>
+      <label>Shade usage
+        <select id="shadeUsageCategory" required>
+          <option value="">Choose usage</option>
+          {% for category in master_data.shade_categories %}
+            {% if category.code in ['LADIES','GENTS','COMMON'] and category.is_active %}
+              <option value="{{ category.id }}">{{ category.name }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <div class="config-form-actions">
+      <button type="button" id="saveShadeUsage">Save shade usage</button>
+      <span id="shadeUsageMessage" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+  <form id="masterDataForm" data-csrf="{{ csrf_token }}">
+    <div class="config-form-grid">
+      <label>Record type
+        <select id="masterRecordType">
+          <option value="BRAND">Brand</option><option value="UNIT">Unit</option>
+          <option value="SHADE">Shade</option><option value="VARIANT">Item Variant</option>
+          <option value="YARN_COUNT">Yarn Count</option><option value="FIBER_TYPE">Fiber Type</option>
+          <option value="SHADE_CATEGORY">Shade Category</option>
+          <option value="ITEM_CATEGORY">Item Category</option><option value="ITEM">Item</option>
+        </select>
+      </label>
+      <label>Record ID (blank = create new)
+        <input id="masterRecordId" inputmode="numeric" placeholder="New record">
+      </label>
+    </div>
+    <details class="config-notice" style="margin:12px 0">
+      <summary>Available IDs for item variant creation</summary>
+      <p><strong>Items:</strong> {% for item in master_data['items'] %}{{ item.id }} = {{ item.item_code }} ({{ item.item_name }}, base unit {{ item.base_unit_code }}){% if not loop.last %}; {% endif %}{% endfor %}</p>
+      <p><strong>Active yarn counts:</strong> {% for item in master_data.yarn_counts %}{{ item.id }} = {{ item.code }}{% if not loop.last %}; {% endif %}{% endfor %}</p>
+      <p><strong>Active fiber types:</strong> {% for item in master_data.fiber_types %}{{ item.id }} = {{ item.code }}{% if not loop.last %}; {% endif %}{% endfor %}</p>
+      <p><strong>Brands / shades / units:</strong> Use the corresponding master-data tables above. A shade determines its brand; Nalki and Label variants require both. Yarn, Big Cone and Baby Cone variants require yarn count and fiber type.</p>
+    </details>
+    <div id="masterGuidedFields" class="config-form-grid" aria-live="polite"></div>
+    <details class="config-notice" style="margin:12px 0">
+      <summary>Advanced JSON (for administrator review)</summary>
+      <label class="config-payload-label">Generated master-data payload
+        <textarea id="masterRecordPayload" rows="8" spellcheck="false"></textarea>
+      </label>
+    </details>
+    <div class="config-form-actions">
+      <button type="submit">Save Master Data</button>
+      <button type="button" id="masterRecordReset">New record</button>
+      <span id="masterDataMessage" role="status" aria-live="polite"></span>
+    </div>
+  </form>
+</section>
+{% endif %}
 <div class="page-heading">
   <div>
     <div class="eyebrow">SYSTEM RULES & MASTER DATA</div>
     <h1>Flexible Configuration</h1>
     <p>Designed to add future products, brands, shades, units, measurements and packaging rules without hard-coding each new product.</p>
   </div>
-  <a class="back-link" href="/">← Back to overview</a>
+  <a class="back-link" href="/">â† Back to overview</a>
 </div>
 <div class="config-notice">
   <div class="config-notice-icon">i</div>
-  <div><strong>Design scaffold — read-only</strong><p>This page documents the planned configuration structure. It does not save settings or change PostgreSQL. Save/approval actions will be enabled only after the database model, permissions, audit history and validation tests are ready.</p></div>
+  <div><strong>Draft-only configuration editor enabled</strong><p>New changes are validated and saved as DRAFT versions. Submit moves a draft to PENDING; a different ERP Administrator must approve or reject it. Approved versions are consumed only by modules whose integration has been completed and verified; other rule families remain inactive until their operational consumers are ready.</p></div>
 </div>
+<section class="config-editor config-card">
+  <div class="section-heading"><div><h2>Create configuration draft</h2><p>Choose a configuration type and complete its guided fields. The generated JSON is available for review; saving creates a new numbered DRAFT version.</p></div></div>
+  <form id="configurationDraftForm" data-csrf="{{ csrf_token }}">
+    <div class="config-form-grid">
+      <label>Configuration type
+        <select id="configType" required>
+          <option value="PRODUCT_DEFINITION">Product definition</option>
+          <option value="UNIT_DEFINITION">Unit definition</option>
+          <option value="PACKAGING_RULE" selected>Packaging rule</option>
+          <option value="BABY_CONE_MEASUREMENT">Baby Cone measurement</option>
+          <option value="OWNERSHIP_POLICY">Ownership policy</option>
+          <option value="PROCESS_COST_RULE">Process cost rule</option>
+          <option value="ATTRIBUTE_DEFINITION">Attribute definition</option>
+          <option value="UNIT_CONVERSION">Unit conversion</option>
+          <option value="MEASUREMENT_PROFILE">Measurement profile</option>
+          <option value="PROCESS_ROUTE">Process route</option>
+          <option value="APPROVAL_POLICY">Approval policy</option>
+        </select>
+      </label>
+      <label>Configuration key
+        <input id="configKey" maxlength="120" required placeholder="e.g. NALKI-FINISHED-BOX">
+      </label>
+      <label>Display name
+        <input id="configName" maxlength="160" required placeholder="e.g. Nalki finished box">
+      </label>
+      <label>Change reason
+        <input id="configReason" maxlength="2000" required placeholder="Why is this rule being added?">
+      </label>
+      <label>Supersedes approved version ID (optional)
+        <input id="configSupersedesId" type="number" min="1" step="1" placeholder="Leave blank for a new rule">
+      </label>
+    </div>
+    <p id="configTypeHelp" class="config-type-help" aria-live="polite">{{ configuration_examples["PACKAGING_RULE"].help }}</p>
+    <label id="ownershipPolicyPresetWrap" hidden style="max-width:520px">Ownership policy starter
+      <select id="ownershipPolicyPreset">
+        <option value="NALKI">Nalki ? OWN only</option>
+        <option value="DYEING">Dyeing ? OWN + controlled PARTY</option>
+      </select>
+      <small class="config-type-help">Starter sirf editable DRAFT fields fill karta hai. Save, submit aur independent approval alag steps hain.</small>
+    </label>
+    <div id="configGuidedFields" class="config-form-grid" aria-live="polite"></div>
+    <div id="unitConversionPrecisionNotice" class="config-notice" hidden style="margin:12px 0" role="status" aria-live="polite"></div>
+    <details class="config-notice" style="margin:12px 0">
+      <summary>Advanced JSON preview (generated from guided fields)</summary>
+      <label class="config-payload-label">Validated draft payload
+        <textarea id="configPayload" rows="12" spellcheck="false" readonly>{{ configuration_examples["PACKAGING_RULE"].payload | tojson(indent=2) }}</textarea>
+      </label>
+    </details>
+    <div class="config-form-actions">
+      <button type="submit" class="primary-button">Save as draft</button>
+      <span id="configDraftMessage" role="status" aria-live="polite"></span>
+    </div>
+  </form>
+</section>
+<section class="config-card">
+  <div class="section-heading"><div><h2>Configuration version history</h2><p>Company-scoped record of draft versions and approval status.</p></div><button type="button" id="refreshConfigHistory">Refresh history</button></div>
+  <div style="overflow-x:auto">
+    <table><thead><tr><th>Type</th><th>Record ID</th><th>Key</th><th>Version</th><th>Name</th><th>Status</th><th>Effective period</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody id="configHistoryRows"><tr><td colspan="9">Loading historyâ€¦</td></tr></tbody>
+    </table>
+  </div>
+</section>
+<section class="config-card" id="configVersionDetail" hidden>
+  <div class="section-heading"><div><h2>Version detail & audit trail</h2><p>Review the complete payload, approval decisions and audit reasons before approving.</p></div></div>
+  <pre id="configVersionDetailJson" class="config-detail-json"></pre>
+</section>
+<section class="config-card" id="effectiveConfigLookup">
+  <div class="section-heading"><div><h2>Effective configuration lookup</h2><p>Read-only check: find the APPROVED version that applies to a key on a selected date.</p></div></div>
+  <div class="config-form-grid">
+    <label>Configuration type
+      <select id="effectiveConfigType">
+        {% for config_type, example in configuration_examples.items() %}
+          <option value="{{ config_type }}">{{ example.label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Configuration key
+      <input id="effectiveConfigKey" maxlength="120" placeholder="Enter exact configuration key">
+    </label>
+    <label>Effective date
+      <input id="effectiveConfigDate" type="date" value="{{ configuration_examples['PACKAGING_RULE'].payload.effective_from }}">
+    </label>
+  </div>
+  <div class="config-form-actions"><button type="button" id="checkEffectiveConfig">Check approved rule</button><span id="effectiveConfigMessage" role="status" aria-live="polite"></span></div>
+  <pre id="effectiveConfigResult" class="config-detail-json"></pre>
+</section>
+<section class="config-card" id="configurationIntegrationStatus">
+  <div class="section-heading">
+    <div><h2>Operational integration status</h2><p>Code-wiring audit only. APPROVED status does not mean a rule is consumed by every ERP module.</p></div>
+    <span class="config-tag">Read-only ? no activation</span>
+  </div>
+  <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Rule type</th><th>Current consumer / evidence</th><th>Readiness</th></tr></thead>
+      <tbody>
+        <tr><td>PACKAGING_RULE</td><td>Packing draft resolves the effective Nalki rule and pins its version/payload snapshot.</td><td><span class="config-tag">Integrated ? draft only</span></td></tr>
+        <tr><td>PRODUCT_DEFINITION</td><td>Purchasing GRN pins identity snapshot; no full operational product behavior.</td><td><span class="config-tag">Partial</span></td></tr>
+        <tr><td>UNIT_DEFINITION</td><td>Purchasing GRN pins unit identity; conversion semantics remain unchanged.</td><td><span class="config-tag">Partial</span></td></tr>
+        <tr><td>APPROVAL_POLICY</td><td>Configuration approval workflow checks policy, requester separation and approver count.</td><td><span class="config-tag">Integrated ? configuration governance</span></td></tr>
+        <tr><td>UNIT_CONVERSION</td><td>Dyeing DRAFT captures the selected source quantity and unit without converting it. The resolver accepts APPROVED, date-effective rules only; the current MG-TO-KG version is PENDING, so conversion is correctly blocked. No stock/purchasing posting consumer.</td><td><span class="config-tag">Partial ? DRAFT source capture; conversion blocked</span></td></tr>
+        <tr><td>BABY_CONE_MEASUREMENT</td><td>Legacy one-off measurement definition remains validation-only; the operational path uses MEASUREMENT_PROFILE.</td><td><span class="config-tag">Validation only</span></td></tr>
+        <tr><td>MEASUREMENT_PROFILE</td><td>Flexible Baby Cone measurement profiles can be configured whenever factory measurements are confirmed. Supported methods: weight per length, piece weight, or manual. Create a new DRAFT version for each required setup; approved effective versions are pinned to DRAFT measurements. No assumed 1,500-yard weight or fixed tolerance.</td><td><span class="config-tag">Flexible ? configure when required</span></td></tr>
+        <tr><td>OWNERSHIP_POLICY</td><td>Separate Nalki OWN-only and Dyeing OWN + controlled PARTY starters are available. Approved effective-policy resolver, DRAFT-line PARTY-use request queue, independent approve/reject, locked PKR rate and request-to-line link are connected. Nalki remains OWN-only unless a separately approved policy changes it. Final consumption/cost transaction snapshots and costing consumer remain pending.</td><td><span class="config-tag">Policy + request/approval connected ? posting snapshot pending</span></td></tr>
+        <tr><td>PROCESS_COST_RULE</td><td>No costing/labour consumer is connected. Preserve existing factory rules: Dyeing and Big Cone salary plus overhead; Nalki theka including packing; Baby Cone salary, not theka.</td><td><span class="config-tag">Not connected ? costing protected</span></td></tr>
+        <tr><td>ATTRIBUTE_DEFINITION</td><td>No extensible attribute storage exists under master schema; items/variants currently use fixed columns. Operational integration needs a reviewed attribute-value schema and master form validation.</td><td><span class="config-tag">Blocked ? storage/schema not present</span></td></tr>
+        <tr><td>PROCESS_ROUTE</td><td>Approved effective-route resolver now validates step continuity and enforces Large Cone ? Nalki (never Baby Cone). Production-order snapshot/consumer is still pending; route rules do not create warehouses or post stock.</td><td><span class="config-tag">Resolver connected ? production consumer pending</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="config-type-help">Safety boundary: this panel reports code integration only. It does not approve, activate, or change any rule, stock, costing, ownership, route, or posted transaction.</p>
+</section>
 <div class="config-principles">
   <div><span class="config-number">01</span><strong>Data-driven</strong><p>New product types and attributes should be master data, not new Python code.</p></div>
   <div><span class="config-number">02</span><strong>Versioned</strong><p>Keep effective dates and rule history; do not silently change rules used by posted transactions.</p></div>
@@ -100,7 +371,7 @@
 <div class="config-grid">
 {% for group in configuration_groups %}
   <article class="config-card">
-    <div class="config-card-top"><span class="config-symbol">{% if loop.index == 1 %}◆{% elif loop.index == 2 %}⚖{% elif loop.index == 3 %}◈{% elif loop.index == 4 %}⇄{% elif loop.index == 5 %}∑{% else %}✓{% endif %}</span><span class="config-tag">{{ group.tag }}</span></div>
+    <div class="config-card-top"><span class="config-symbol">{% if loop.index == 1 %}â—†{% elif loop.index == 2 %}âš–{% elif loop.index == 3 %}â—ˆ{% elif loop.index == 4 %}â‡„{% elif loop.index == 5 %}âˆ‘{% else %}âœ“{% endif %}</span><span class="config-tag">{{ group.tag }}</span></div>
     <h2>{{ group.title }}</h2><p>{{ group.description }}</p>
     <ul>{% for example in group.examples %}<li>{{ example }}</li>{% endfor %}</ul>
   </article>
@@ -129,7 +400,7 @@
   </div>
 </section>
 
-<div class="config-rule-conflict"><strong>Policy decision to preserve</strong><p>An earlier instruction says Nalki must not have Party Stock; a later discussion mentions a controlled, authorized PARTY-stock option. The system must not silently choose between these. The policy must be explicitly confirmed before that option can be enabled.</p></div>
+<div class="config-rule-conflict"><strong>Nalki ownership safeguard</strong><p>Nalki defaults to OWN stock. PARTY stock must remain disabled unless the controlled request, named owner, approval and locked-rate workflow is implemented and explicitly authorized. The starter policy in this editor is OWN only.</p></div>
 <style>
 .nalki-packaging-section { margin: 28px 0; }
 .nalki-packaging-grid {
@@ -163,6 +434,567 @@
 .nalki-packaging-card h3 { margin: 6px 0; }
 .nalki-packaging-card p { margin-bottom: 0; }
 </style>
-{% endblock %}
 
 
+
+
+<style>
+.config-editor { margin:24px 0; }
+.config-form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+.config-editor label { display:flex; flex-direction:column; gap:7px; font-weight:600; }
+.config-editor input,.config-editor select,.config-editor textarea { width:100%; padding:11px 12px; border:1px solid var(--border-color,#cbd2da); border-radius:9px; background:var(--card-bg,#fff); color:inherit; font:inherit; }
+.config-payload-label { margin-top:16px; }
+.config-editor textarea { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.9rem; }
+.config-form-actions { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:14px; }
+.config-form-actions button,.config-card button { padding:10px 16px; border:1px solid var(--border-color,#cbd2da); border-radius:9px; cursor:pointer; }
+#configDraftMessage { font-size:.92rem; }
+.config-route-steps { grid-column:1/-1; display:flex; flex-direction:column; gap:12px; }
+.config-route-step-list { display:flex; flex-direction:column; gap:10px; }
+.config-route-step { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; padding:12px; border:1px solid var(--border-color,#cbd2da); border-radius:10px; }
+.config-route-step label,.config-owner-options label { display:flex; flex-direction:column; gap:6px; }
+.config-route-step input,.config-route-step select,#configGuidedFields input,#configGuidedFields select,#configGuidedFields textarea { width:100%; padding:10px 11px; border:1px solid var(--border-color,#cbd2da); border-radius:8px; background:var(--card-bg,#fff); color:inherit; font:inherit; }
+.config-route-step button { align-self:end; }
+.config-owner-options { display:flex; flex-wrap:wrap; gap:18px; padding:12px; border:1px solid var(--border-color,#cbd2da); border-radius:10px; }
+.config-owner-options label { flex-direction:row; align-items:center; }
+.config-type-help { margin:12px 0 4px; padding:10px 12px; border-left:3px solid var(--border-color,#9aa5b1); }
+.config-detail-json { white-space:pre-wrap; overflow-wrap:anywhere; max-height:520px; overflow:auto; padding:14px; border:1px solid var(--border-color,#cbd2da); border-radius:9px; background:var(--card-bg,rgba(127,127,127,.035)); font-size:.84rem; }
+.master-editor { margin:24px 0; }
+.master-editor label { display:flex; flex-direction:column; gap:7px; font-weight:600; }
+.master-editor input,.master-editor select,.master-editor textarea { width:100%; padding:11px 12px; border:1px solid var(--border-color,#cbd2da); border-radius:9px; background:var(--card-bg,#fff); color:inherit; font:inherit; }
+.master-editor textarea { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.88rem; }
+.master-edit-row { padding:6px 10px; border:1px solid var(--border-color,#cbd2da); border-radius:7px; cursor:pointer; }
+</style>
+<script>
+(() => {
+  const form = document.getElementById('configurationDraftForm');
+  if (!form) return;
+  const esc = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const masterForm = document.getElementById('masterDataForm');
+  if (masterForm) {
+  const masterType = document.getElementById('masterRecordType');
+  const masterId = document.getElementById('masterRecordId');
+  const masterPayload = document.getElementById('masterRecordPayload');
+  const masterMessage = document.getElementById('masterDataMessage');
+  const masterDataRecords = {{ master_data | tojson }};
+  const masterDefaults = {
+    BRAND:{code:'NEW-BRAND',name:'New brand',description:'',is_active:true},
+    UNIT:{code:'NEW-UNIT',name:'New unit',unit_type:'QUANTITY',decimal_places:0,is_active:true},
+    SHADE:{brand_id:null,shade_code:'NEW-SHADE',shade_name:'',shade_category_id:null,is_active:true},
+    VARIANT:{item_id:null,variant_code:'NEW-VARIANT-CODE',variant_name:'',default_unit_id:null,yarn_count_id:null,fiber_type_id:null,brand_id:null,shade_id:null,is_active:true},
+    YARN_COUNT:{code:'NEW-YARN-COUNT',name:'New yarn count',description:'',is_active:true},
+    FIBER_TYPE:{code:'NEW-FIBER-TYPE',name:'New fiber type',description:'',is_active:true},
+    SHADE_CATEGORY:{code:'NEW-SHADE-CATEGORY',name:'New shade category',description:'',is_active:true},
+    ITEM_CATEGORY:{code:'NEW-CATEGORY',name:'New item category',description:'',parent_category_id:null,is_active:true},
+    ITEM:{item_code:'NEW-ITEM',item_name:'New item',description:'',item_category_id:null,base_unit_id:null,track_batch:false,track_shade:false,track_ownership:true,is_stock_item:true,is_active:true}
+  };
+  const guided = document.getElementById('masterGuidedFields');
+  const active = rows => rows.filter(row => row.is_active !== false);
+  const option = (id,label,selected=false) => '<option value="'+esc(id)+'" '+(selected?'selected':'')+'>'+esc(label)+'</option>';
+  function field(label,id,control,required=false) {
+    return '<label>'+esc(label)+(required?' *':'')+control+'</label>';
+  }
+  function selectControl(id,placeholder,rows,labelFn,selected) {
+    let html='<select id="'+id+'"><option value="">'+esc(placeholder)+'</option>';
+    rows.forEach(row => { html+=option(row.id,labelFn(row),String(row.id)===String(selected)); });
+    html+='</select>';
+    return html;
+  }
+  const shadePicker = document.getElementById('shadeUsagePicker');
+  if (shadePicker) {
+    const search = document.getElementById('shadeUsageSearch');
+    const shadeSelect = document.getElementById('shadeUsageSelect');
+    const usageSelect = document.getElementById('shadeUsageCategory');
+    const saveButton = document.getElementById('saveShadeUsage');
+    const status = document.getElementById('shadeUsageMessage');
+    const shadeRows = masterDataRecords.shade_options || [];
+    const renderShadeChoices = (term='', keepId='') => {
+      const q=String(term||'').trim().toLowerCase();
+      const matches=shadeRows.filter(row => [row.brand_name,row.brand_code,row.shade_code,row.shade_name].some(value=>String(value||'').toLowerCase().includes(q)));
+      shadeSelect.innerHTML='<option value="">Choose a shade ('+matches.length+' found)</option>'+matches.map(row=>option(row.id,[row.brand_name,row.shade_code,row.shade_name].filter(Boolean).join(' — '),String(row.id)===String(keepId))).join('');
+      if(keepId && matches.some(row=>String(row.id)===String(keepId))) shadeSelect.value=String(keepId);
+    };
+    renderShadeChoices();
+    search.addEventListener('input',()=>renderShadeChoices(search.value,shadeSelect.value));
+    shadeSelect.addEventListener('change',()=>{
+      const selected=shadeRows.find(row=>String(row.id)===shadeSelect.value);
+      usageSelect.value=selected?.shade_category_id?String(selected.shade_category_id):'';
+      status.textContent=selected?'Current usage: '+(selected.category_name||'Not assigned'):'';
+    });
+    saveButton.addEventListener('click',async()=>{
+      const selected=shadeRows.find(row=>String(row.id)===shadeSelect.value);
+      if(!selected){status.textContent='Please select a shade from the list.';return;}
+      if(!usageSelect.value){status.textContent='Please choose Ladies, Gents or Common.';return;}
+      saveButton.disabled=true; status.textContent='Saving with audit trail…';
+      try {
+        const response=await fetch('/configuration/api/master/shade/'+encodeURIComponent(selected.id),{
+          method:'PUT',credentials:'same-origin',
+          headers:{'Content-Type':'application/json','X-CSRF-Token':masterForm.dataset.csrf,'Accept':'application/json'},
+          body:JSON.stringify({shade_name:selected.shade_name,shade_category_id:Number(usageSelect.value),is_active:true})
+        });
+        const result=await response.json();
+        if(!response.ok) throw new Error(result.detail||'Shade usage could not be saved.');
+        const category=Array.from(usageSelect.options).find(x=>x.value===usageSelect.value);
+        selected.shade_category_id=Number(usageSelect.value);
+        selected.category_name=category?.textContent||'';
+        status.textContent='Saved: '+selected.brand_name+' — '+selected.shade_code+' is now '+selected.category_name+'.';
+      } catch(error) { status.textContent=error.message; }
+      finally { saveButton.disabled=false; }
+    });
+  }
+  function renderGuided(kind,payload,id) {
+    const editing=!!id, p=payload||{};
+    const text=(label,key,max,required=false)=>field(label,key,'<input id="'+key+'" maxlength="'+max+'" value="'+esc(p[key]??'')+'" '+(required?'required':'')+'>',required);
+    const yesno=(label,key)=>field(label,key,'<select id="'+key+'"><option value="true" '+(p[key]!==false?'selected':'')+'>Yes</option><option value="false" '+(p[key]===false?'selected':'')+'>No</option></select>');
+    const brands=active(masterDataRecords.brands||[]);
+    const units=active(masterDataRecords.units||[]);
+    const items=active(masterDataRecords.items||[]);
+    const categories=active(masterDataRecords.item_categories||[]);
+    const yarns=active(masterDataRecords.yarn_counts||[]), fibers=active(masterDataRecords.fiber_types||[]);
+    const shadeUsage=active(masterDataRecords.shade_categories||[]).filter(x=>['LADIES','GENTS','COMMON'].includes(String(x.code||'').toUpperCase()));
+    let html='';
+    if(kind==='BRAND') {
+      html+=editing?text('Brand name','name',100,true):text('Brand code','code',50,true)+text('Brand name','name',100,true);
+      html+=text('Description','description',300)+yesno('Active','is_active');
+    } else if(kind==='UNIT') {
+      html+=editing?text('Unit name','name',100,true):text('Unit code','code',30,true)+text('Unit name','name',100,true)+field('Unit type','unit_type','<select id="unit_type"><option>QUANTITY</option><option>WEIGHT</option><option>LENGTH</option><option>VOLUME</option></select>');
+      if(!editing) html+=field('Decimal places','decimal_places','<input id="decimal_places" type="number" min="0" max="6" step="1" value="0" required>');
+      html+=yesno('Active','is_active');
+    } else if(kind==='SHADE') {
+      if(!editing) html+=field('Brand','brand_id',selectControl('brand_id','Choose active brand',brands,r=>r.name+' ('+r.code+')',p.brand_id),true);
+      if(!editing) html+=text('Shade code','shade_code',30,true);
+      html+=text('Shade name','shade_name',150);
+      html+=field('Shade usage','shade_category_id',selectControl('shade_category_id','Choose Ladies / Gents / Common',shadeUsage,r=>r.name,p.shade_category_id),true);
+      html+=yesno('Active','is_active');
+    } else if(kind==='YARN_COUNT' || kind==='FIBER_TYPE' || kind==='SHADE_CATEGORY') {
+      html+=editing?text(kind==='YARN_COUNT'?'Yarn count name':kind==='FIBER_TYPE'?'Fiber type name':'Shade category name','name',100,true):text('Code','code',30,true)+text('Name','name',100,true);
+      html+=text('Description','description',300)+yesno('Active','is_active');
+    } else if(kind==='ITEM_CATEGORY') {
+      if(!editing) html+=text('Category code','code',50,true);
+      html+=text('Category name','name',150,true)+text('Description','description',500);
+      const parents=categories.filter(row=>!editing || String(row.id)!==String(id));
+      const categoryLabel=row=>{const parent=categories.find(x=>String(x.id)===String(row.parent_category_id));return (parent?parent.name+' → ':'')+row.name+' ('+row.code+')';};
+      html+=field('Parent category (optional)','parent_category_id',selectControl('parent_category_id','Top-level category',parents,categoryLabel,p.parent_category_id));
+      html+=yesno('Active','is_active');
+    } else if(kind==='ITEM') {
+      if(!editing) {
+        html+=text('Item code','item_code',100,true)+text('Item name','item_name',250,true)+text('Description','description',500);
+        const categoryLabel=row=>{const parent=categories.find(x=>String(x.id)===String(row.parent_category_id));return (parent?parent.name+' → ':'')+row.name+' ('+row.code+')';};
+        html+=field('Item category','item_category_id',selectControl('item_category_id','Choose active category',categories,categoryLabel,p.item_category_id),true);
+        html+=field('Base unit','base_unit_id',selectControl('base_unit_id','Choose active unit',units,r=>r.code+' — '+r.name,p.base_unit_id),true);
+        html+=yesno('Track batch','track_batch')+yesno('Track shade','track_shade')+yesno('Track ownership','track_ownership')+yesno('Stock item','is_stock_item');
+      } else {
+        html+=text('Item name','item_name',250,true)+text('Description','description',500);
+        html+='<p class="config-type-help">Item code, category, base unit and tracking identities are locked after creation to protect variants, stock and posted transaction history.</p>';
+      }
+      html+=yesno('Active','is_active');
+    } else if(kind==='VARIANT') {
+      if(!editing) {
+        html+=field('Item','item_id',selectControl('item_id','Choose active item',items,r=>r.item_code+' — '+r.item_name,p.item_id),true);
+        html+=text('Variant code','variant_code',80,true)+text('Variant name','variant_name',250);
+        html+=field('Default unit (item base unit)','default_unit_id','<select id="default_unit_id" disabled><option value="">Choose item first</option></select>');
+        html+=field('Brand','brand_id',selectControl('brand_id','Optional brand',brands,r=>r.name,p.brand_id));
+        html+=field('Shade','shade_id','<select id="shade_id" disabled><option value="">Choose brand first</option></select>');
+        html+=field('Yarn count','yarn_count_id',selectControl('yarn_count_id','Optional yarn count',yarns,r=>r.code+' — '+r.name,p.yarn_count_id));
+        html+=field('Fiber type','fiber_type_id',selectControl('fiber_type_id','Optional fiber type',fibers,r=>r.code+' — '+r.name,p.fiber_type_id));
+      } else html+=text('Variant name','variant_name',250);
+      html+=yesno('Active','is_active');
+    }
+    guided.innerHTML=html;
+    const itemSelect=document.getElementById('item_id');
+    if(itemSelect) itemSelect.required=true;
+    if(itemSelect) itemSelect.addEventListener('change',()=>{
+      const item=items.find(x=>String(x.id)===itemSelect.value);
+      const unit=document.getElementById('default_unit_id');
+      unit.innerHTML=item?option(item.base_unit_id,item.base_unit_code+' (item base unit)'):'<option value="">Choose item first</option>';
+      unit.disabled=!item;
+      if(item) unit.value=String(item.base_unit_id);
+      const code=String(item?.item_code||'').toUpperCase();
+      const shadeTracked=['NALKI','LABEL'].includes(code);
+      const yarnTracked=['YARN','BIG_CONE','BABY_CONE'].includes(code);
+      document.getElementById('brand_id').required=shadeTracked;
+      document.getElementById('shade_id').required=shadeTracked;
+      document.getElementById('yarn_count_id').required=yarnTracked;
+      document.getElementById('fiber_type_id').required=yarnTracked;
+    });
+    const brandSelect=document.getElementById('brand_id');
+    if(brandSelect && kind==='SHADE') brandSelect.required=true;
+    if(brandSelect && kind==='VARIANT') brandSelect.addEventListener('change',()=>{
+      const shade=document.getElementById('shade_id');
+      const choices=(masterDataRecords.shade_options||[]).filter(x=>String(x.brand_id)===brandSelect.value);
+      shade.innerHTML='<option value="">Choose shade</option>'+choices.map(x=>option(x.id,x.shade_code+' — '+(x.shade_name||''))).join('');
+      shade.disabled=!brandSelect.value;
+    });
+    if(kind==='VARIANT' && itemSelect) itemSelect.dispatchEvent(new Event('change'));
+    if(kind==='VARIANT' && brandSelect) brandSelect.dispatchEvent(new Event('change'));
+  }
+  function collectGuidedPayload(kind) {
+    const get=id=>document.getElementById(id)?.value ?? '';
+    const bool=id=>get(id)==='true';
+    if(kind==='BRAND') return {code:get('code'),name:get('name'),description:get('description'),is_active:bool('is_active')};
+    if(kind==='UNIT') return masterId.value ? {name:get('name'),is_active:bool('is_active')} : {code:get('code'),name:get('name'),unit_type:get('unit_type'),decimal_places:Number(get('decimal_places')),is_active:bool('is_active')};
+    if(kind==='SHADE') return masterId.value ? {shade_name:get('shade_name'),shade_category_id:Number(get('shade_category_id')),is_active:bool('is_active')} : {brand_id:Number(get('brand_id')),shade_code:get('shade_code'),shade_name:get('shade_name'),shade_category_id:Number(get('shade_category_id')),is_active:bool('is_active')};
+    if(kind==='VARIANT') return masterId.value ? {variant_name:get('variant_name'),is_active:bool('is_active')} : {item_id:Number(get('item_id')),variant_code:get('variant_code'),variant_name:get('variant_name'),default_unit_id:Number(get('default_unit_id')),brand_id:get('brand_id')?Number(get('brand_id')):null,shade_id:get('shade_id')?Number(get('shade_id')):null,yarn_count_id:get('yarn_count_id')?Number(get('yarn_count_id')):null,fiber_type_id:get('fiber_type_id')?Number(get('fiber_type_id')):null,is_active:bool('is_active')};
+    if(['YARN_COUNT','FIBER_TYPE','SHADE_CATEGORY'].includes(kind)) return masterId.value ? {name:get('name'),description:get('description'),is_active:bool('is_active')} : {code:get('code'),name:get('name'),description:get('description'),is_active:bool('is_active')};
+    if(kind==='ITEM_CATEGORY') return masterId.value ? {name:get('name'),description:get('description'),parent_category_id:get('parent_category_id')?Number(get('parent_category_id')):null,is_active:bool('is_active')} : {code:get('code'),name:get('name'),description:get('description'),parent_category_id:get('parent_category_id')?Number(get('parent_category_id')):null,is_active:bool('is_active')};
+    if(kind==='ITEM') return masterId.value ? {item_name:get('item_name'),description:get('description'),is_active:bool('is_active')} : {item_code:get('item_code'),item_name:get('item_name'),description:get('description'),item_category_id:Number(get('item_category_id')),base_unit_id:Number(get('base_unit_id')),track_batch:bool('track_batch'),track_shade:bool('track_shade'),track_ownership:bool('track_ownership'),is_stock_item:bool('is_stock_item'),is_active:bool('is_active')};
+    return {};
+  }
+  function setMasterEditor(kind, id, payload) {
+    masterType.value = kind;
+    masterId.value = id || '';
+    const data=payload || masterDefaults[kind];
+    renderGuided(kind,data,id);
+    masterPayload.value = JSON.stringify(data, null, 2);
+    document.getElementById('masterEditorTitle').textContent = (id ? 'Edit ' : 'Create ') + kind.toLowerCase() + ' master record';
+    const saveButton = masterForm.querySelector('button[type="submit"]');
+    saveButton.disabled = false;
+    masterMessage.textContent = kind === 'VARIANT' && !id ? 'Select an active item. Its base unit is filled automatically. Nalki/Label require a brand and its shade; Yarn/Big Cone/Baby Cone require yarn count and fiber type.' : '';
+  }
+  masterType.addEventListener('change', () => setMasterEditor(masterType.value, '', masterDefaults[masterType.value]));
+  document.getElementById('masterRecordReset').addEventListener('click', () => setMasterEditor(masterType.value, '', masterDefaults[masterType.value]));
+  document.querySelectorAll('.master-edit-row').forEach(button => button.addEventListener('click', () => {
+    const kind = button.dataset.masterKind.toUpperCase();
+    const id = button.dataset.masterId;
+    const dataKey = ({BRAND:'brands',UNIT:'units',SHADE:'shades',VARIANT:'variants',YARN_COUNT:'yarn_counts',FIBER_TYPE:'fiber_types',SHADE_CATEGORY:'shade_categories',ITEM_CATEGORY:'item_categories',ITEM:'items'})[kind];
+    const rows = masterDataRecords[dataKey] || [];
+    const row = rows.find(item => String(item.id) === String(id));
+    if (!row) { masterMessage.textContent = 'Record not available on this page. Refresh and try again.'; return; }
+    let payload;
+    if (kind === 'BRAND') payload = {name:row.name,description:row.description,is_active:row.is_active};
+    else if (kind === 'UNIT') payload = {name:row.name,is_active:row.is_active};
+    else if (kind === 'SHADE') payload = {shade_name:row.shade_name,shade_category_id:row.shade_category_id,is_active:row.is_active};
+    else if (['YARN_COUNT','FIBER_TYPE','SHADE_CATEGORY'].includes(kind)) payload = {name:row.name,description:row.description,is_active:row.is_active};
+    else if (kind === 'ITEM_CATEGORY') payload = {name:row.name,description:row.description,parent_category_id:row.parent_category_id,is_active:row.is_active};
+    else if (kind === 'ITEM') payload = {item_name:row.item_name,description:row.description,is_active:row.is_active};
+    else payload = {variant_name:row.variant_name,is_active:row.is_active};
+    setMasterEditor(kind,id,payload);
+    document.getElementById('masterDataEditor').scrollIntoView({behavior:'smooth',block:'center'});
+  }));
+  masterForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    let payload;
+    try {
+      payload = collectGuidedPayload(masterType.value);
+      masterPayload.value = JSON.stringify(payload,null,2);
+      if (!masterForm.reportValidity()) return;
+    } catch (_) { masterMessage.textContent = 'Please complete the required master-data fields.'; return; }
+    masterMessage.textContent = 'Saving with audit trail…';
+    const id = masterId.value.trim();
+    const kind = masterType.value.toLowerCase();
+    const url = '/configuration/api/master/' + kind + (id ? '/' + encodeURIComponent(id) : '');
+    try {
+      const response = await fetch(url,{method:id?'PUT':'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','X-CSRF-Token':masterForm.dataset.csrf,'Accept':'application/json'},
+        body:JSON.stringify(payload)});
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.detail || 'Master data could not be saved.');
+      masterMessage.textContent = 'Saved successfully. Reloading the current master-data list…';
+      window.location.reload();
+    } catch(error) { masterMessage.textContent = error.message; }
+  });
+  setMasterEditor('BRAND','',masterDefaults.BRAND);
+  }
+  const message = document.getElementById('configDraftMessage');
+  const rows = document.getElementById('configHistoryRows');
+  const csrf = form.dataset.csrf || '';
+  const configurationExamples = {{ configuration_examples | tojson }};
+  const configurationUnits = {{ master_data.units | tojson }};
+  const configGuidedFields = document.getElementById('configGuidedFields');
+  const configurationFieldDefinitions = {
+    PRODUCT_DEFINITION:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['code','Product code','text',true],['name','Product name','text',true],['product_type','Product type','text',true],['attributes','Attributes (JSON object)','json'],['active','Active','bool']
+    ],
+    UNIT_DEFINITION:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['code','Unit code','text',true],['name','Unit name','text',true],['base_unit_code','Base unit code (optional)','text'],['factor_to_base','Factor to base','decimal',true]
+    ],
+    PACKAGING_RULE:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['product_type','Product type','text',true],['product_code','Item code (optional)','text'],['packaging_code','Packaging code','text',true],['base_unit_code','Base unit code (optional)','text'],['units_per_pack','Pieces / units per pack','integer',true],['inner_packaging_code','Inner packaging code (optional)','text'],['inner_packs_per_pack','Inner packs per pack (optional)','integer'],['net_weight_grams','Net weight grams (optional)','decimal'],['active','Active','bool']
+    ],
+    BABY_CONE_MEASUREMENT:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['variant_code','Baby Cone variant code','text',true],['gross_weight_grams','Gross weight (g)','decimal',true],['empty_core_tare_grams','Empty core tare (g)','decimal',true],['measured_yards','Measured yards','decimal',true],['measured_on','Measurement date','date',true],['operator_code','Operator code','text',true]
+    ],
+    OWNERSHIP_POLICY:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['product_type','Product type','text',true],['allowed_owners','Allowed owners','owners',true],['party_rate_required','Party rate required','bool'],['party_stock_requires_approval','Party stock requires approval','bool']
+    ],
+    PROCESS_COST_RULE:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['process_code','Process code','text',true],['labour_method','Labour method','enum:salary,theka',true],['waste_allowance_percent','Waste allowance (%)','decimal'],['active','Active','bool']
+    ],
+    ATTRIBUTE_DEFINITION:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['code','Attribute code','text',true],['label','Attribute label','text',true],['data_type','Data type','enum:text,integer,decimal,boolean,date,choice',true],['scope','Applies to','enum:product,variant,batch,production_order',true],['required','Required','bool'],['allowed_values','Allowed values (one per line; required for choice)','lines'],['decimal_places','Decimal places','integer'],['active','Active','bool']
+    ],
+    UNIT_CONVERSION:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['from_unit_code','Source unit (from)','unit',true],['to_unit_code','Target unit (to)','unit',true],['factor','Conversion factor','decimal',true],['rounding_places','Rounding places','integer'],['active','Active','bool']
+    ],
+    MEASUREMENT_PROFILE:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['profile_code','Profile code','text',true],['variant_code','Variant code','text',true],['method','Measurement method','enum:weight_per_length,piece_weight,manual',true],['tolerance_percent','Tolerance (%)','decimal'],['requires_operator','Requires operator','bool'],['requires_approval','Requires approval','bool'],['active','Active','bool']
+    ],
+    PROCESS_ROUTE:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['route_code','Route code','text',true],['route_name','Route name','text',true],['product_type','Product type','text',true],['steps','Ordered process steps','steps',true],['active','Active','bool']
+    ],
+    APPROVAL_POLICY:[
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['config_type','Configuration type','enum:PRODUCT_DEFINITION,UNIT_DEFINITION,PACKAGING_RULE,BABY_CONE_MEASUREMENT,OWNERSHIP_POLICY,PROCESS_COST_RULE,ATTRIBUTE_DEFINITION,UNIT_CONVERSION,MEASUREMENT_PROFILE,PROCESS_ROUTE,APPROVAL_POLICY',true],['required_role_code','Required role code','text',true],['minimum_approvals','Minimum approvals','integer'],['separate_requester_approver','Separate requester and approver','bool'],['active','Active','bool']
+    ]
+  };
+  const typeSelect = document.getElementById('configType');
+  const payloadEditor = document.getElementById('configPayload');
+  const typeHelp = document.getElementById('configTypeHelp');
+  const ownershipPresetWrap = document.getElementById('ownershipPolicyPresetWrap');
+  const ownershipPresetSelect = document.getElementById('ownershipPolicyPreset');
+  function applyOwnershipPolicyPreset() {
+    const preset = configurationExamples.OWNERSHIP_POLICY_PRESETS[ownershipPresetSelect.value];
+    if (!preset) return;
+    document.getElementById('configKey').value = preset.key;
+    document.getElementById('configName').value = preset.name;
+    typeHelp.textContent = preset.help;
+    renderConfigurationGuided(preset.payload);
+  }
+  function configFieldHtml(def, payload) {
+    const [key,label,type,required] = def;
+    const value = payload[key];
+    const id = 'cfg_' + key;
+    const req = required ? ' required' : '';
+    if (type === 'bool') return '<label>'+esc(label)+'<select id="'+id+'"><option value="true" '+(value!==false?'selected':'')+'>Yes</option><option value="false" '+(value===false?'selected':'')+'>No</option></select></label>';
+    if (type.startsWith('enum:')) {
+      const choices=type.slice(5).split(',');
+      return '<label>'+esc(label)+'<select id="'+id+'"'+req+'>'+choices.map(x=>'<option value="'+esc(x)+'" '+(String(value)===x?'selected':'')+'>'+esc(x)+'</option>').join('')+'</select></label>';
+    }
+    if (type === 'unit') {
+      const units=configurationUnits.filter(x=>x.is_active);
+      const options=units.map(x=>'<option value="'+esc(x.code)+'" '+(String(value)===String(x.code)?'selected':'')+'>'+esc(x.code+' ? '+x.name+' ('+x.unit_type+', '+x.decimal_places+' dp)')+'</option>').join('');
+      return '<label>'+esc(label)+'<select id="'+id+'"'+req+'>'+options+'</select></label>';
+    }
+    if (type === 'owners') {
+      const selected=Array.isArray(value)?value:[];
+      return '<fieldset class="config-owner-options"><legend>'+esc(label)+'</legend>'+['OWN','PARTY'].map(x=>'<label><input type="checkbox" name="cfg_allowed_owners" value="'+x+'" '+(selected.includes(x)?'checked':'')+'> '+x+'</label>').join('')+'</fieldset>';
+    }
+    if (type === 'steps') return renderConfigSteps(Array.isArray(value)?value:[]);
+    if (type === 'lines') return '<label>'+esc(label)+'<textarea id="'+id+'" rows="4" placeholder="One value per line">'+esc(Array.isArray(value)?value.join('\n'):'')+'</textarea></label>';
+    if (type === 'json') return '<label>'+esc(label)+'<textarea id="'+id+'" rows="4" spellcheck="false">'+esc(JSON.stringify(value||{},null,2))+'</textarea></label>';
+    const inputType = type === 'date' ? 'date' : (type === 'decimal' || type === 'integer' ? 'number' : 'text');
+    const step = type === 'integer' ? ' step="1"' : (type === 'decimal' ? ' step="any"' : '');
+    const val = value===null || value===undefined ? '' : value;
+    return '<label>'+esc(label)+'<input id="'+id+'" type="'+inputType+'"'+step+req+' value="'+esc(val)+'"></label>';
+  }
+  function renderConfigSteps(steps) {
+    let html='<div class="config-route-steps"><strong>Ordered process steps</strong><div class="config-route-step-list">';
+    steps.forEach((step,index)=>{
+      html+='<div class="config-route-step" data-route-step-row data-index="'+index+'">'+
+        '<label>Sequence<input data-step-field="sequence_no" type="number" min="1" step="1" value="'+esc(step.sequence_no??index+1)+'" required></label>'+
+        '<label>Process code<input data-step-field="process_code" value="'+esc(step.process_code||'')+'" required></label>'+
+        '<label>Input product type<input data-step-field="input_product_type" value="'+esc(step.input_product_type||'')+'" required></label>'+
+        '<label>Output product type<input data-step-field="output_product_type" value="'+esc(step.output_product_type||'')+'" required></label>'+
+        '<label>Optional<select data-step-field="optional"><option value="false" '+(step.optional?'':'selected')+'>No</option><option value="true" '+(step.optional?'selected':'')+'>Yes</option></select></label>'+
+        '<button type="button" data-step-remove="'+index+'">Remove step</button></div>';
+    });
+    html+='</div><button type="button" data-step-add>Add process step</button></div>';
+    return html;
+  }
+  function collectConfigSteps() {
+    return Array.from(configGuidedFields.querySelectorAll('[data-route-step-row]')).map(row=>({
+      sequence_no:Number(row.querySelector('[data-step-field="sequence_no"]').value),
+      process_code:row.querySelector('[data-step-field="process_code"]').value.trim(),
+      input_product_type:row.querySelector('[data-step-field="input_product_type"]').value.trim(),
+      output_product_type:row.querySelector('[data-step-field="output_product_type"]').value.trim(),
+      optional:row.querySelector('[data-step-field="optional"]').value==='true'
+    }));
+  }
+  function updateUnitConversionPrecisionNotice() {
+    const notice=document.getElementById('unitConversionPrecisionNotice');
+    if(typeSelect.value!=='UNIT_CONVERSION') { notice.hidden=true; notice.textContent=''; return; }
+    const from=configurationUnits.find(x=>x.is_active && x.code===document.getElementById('cfg_from_unit_code')?.value);
+    const to=configurationUnits.find(x=>x.is_active && x.code===document.getElementById('cfg_to_unit_code')?.value);
+    const factor=document.getElementById('cfg_factor')?.value;
+    const places=Number(document.getElementById('cfg_rounding_places')?.value);
+    const notes=[];
+    if(from && to && from.unit_type!==to.unit_type) notes.push('BLOCKER: source and target units have different dimensions ('+from.unit_type+' vs '+to.unit_type+').');
+    if(from && to && from.code===to.code) notes.push('BLOCKER: source and target must be different units.');
+    if(from && to && Number.isInteger(places) && places>to.decimal_places) notes.push('PRECISION BLOCK: rounding places ('+places+') exceed target unit '+to.code+' storage precision ('+to.decimal_places+' dp). Dyeing conversion will remain BLOCKED_PRECISION.');
+    if(from && to) notes.push('Direction means: 1 '+from.code+' = factor ? '+to.code+'. Target unit precision: '+to.decimal_places+' decimal places.');
+    if(factor) notes.push('Factor entered: '+factor+'. Confirm it against an authoritative conversion reference before submission/approval.');
+    notice.hidden=false;
+    notice.innerHTML=notes.map(x=>'<p>'+esc(x)+'</p>').join('') || '<p>Select active source and target units to review the conversion direction and precision.</p>';
+  }
+  function renderConfigurationGuided(payload) {
+    const defs=configurationFieldDefinitions[typeSelect.value]||[];
+    configGuidedFields.innerHTML=defs.map(def=>configFieldHtml(def,payload)).join('');
+    syncConfigurationPayload();
+    updateUnitConversionPrecisionNotice();
+  }
+  function collectConfigurationGuidedPayload() {
+    const payload={};
+    for(const def of configurationFieldDefinitions[typeSelect.value]||[]) {
+      const [key,label,type]=def;
+      if(type==='steps') { payload.steps=collectConfigSteps(); continue; }
+      if(type==='owners') {
+        payload.allowed_owners=Array.from(configGuidedFields.querySelectorAll('input[name="cfg_allowed_owners"]:checked')).map(x=>x.value);
+        continue;
+      }
+      const el=document.getElementById('cfg_'+key);
+      if(!el) continue;
+      const value=el.value;
+      if(type==='bool') payload[key]=value==='true';
+      else if(type==='integer') payload[key]=value===''?null:Number(value);
+      else if(type==='decimal') payload[key]=value===''?null:value;
+      else if(type==='json') { try { payload[key]=JSON.parse(value||'{}'); } catch(_) { throw new Error(label+' must be valid JSON.'); } }
+      else if(type==='lines') payload[key]=value.split('\n').map(x=>x.trim()).filter(Boolean);
+      else payload[key]=value===''?null:value;
+    }
+    return payload;
+  }
+  function syncConfigurationPayload() {
+    try {
+      payloadEditor.value=JSON.stringify(collectConfigurationGuidedPayload(),null,2);
+      return true;
+    } catch(error) {
+      payloadEditor.value='';
+      document.getElementById('configDraftMessage').textContent=error.message;
+      return false;
+    }
+  }
+  configGuidedFields.addEventListener('input',()=>{syncConfigurationPayload();updateUnitConversionPrecisionNotice();});
+  configGuidedFields.addEventListener('change',()=>{syncConfigurationPayload();updateUnitConversionPrecisionNotice();});
+  configGuidedFields.addEventListener('click',event=>{
+    const add=event.target.closest('[data-step-add]');
+    const remove=event.target.closest('[data-step-remove]');
+    if(!add&&!remove) return;
+    let steps=collectConfigSteps();
+    if(add) steps.push({sequence_no:steps.length+1,process_code:'',input_product_type:'',output_product_type:'',optional:false});
+    if(remove) steps=steps.filter((_,index)=>index!==Number(remove.dataset.stepRemove)).map((step,index)=>({...step,sequence_no:index+1}));
+    const current=collectConfigurationGuidedPayload();
+    current.steps=steps;
+    configGuidedFields.innerHTML=(configurationFieldDefinitions[typeSelect.value]||[]).map(def=>configFieldHtml(def,current)).join('');
+    syncConfigurationPayload();
+  });
+  function applyConfigurationExample() {
+    const isOwnership = typeSelect.value === 'OWNERSHIP_POLICY';
+    ownershipPresetWrap.hidden = !isOwnership;
+    if (isOwnership) {
+      ownershipPresetSelect.value = 'NALKI';
+      applyOwnershipPolicyPreset();
+      return;
+    }
+    const example = configurationExamples[typeSelect.value];
+    if (!example) return;
+    document.getElementById('configKey').value = example.key;
+    document.getElementById('configName').value = example.name;
+    typeHelp.textContent = example.help;
+    renderConfigurationGuided(example.payload);
+  }
+  ownershipPresetSelect.addEventListener('change', applyOwnershipPolicyPreset);
+  typeSelect.addEventListener('change', applyConfigurationExample);
+  applyConfigurationExample();
+  async function refreshHistory() {
+    try {
+      const response = await fetch('/configuration/api/history', {credentials:'same-origin', headers:{'Accept':'application/json'}});
+      if (!response.ok) throw new Error(response.status === 403 ? 'History permission required.' : 'Could not load history.');
+      const data = await response.json();
+      if (!data.items.length) { rows.innerHTML = '<tr><td colspan="9">No configuration versions yet.</td></tr>'; return; }
+      rows.innerHTML = data.items.map(item => {
+        let actions = '<button type="button" data-config-action="view" data-version-id="'+esc(item.id)+'">View</button> ';
+        if (item.status === 'DRAFT') actions += '<button type="button" data-config-action="submit" data-version-id="'+esc(item.id)+'">Submit</button>';
+        if (item.status === 'PENDING') actions += '<button type="button" data-config-action="approve" data-version-id="'+esc(item.id)+'">Approve</button> <button type="button" data-config-action="reject" data-version-id="'+esc(item.id)+'">Reject</button>';
+        return '<tr><td>'+esc(item.config_type)+'</td><td>'+esc(item.id)+'</td><td>'+esc(item.config_key)+'</td><td>'+esc(item.version_no)+'</td><td>'+esc(item.display_name)+'</td><td>'+esc(item.status)+'</td><td>'+esc(item.effective_from)+(item.effective_to ? ' â†’ '+esc(item.effective_to) : '')+'</td><td>'+esc(item.created_at)+'</td><td>'+actions+'</td></tr>';
+      }).join('');
+    } catch (error) { rows.innerHTML = '<tr><td colspan="9">'+esc(error.message)+'</td></tr>'; }
+  }
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    message.textContent = 'Validating and saving draftâ€¦';
+    let payload;
+    try {
+      payload = collectConfigurationGuidedPayload();
+      if (typeSelect.value === 'UNIT_CONVERSION') {
+        const source = configurationUnits.find(x => x.is_active && x.code === payload.from_unit_code);
+        const target = configurationUnits.find(x => x.is_active && x.code === payload.to_unit_code);
+        if (!source || !target) throw new Error('Choose active source and target units from Units Master.');
+        if (source.code === target.code) throw new Error('Source and target units must be different.');
+        if (source.unit_type !== target.unit_type) throw new Error('Cannot save this conversion: source and target physical dimensions do not match ('+source.unit_type+' vs '+target.unit_type+').');
+      }
+      payloadEditor.value=JSON.stringify(payload,null,2);
+    }
+    catch (error) { message.textContent = error.message || 'Please complete the guided rule fields.'; return; }
+    const body = {
+      config_type: document.getElementById('configType').value,
+      config_key: document.getElementById('configKey').value,
+      display_name: document.getElementById('configName').value,
+      change_reason: document.getElementById('configReason').value,
+      supersedes_version_id: document.getElementById('configSupersedesId').value || null,
+      payload: payload
+    };
+    try {
+      const response = await fetch('/configuration/api/drafts', {
+        method:'POST', credentials:'same-origin',
+        headers:{'Content-Type':'application/json','X-CSRF-Token':csrf,'Accept':'application/json'},
+        body:JSON.stringify(body)
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        const detail = Array.isArray(result.detail) ? result.detail.map(e => (e.loc || ['payload']).join('.')+': '+e.msg).join('; ') : result.detail;
+        throw new Error(detail || 'Draft could not be saved.');
+      }
+      message.textContent = 'Saved as DRAFT Â· Version '+result.configuration.version_no+'. No live rule was changed.';
+      await refreshHistory();
+    } catch (error) { message.textContent = error.message; }
+  });
+  rows.addEventListener('click', async (event) => {
+    const button = event.target.closest('button[data-config-action]');
+    if (!button) return;
+    const action = button.dataset.configAction;
+    const versionId = button.dataset.versionId;
+    if (action === 'view') {
+      button.disabled = true;
+      try {
+        const response = await fetch('/configuration/api/versions/'+encodeURIComponent(versionId), {credentials:'same-origin', headers:{'Accept':'application/json'}});
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.detail || 'Could not load configuration detail.');
+        document.getElementById('configVersionDetailJson').textContent = JSON.stringify(result, null, 2);
+        const detailPanel = document.getElementById('configVersionDetail');
+        detailPanel.hidden = false;
+        detailPanel.scrollIntoView({behavior:'smooth', block:'nearest'});
+      } catch (error) { message.textContent = error.message; }
+      finally { button.disabled = false; }
+      return;
+    }
+    let comments = '';
+    if (action === 'reject') {
+      comments = window.prompt('Rejection reason (minimum 5 characters):') || '';
+      if (comments.trim().length < 5) return;
+    } else if (action === 'approve' && !window.confirm('Approve this configuration version? A different administrator must be the approver.')) {
+      return;
+    }
+    button.disabled = true;
+    try {
+      const response = await fetch('/configuration/api/versions/'+encodeURIComponent(versionId)+'/'+action, {
+        method:'POST', credentials:'same-origin',
+        headers:{'Content-Type':'application/json','X-CSRF-Token':csrf,'Accept':'application/json'},
+        body:JSON.stringify({comments})
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.detail || 'Configuration action failed.');
+      if (result.configuration.status === 'PENDING' && result.configuration.approvals_required) {
+        message.textContent = 'Approval recorded: '+result.configuration.approvals_received+' of '+result.configuration.approvals_required+'. Another eligible, independent approver must approve before activation.';
+      } else {
+        message.textContent = 'Configuration version '+result.configuration.status+'.';
+      }
+      await refreshHistory();
+    } catch (error) {
+      message.textContent = error.message;
+      button.disabled = false;
+    }
+  });
+  const refresh = document.getElementById('refreshConfigHistory');
+  if (refresh) refresh.addEventListener('click', refreshHistory);
+  const effectiveButton = document.getElementById('checkEffectiveConfig');
+  effectiveButton.addEventListener('click', async () => {
+    const resultBox = document.getElementById('effectiveConfigResult');
+    const status = document.getElementById('effectiveConfigMessage');
+    const configKey = document.getElementById('effectiveConfigKey').value.trim();
+    const onDate = document.getElementById('effectiveConfigDate').value;
+    if (!configKey || !onDate) { status.textContent = 'Enter a configuration key and date.'; return; }
+    status.textContent = 'Checking approved version…';
+    resultBox.textContent = '';
+    const params = new URLSearchParams({
+      config_type: document.getElementById('effectiveConfigType').value,
+      config_key: configKey,
+      on_date: onDate
+    });

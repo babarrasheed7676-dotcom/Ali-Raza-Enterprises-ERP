@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Inventory Journal Review — {{ app_name }}{% endblock %}
+{% block breadcrumb %}Accounting / Inventory Journal Review{% endblock %}
+{% block content %}
+<div class="accounting-page">
+  <div class="page-heading">
+    <div>
+      <div class="eyebrow">INVENTORY / GENERAL LEDGER CONTROL</div>
+      <h1>Posted Stock Valuation Review</h1>
+      <p>Read-only valuation review for the latest posted stock documents.</p>
+    </div>
+    <a class="back-link" href="/accounting/setup-readiness">Back to Setup Readiness</a>
+  </div>
+
+  <div class="notice warning">
+    <strong>Review only — no GL journals are created or posted here</strong>
+    <p>Each source document is checked for OWN ownership, supported transaction type, item category and usable stock cost. A review-ready result is not accounting-policy approval.</p>
+  </div>
+
+  <div class="module-grid accounting-grid">
+    <section class="module-card accounting-tile">
+      <h3>Documents reviewed</h3>
+      <p>{{ review.document_count }}</p>
+    </section>
+    <section class="module-card accounting-tile">
+      <h3>Valuation ready</h3>
+      <p>{{ review.ready_count }}</p>
+    </section>
+    <section class="module-card accounting-tile">
+      <h3>Blocked</h3>
+      <p>{{ review.blocked_count }}</p>
+    </section>
+  </div>
+
+  {% for item in review.documents %}
+  <section class="module-card" style="margin-top:16px;padding:18px;">
+    <div class="module-top">
+      <h2>{{ item.document_no }}</h2>
+      <span class="module-status">{% if item.ready_for_mapping_review %}Valuation ready for mapping review{% else %}Blocked{% endif %}</span>
+    </div>
+    <p>{{ item.document_type }} · {{ item.document_date }} · {{ item.status }} · {{ item.line_count }} lines</p>
+    <div class="module-grid accounting-grid">
+      <section class="module-card accounting-tile">
+        <h3>Inward value</h3>
+        <p>{{ "%.6f"|format(item.total_inward_value) }}</p>
+      </section>
+      <section class="module-card accounting-tile">
+        <h3>Outward value</h3>
+        <p>{{ "%.6f"|format(item.total_outward_value) }}</p>
+      </section>
+      <section class="module-card accounting-tile">
+        <h3>Net stock movement</h3>
+        <p>{{ "%.6f"|format(item.net_stock_value_change) }}</p>
+      </section>
+      <section class="module-card accounting-tile">
+        <h3>Gross journal basis</h3>
+        <p>{{ "%.6f"|format(item.gross_movement_value) }}</p>
+      </section>
+    </div>
+    <h3>Category valuation</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Category</th><th>Lines</th><th>Inward value</th><th>Outward value</th></tr></thead>
+        <tbody>
+        {% for category in item.categories %}
+          <tr>
+            <td>{{ category.category_code }} · {{ category.category_name }}</td>
+            <td>{{ category.line_count }}</td>
+            <td>{{ "%.6f"|format(category.inward_value) }}</td>
+            <td>{{ "%.6f"|format(category.outward_value) }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4">No eligible OWN category lines.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if item.blockers %}
+    <div class="notice warning" style="margin-top:12px;">
+      <strong>Review blockers</strong>
+      <ul>{% for blocker in item.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+    <p class="muted">Automatic journal approval: No. No journal was created from this review.</p>
+  </section>
+  {% else %}
+  <section class="module-card" style="margin-top:16px;padding:18px;">
+    <p>No posted stock documents were found for this company.</p>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

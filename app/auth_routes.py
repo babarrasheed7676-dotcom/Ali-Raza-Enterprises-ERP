@@ -156,4 +156,3 @@ async def logout_submit(request: Request):
     )
     response.headers["Cache-Control"] = "no-store"
     return response
-

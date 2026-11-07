@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Random 100-Piece Packing · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Packing / Random 100-Piece{% endblock %}
+{% block content %}
+<style>
+.rnd-wrap{display:grid;gap:16px}.rnd-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.rnd-head h1{margin:4px 0 6px;font-size:27px}.rnd-muted{color:var(--muted,#8490a2);font-size:12px;line-height:1.6}.rnd-panel{border:1px solid var(--border,#263449);border-radius:12px;background:var(--surface,#111c2b);padding:16px}.rnd-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.rnd-field{display:grid;gap:6px}.rnd-field label{font-size:12px;color:var(--muted,#8490a2)}.rnd-field input,.rnd-field textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--border,#263449);border-radius:8px;background:var(--background,#0b1220);color:inherit}.rnd-table-wrap{overflow:auto;border:1px solid var(--border,#263449);border-radius:10px}.rnd-table{border-collapse:collapse;width:100%;min-width:1050px}.rnd-table th,.rnd-table td{padding:10px;border-bottom:1px solid var(--border,#263449);font-size:12px;text-align:left}.rnd-table th{color:var(--muted,#8490a2);font-size:10px;text-transform:uppercase}.rnd-table input[type=number]{width:90px;padding:7px;border:1px solid var(--border,#263449);border-radius:6px;background:var(--background,#0b1220);color:inherit}.rnd-empty,.rnd-error{padding:16px;border-radius:9px}.rnd-empty{border:1px dashed var(--border,#263449);color:var(--muted,#8490a2)}.rnd-error{border:1px solid #b45309;color:#fbbf24}.rnd-actions{display:flex;gap:8px;flex-wrap:wrap}.rnd-btn{padding:10px 14px;border:1px solid var(--border,#263449);border-radius:8px;color:inherit;background:var(--surface,#111c2b);text-decoration:none;cursor:pointer}.rnd-btn.primary{background:var(--accent,#2563eb);color:white;border-color:var(--accent,#2563eb)}.rnd-btn:disabled{opacity:.45;cursor:not-allowed}@media(max-width:700px){.rnd-grid{grid-template-columns:1fr}}
+</style>
+<div class="rnd-wrap">
+  <div class="rnd-head">
+    <div><div class="eyebrow">PRODUCTION · NALKI FINISHED GOODS</div><h1>Random 100-Piece Packing</h1><p class="rnd-muted">One finished box contains 100 unique shades, one piece of each shade. Fresh Nalki and accepted party-rejected-but-usable returns can be mixed; every source line keeps its own batch, stage, owner and cost trace.</p></div>
+    <span class="packing-status">DRAFT ONLY</span>
+  </div>
+  {% if packing_errors %}<div class="rnd-error"><strong>Draft not saved:</strong><ul>{% for error in packing_errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+  <section class="rnd-panel">
+    <div class="rnd-grid">
+      <div class="rnd-field"><label>Packing date *</label><input type="date" name="packing_date" form="randomPackingForm" max="{{ today }}" required value="{{ packing_form.packing_date or today }}"></div>
+      <div class="rnd-field"><label>Finished 100-piece boxes *</label><input type="number" id="randomBoxes" name="finished_boxes_qty" form="randomPackingForm" min="1" max="100000" step="1" required value="{{ packing_form.finished_boxes_qty or '' }}"></div>
+      <div class="rnd-field"><label>Source lines selected</label><input id="randomSelectedCount" value="0" readonly></div>
+    </div>
+    <p class="rnd-muted">For each shade, total allocated pieces must equal the finished-box quantity. If a shade is split across source lines, enter the split quantities so their total equals the box count. Each selected source line is saved as a separate traceable packing item.</p>
+  </section>
+  <form id="randomPackingForm" method="post" action="/modules/packing/random/new">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" id="randomAllocations" name="allocations_json" value="{{ packing_form.allocations_json or '' }}">
+    <section class="rnd-panel">
+      <h3>Verified source lines</h3>
+      {% if candidates %}
+        <div class="rnd-table-wrap"><table class="rnd-table"><thead><tr><th>Select</th><th>Source</th><th>Source order</th><th>Line ID</th><th>Brand / Shade</th><th>Stage</th><th>Available pcs</th><th>Owner</th><th>Source cost / pc</th><th>Allocate pcs</th></tr></thead><tbody>
+        {% for c in candidates %}
+          <tr data-source-type="{{ c.source_type }}" data-source-line-id="{{ c.source_line_id }}" data-shade-id="{{ c.shade_id }}">
+            <td><input type="checkbox" class="rnd-select" aria-label="Select source line {{ c.source_line_id }}"></td>
+            <td>{{ "Fresh Nalki" if c.source_type == "FRESH_NALKI" else "Accepted party return" }}</td>
+            <td>{{ c.source_order_no }}</td><td>{{ c.source_line_id }}</td>
+            <td>{{ c.brand_name }} / {{ c.shade_code }}{% if c.shade_name %} · {{ c.shade_name }}{% endif %}</td>
+            <td>{{ c.process_stage_code }}</td><td>{{ c.available_pieces }}</td>
+            <td>{% if c.ownership_type_id == 1 %}OWN{% else %}PARTY · {{ c.owner_party_name }}{% endif %}</td>
+            <td>{{ c.unit_cost }}</td>
+            <td><input type="number" class="rnd-qty" min="1" max="{{ c.available_pieces }}" step="1" value="" disabled></td>
+          </tr>
+        {% endfor %}
+        </tbody></table></div>
+      {% else %}
+        <div class="rnd-empty"><strong>No eligible source lines are available right now.</strong><p>Random packing will stay disabled until there are posted GOOD/ACCEPTED Nalki production lines or accepted outside-labeling returns with explicit NALKI/LABELING stage, matching positive stock, ownership and source cost.</p></div>
+      {% endif %}
+    </section>
+    <section class="rnd-panel">
+      <div class="rnd-field"><label>Remarks</label><textarea name="remarks" rows="3" maxlength="2000">{{ packing_form.remarks or '' }}</textarea></div>
+      <p class="rnd-muted">Save creates DRAFT only. It does not reserve or consume stock, move stock, create finished-goods transfers, charge packaging material, calculate packing theka, or post accounting. Availability is checked again under lock at save; approval/posting will require another stock validation.</p>
+    </section>
+    <div class="rnd-actions"><a class="rnd-btn" href="/modules/packing">Back to Packing</a><button id="randomSave" class="rnd-btn primary" type="submit" {% if not candidates %}disabled{% endif %}>Save Random Packing Draft</button></div>
+  </form>
+</div>
+<script>
+(()=>{const form=document.getElementById('randomPackingForm');if(!form)return;const rows=[...document.querySelectorAll('.rnd-table tbody tr')];const count=document.getElementById('randomSelectedCount');const output=document.getElementById('randomAllocations');const boxes=document.getElementById('randomBoxes');const save=document.getElementById('randomSave');for(const row of rows){const check=row.querySelector('.rnd-select'),qty=row.querySelector('.rnd-qty');check.addEventListener('change',()=>{qty.disabled=!check.checked;if(check.checked&&!qty.value)qty.value=boxes.value||'1';count.value=String(rows.filter(r=>r.querySelector('.rnd-select').checked).length);});boxes.addEventListener('input',()=>{if(check.checked&&!qty.dataset.manual)qty.value=boxes.value;});qty.addEventListener('input',()=>{qty.dataset.manual='1';});}form.addEventListener('submit',e=>{const selected=rows.filter(r=>r.querySelector('.rnd-select').checked).map(r=>({source_type:r.dataset.sourceType,source_line_id:Number(r.dataset.sourceLineId),quantity_pieces:Number(r.querySelector('.rnd-qty').value)}));if(!Number.isInteger(Number(boxes.value))||Number(boxes.value)<=0||selected.length===0||selected.some(x=>!Number.isInteger(x.quantity_pieces)||x.quantity_pieces<=0)){e.preventDefault();alert('Enter a positive whole box quantity and select valid source allocations.');return;}output.value=JSON.stringify(selected);});})();
+</script>
+{% endblock %}

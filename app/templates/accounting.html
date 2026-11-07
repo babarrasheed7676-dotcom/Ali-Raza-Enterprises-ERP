@@ -14,11 +14,13 @@
 </div>
 
 <div class="notice warning">
-  <strong>Read-only design preview</strong>
+  <strong>General Ledger foundation installed — setup required</strong>
   <p>
-    Financial data is not connected to this screen yet. No live balances,
-    transactions or opening balances are displayed. No financial records
-    can be changed here.
+    The General Ledger database migration is applied and the General Journal
+    draft, approval, posting and reversal workflow is connected. No fiscal year
+    or accounting period is configured yet, so journal entries cannot be
+    created until an open period is set up. No journal entries have been posted.
+    Read-only Trial Balance and account-wise General Ledger reports are connected. Use Setup Readiness to review fiscal-period and party-opening gaps.
   </p>
 </div>
 
@@ -36,11 +38,21 @@
   <section class="module-card accounting-tile">
     <div class="module-top">
       <div class="module-icon">PL</div>
-      <span class="module-status">Not connected</span>
+      <span class="module-status">Party profile review</span>
     </div>
     <h3>Party Ledger</h3>
-    <p>Opening balance, dated debit and credit entries, running balance and Dr/Cr.</p>
-    <div class="module-status">Source tables require verification</div>
+    <p>Company-scoped party master and existing supplier financial-profile fields. Party opening amounts are not yet posted to the General Ledger.</p>
+    <a class="back-link" href="/accounting/party-ledger">Open Party Ledger</a>
+  </section>
+
+  <section class="module-card accounting-tile">
+    <div class="module-top">
+      <div class="module-icon">GJ</div>
+      <span class="module-status">Workflow connected · period setup pending</span>
+    </div>
+    <h3>General Journal</h3>
+    <p>Balanced debit/credit lines with separate draft, approval, posting and reversal controls. Journal entry creation remains blocked until an open fiscal year and accounting period are configured.</p>
+    <a class="back-link" href="/accounting/journal">Open General Journal</a>
   </section>
 
   <section class="module-card accounting-tile">
@@ -56,11 +68,21 @@
   <section class="module-card accounting-tile">
     <div class="module-top">
       <div class="module-icon">R</div>
-      <span class="module-status">Planned</span>
+      <span class="module-status">Read-only reports connected</span>
     </div>
     <h3>Accounting Reports</h3>
-    <p>Future account summaries and financial reporting after verification.</p>
-    <div class="module-status">Not implemented</div>
+    <p>Movement-based Trial Balance and account-wise General Ledger from posted journal entries. Opening balances remain clearly unconfigured.</p>
+    <a class="back-link" href="/accounting/reports">Open Trial Balance & Ledger</a>
+  </section>
+
+  <section class="module-card accounting-tile">
+    <div class="module-top">
+      <div class="module-icon">SR</div>
+      <span class="module-status">Read-only setup audit</span>
+    </div>
+    <h3>Setup Readiness</h3>
+    <p>Review fiscal years, accounting periods, party financial profiles and opening-balance readiness before any posting is enabled.</p>
+    <a class="back-link" href="/accounting/setup-readiness">Open Setup Readiness</a>
   </section>
 </div>
 
@@ -71,7 +93,7 @@
     <p>
       An unconfigured opening balance must remain marked as not configured,
       not be assumed to be zero. Bills and party ledgers will remain separate.
-      Financial posting is not available in this preview.
+      General Journal posting is implemented but remains blocked until an open accounting period is configured. Reports must not show unconfigured opening balances as zero.
     </p>
   </div>
 </div>

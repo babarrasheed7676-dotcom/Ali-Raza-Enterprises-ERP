@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}PARTY Stock Use Requests · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Ownership Control / PARTY Use Requests{% endblock %}
+{% block content %}
+<style>
+.our-wrap{display:grid;gap:16px}.our-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.our-head h1{margin:4px 0;font-size:27px}.our-muted{color:var(--muted,#8490a2);font-size:12px;line-height:1.6}.our-panel{border:1px solid var(--border,#263449);border-radius:14px;background:var(--surface,#111c2b);padding:16px}.our-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}.our-stat{border:1px solid var(--border,#263449);border-radius:11px;padding:13px}.our-stat strong{display:block;font-size:25px;margin-top:5px}.our-table-wrap{overflow:auto}.our-table{border-collapse:collapse;width:100%;min-width:1050px}.our-table th,.our-table td{padding:11px 9px;border-bottom:1px solid var(--border,#263449);text-align:left;vertical-align:top;font-size:12px}.our-table th{font-size:10px;text-transform:uppercase;color:var(--muted,#8490a2)}.our-pill{display:inline-block;border-radius:20px;padding:4px 9px;background:var(--surface-muted,#263449);font-size:10px}.our-actions{display:flex;gap:6px;flex-wrap:wrap}.our-btn{padding:7px 10px;border:1px solid var(--border,#263449);border-radius:7px;background:var(--surface,#111c2b);color:inherit;cursor:pointer}.our-btn:disabled{opacity:.5}.our-empty{padding:20px;border:1px dashed var(--border,#263449);border-radius:10px;color:var(--muted,#8490a2)}#ourMessage{min-height:20px}
+</style>
+<div class="our-wrap">
+ <div class="our-head">
+  <div><div class="eyebrow">OWNERSHIP GOVERNANCE · SEPARATION OF DUTIES</div><h1>PARTY Stock Use Requests</h1><p class="our-muted">Dyeing aur Nalki Packing ke PARTY-stock requests yahan review hote hain. Requester apni request approve nahi kar sakta. Approval sirf requested PKR rate lock karta hai; stock issue, consumption ya accounting posting nahi hoti.</p></div>
+  <a class="btn btn-secondary" href="/">Back to Overview</a>
+ </div>
+ <div class="our-stats">
+  <div class="our-stat"><span class="our-muted">TOTAL REQUESTS</span><strong>{{ requests|length }}</strong></div>
+  <div class="our-stat"><span class="our-muted">PENDING</span><strong>{{ pending_count }}</strong></div>
+  <div class="our-stat"><span class="our-muted">APPROVED</span><strong>{{ approved_count }}</strong></div>
+  <div class="our-stat"><span class="our-muted">REJECTED</span><strong>{{ rejected_count }}</strong></div>
+ </div>
+ <section class="our-panel">
+  <h2 style="margin-top:0">Create separate PARTY-use request</h2>
+  <p class="our-muted">Select an existing DRAFT PARTY line. The system rechecks the company, owner, quantity, document date and effective approved ownership policy before saving.</p>
+  {% if draft_lines %}
+  <form id="ourCreateForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+   <label class="our-muted">DRAFT source line<select id="ourLine" required style="display:block;width:100%;padding:10px;margin-top:5px;background:var(--surface);color:inherit;border:1px solid var(--border);border-radius:8px"><option value="">Select PARTY line</option>{% for x in draft_lines %}<option value="{{ loop.index0 }}">{{ x.use_module }} ? {{ x.source_document }} ? Line #{{ x.target_line_id }} ? {{ x.source_description }} ? {{ x.party_name }} ? {{ x.requested_quantity }} {{ x.unit_code }}</option>{% endfor %}</select></label>
+   <label class="our-muted">Requested PKR rate<input id="ourRate" type="number" min="0.000001" step="0.000001" required style="display:block;width:100%;padding:10px;margin-top:5px;background:var(--surface);color:inherit;border:1px solid var(--border);border-radius:8px"></label>
+   <label class="our-muted" style="grid-column:span 2">Reason<textarea id="ourReason" minlength="5" maxlength="1000" required rows="2" style="display:block;width:100%;padding:10px;margin-top:5px;background:var(--surface);color:inherit;border:1px solid var(--border);border-radius:8px"></textarea></label>
+   <div style="display:flex;align-items:end"><button class="our-btn" type="submit">Save PENDING request</button></div>
+  </form>
+  {% else %}<div class="our-empty">Koi existing DRAFT PARTY line request ke liye available nahi. Pehle authorized module mein PARTY owner select kar ke DRAFT save karein.</div>{% endif %}
+ </section>
+ <section class="our-panel">
+  <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><h2 style="margin:0 0 5px">Request register</h2><p class="our-muted">Company-scoped records · latest 200 · newest pending requests first</p></div><span class="our-pill">READ / APPROVAL CONTROL</span></div>
+  <p id="ourMessage" class="our-muted" role="status" aria-live="polite"></p>
+  {% if requests %}
+  <div class="our-table-wrap"><table class="our-table"><thead><tr><th>Request</th><th>Module / Target line</th><th>Party owner</th><th>Requested quantity</th><th>Requested rate</th><th>Locked rate</th><th>Requester / Approver</th><th>Policy version</th><th>Status / Reason</th><th>Decision</th></tr></thead><tbody>
+  {% for r in requests %}
+   <tr>
+    <td>#{{ r.id }}<br><span class="our-muted">{{ r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '' }}</span></td>
+    <td><strong>{{ r.use_module }}</strong><br>Line #{{ r.target_line_id }}</td>
+    <td>{{ r.party_name }}<br><span class="our-muted">{{ r.party_code }}</span></td>
+    <td>{{ r.requested_quantity }} {{ r.unit_code or '' }}</td>
+    <td>{{ r.currency_code }} {{ r.requested_unit_rate }}</td>
+    <td>{% if r.locked_unit_rate is not none %}{{ r.currency_code }} {{ r.locked_unit_rate }}{% else %}—{% endif %}</td>
+    <td>{{ r.requester_name }}<br><span class="our-muted">Approver: {{ r.approver_name or '—' }}</span></td>
+    <td>#{{ r.ownership_policy_version_id }} · v{{ r.policy_version }}</td>
+    <td><span class="our-pill">{{ r.status }}</span><p class="our-muted">{{ r.request_reason }}</p>{% if r.decision_note %}<p class="our-muted">Decision: {{ r.decision_note }}</p>{% endif %}</td>
+    <td>{% if r.status == 'PENDING' and ((r.use_module == 'DYEING' and can_approve_dyeing) or (r.use_module == 'PACKING' and can_approve_packing)) %}
+      <div class="our-actions"><button class="our-btn" data-request-id="{{ r.id }}" data-decision="APPROVE">Approve & lock rate</button><button class="our-btn" data-request-id="{{ r.id }}" data-decision="REJECT">Reject</button></div>
+     {% elif r.status == 'PENDING' %}<span class="our-muted">Approval permission required</span>{% else %}<span class="our-muted">Decision locked</span>{% endif %}</td>
+   </tr>
+  {% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="our-empty"><strong>Abhi koi PARTY-use request maujood nahi.</strong><p>Request yahan tab nazar ayegi jab kisi authorized Dyeing ya Packing DRAFT line par PARTY owner, quantity, approved policy aur requested rate ke sath request save hogi.</p></div>{% endif %}
+ </section>
+ <section class="our-panel"><strong>Important safeguards</strong><ul class="our-muted"><li>Nalki ki current approved policy PARTY stock allow nahi karti; is liye Nalki request tab tak create nahi hogi jab tak policy separately approve na ho.</li><li>Requester aur approver alag users honge.</li><li>Approved rate immutable hai; request ko edit karke rate change nahi kiya ja sakta.</li><li>Approval se stock move, reserve, consume, cost post ya ledger entry nahi banti.</li></ul></section>
+</div>
+<script>
+(()=> {
+ const csrf={{ csrf_token|tojson }};
+ const draftLines={{ draft_lines|tojson }};
+ const createForm=document.getElementById("ourCreateForm");
+ const msg=document.getElementById("ourMessage");
+ if(createForm) createForm.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const idx=Number(document.getElementById("ourLine").value);
+  const line=draftLines[idx];
+  if(!line){msg.textContent="Select a valid DRAFT PARTY line.";return;}
+  const body={module:line.use_module,target_line_id:line.target_line_id,
+   owner_party_id:line.owner_party_id,requested_quantity:String(line.requested_quantity),
+   unit_id:line.unit_id,effective_on:line.effective_on,
+   requested_unit_rate:document.getElementById("ourRate").value,
+   reason:document.getElementById("ourReason").value};
+  msg.textContent="Checking approved policy and saving request?";
+  try{
+   const response=await fetch("/api/production/ownership-use-requests",{method:"POST",
+    credentials:"same-origin",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf,"Accept":"application/json"},
+    body:JSON.stringify(body)});
+   const data=await response.json();
+   if(!response.ok)throw new Error(data.detail||"Request could not be saved.");
+   msg.textContent="PARTY-use request #"+data.ownership_use_request.id+" saved as PENDING.";
+   window.location.reload();
+  }catch(err){msg.textContent=err.message;}
+ });
+ document.querySelectorAll("[data-request-id][data-decision]").forEach(btn=>btn.addEventListener("click",async()=>{
+  const decision=btn.dataset.decision;
+  const note=window.prompt(decision==="APPROVE"?"Approval note (minimum 5 characters):":"Rejection reason (minimum 5 characters):")||"";
+  if(note.trim().length<5)return;
+  if(decision==="APPROVE"&&!window.confirm("Requested PKR rate lock kar ke request approve karni hai? Stock posting nahi hogi."))return;
+  btn.disabled=true;msg.textContent="Saving decision?";
+  try{
+   const response=await fetch("/api/production/ownership-use-requests/"+encodeURIComponent(btn.dataset.requestId)+"/decision",
+    {method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf,"Accept":"application/json"},
+     body:JSON.stringify({decision,decision_note:note})});
+   const data=await response.json();if(!response.ok)throw new Error(data.detail||"Decision could not be saved.");
+   msg.textContent="Request #"+data.ownership_use_request.id+" "+data.ownership_use_request.status+".";
+   window.location.reload();
+  }catch(err){msg.textContent=err.message;btn.disabled=false;}
+ }));
+})();
+</script>
+{% endblock %}

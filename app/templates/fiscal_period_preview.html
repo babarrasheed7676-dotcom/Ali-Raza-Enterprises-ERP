@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Fiscal Year Setup — {{ app_name }}{% endblock %}
+{% block breadcrumb %}Accounting / Fiscal Year Setup{% endblock %}
+{% block content %}
+<div class="accounting-page">
+  <div class="page-heading">
+    <div>
+      <div class="eyebrow">ACCOUNTING SETUP / CONTROLLED CREATION</div>
+      <h1>Fiscal Year & Monthly Period Setup</h1>
+      <p>ARE financial year: 1 July through 30 June, with twelve monthly accounting periods.</p>
+    </div>
+    <a class="back-link" href="/accounting/setup-readiness">Back to Setup Readiness</a>
+  </div>
+
+  {% if created %}
+  <div class="notice success">
+    <strong>Fiscal year and twelve accounting periods created.</strong>
+    <p>The creation and audit record were committed together. No opening balances or journals were created or posted.</p>
+  </div>
+  {% endif %}
+
+  <div class="notice warning">
+    <strong>Preview is read-only; creation is a separate controlled action.</strong>
+    <p>Previewing dates never changes data. Fiscal-year creation is restricted to users with accounting approval permission and creates the fiscal-year record, twelve open monthly periods and its audit record in one transaction.</p>
+  </div>
+
+  {% if errors %}
+  <div class="notice warning"><strong>Dates need correction</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>
+  {% endif %}
+
+  <section class="module-placeholder">
+    <form method="get" action="/accounting/fiscal-period-preview">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="start-date">Fiscal year start date</label>
+          <input id="start-date" name="start_date" type="date" required value="{{ start_date }}">
+        </div>
+        <div class="form-group">
+          <label for="end-date">Fiscal year end date</label>
+          <input id="end-date" name="end_date" type="date" required value="{{ end_date }}">
+        </div>
+      </div>
+      <button type="submit">Preview Monthly Periods</button>
+    </form>
+  </section>
+
+  {% if preview %}
+  <div class="notice {% if preview.is_valid %}success{% else %}warning{% endif %}">
+    <strong>{% if preview.is_valid %}No existing fiscal-year overlap detected{% else %}Date overlap detected — do not proceed{% endif %}</strong>
+    <p>{{ preview.message }}</p>
+    <p>Range: {{ preview.start_date }} to {{ preview.end_date }} · {{ preview.total_days }} days · {{ preview.period_count }} monthly periods.</p>
+  </div>
+
+  {% if preview.conflicts %}
+  <section class="module-placeholder">
+    <h2>Existing overlapping fiscal years</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+      <tbody>{% for conflict in preview.conflicts %}
+      <tr><td>{{ conflict.name }}</td><td>{{ conflict.start_date }}</td><td>{{ conflict.end_date }}</td><td>{{ "Closed" if conflict.is_closed else "Open" }}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+  </section>
+  {% endif %}
+
+  <section class="module-placeholder">
+    <h2>Generated monthly date ranges</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Period</th><th>Start date</th><th>End date</th><th>Days</th></tr></thead>
+      <tbody>{% for period in preview.periods %}
+      <tr><td>{{ period.number }}</td><td>{{ period.name }}</td><td>{{ period.start_date }}</td><td>{{ period.end_date }}</td><td>{{ period.day_count }}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+  </section>
+
+  {% if preview.is_valid and preview.period_count == 12 and preview.start_date.month == 7 and preview.start_date.day == 1 and preview.end_date.month == 6 and preview.end_date.day == 30 and preview.end_date.year == preview.start_date.year + 1 %}
+    {% if can_create_fiscal_year %}
+    <section class="module-placeholder">
+      <h2>Create this fiscal year</h2>
+      <p>Only the accounting approver can perform this action. This creates twelve open periods; it does not create journals or opening balances.</p>
+      <form method="post" action="/accounting/fiscal-year/create">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="start_year" value="{{ preview.start_date.year }}">
+        <button type="submit">Create FY {{ preview.start_date.year }}-{{ "%02d"|format((preview.start_date.year + 1) % 100) }} and 12 periods</button>
+      </form>
+    </section>
+    {% else %}
+    <div class="notice warning"><strong>Approval permission required</strong><p>Your current role can preview this fiscal year but cannot create it.</p></div>
+    {% endif %}
+  {% elif preview.is_valid %}
+    <div class="notice warning"><strong>Standard fiscal-year dates required</strong><p>ARE fiscal years must begin on 1 July and end on 30 June of the following year.</p></div>
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

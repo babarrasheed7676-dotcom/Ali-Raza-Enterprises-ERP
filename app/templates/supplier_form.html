@@ -101,12 +101,12 @@
           </select>
         </div>
       </div>
-      <p class="supplier-note">Tax withholding and credit-allowed flags will be included in the approved save workflow after their business defaults are confirmed.</p>
+      <p class="supplier-note">Current save defaults: Tax withholding = No; Credit allowed = Yes. These values are applied automatically and are not editable on this form.</p>
     </section>
 
     <div class="supplier-alert">
-      <strong>Validation-only phase:</strong>
-      This form does not create or update database records. Duplicate supplier-code verification and audit logging are deferred until the save workflow is approved.
+      <strong>Supplier save:</strong>
+      Saving this form creates the supplier and its financial profile. Supplier codes are checked for duplicates, and both records are audit-logged. If either save step fails, the transaction is rolled back.
     </div>
 
     <div class="supplier-actions">

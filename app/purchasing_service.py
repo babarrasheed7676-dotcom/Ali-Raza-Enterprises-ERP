@@ -1,7 +1,13 @@
 """Company-scoped Purchasing queries and controlled Goods Receipt workflows."""
 
+from datetime import date
+
 from .db import get_connection
 from .audit_service import write_audit_log
+from .configuration_runtime_service import (
+    resolve_purchase_line_configuration_snapshots,
+    insert_purchase_configuration_snapshot,
+)
 
 
 PURCHASING_SECTIONS = {
@@ -176,7 +182,7 @@ PURCHASING_SECTIONS = {
               )
         """,
         "select": """
-            SELECT r.return_no, r.return_date, p.party_name,
+            SELECT r.id, r.return_no, r.return_date, p.party_name,
                    pr.receipt_no, r.status, r.grand_total, r.reason
         """,
         "order": "ORDER BY r.return_date DESC, r.id DESC",
@@ -506,6 +512,22 @@ def get_purchase_receipt_form_data(company_id: int) -> dict:
     }
 
 
+def _normalize_supplier_invoice_no(invoice_no) -> str | None:
+    """Normalize supplier invoice identity for duplicate checks."""
+    normalized = " ".join(str(invoice_no or "").strip().upper().split())
+    return normalized or None
+
+
+def _require_single_raw_store_location(locations) -> int:
+    """Return the one valid company RAW_STORE inventory-location ID."""
+    if len(locations) != 1:
+        raise ValueError(
+            "The company must have exactly one active stock-enabled RAW_STORE "
+            "location before a Goods Receipt can be saved."
+        )
+    return int(locations[0]["id"])
+
+
 def create_purchase_receipt_draft(
     company_id: int,
     created_by: int,
@@ -610,7 +632,9 @@ def create_purchase_receipt_draft(
         raise ValueError("Remarks cannot exceed 4,000 characters.")
 
     receipt_date = str(header.get("receipt_date") or "").strip() or None
+    effective_on = date.fromisoformat(receipt_date) if receipt_date else date.today()
     invoice_date = str(header.get("supplier_invoice_date") or "").strip() or None
+    supplier_invoice_no = _normalize_supplier_invoice_no(header.get("supplier_invoice_no"))
     user_remarks = str(header.get("remarks") or "").strip()
     # The existing receipt table has no GST-choice column. Preserve the explicit choice
     # in the header remarks without inventing a tax rate or altering the schema.
@@ -628,6 +652,33 @@ def create_purchase_receipt_draft(
             )
             if cur.fetchone() is None:
                 raise ValueError("Select an active supplier belonging to this company.")
+
+            if supplier_invoice_no:
+                # Serialize duplicate checks for this company/supplier/invoice key.
+                # The advisory lock avoids concurrent draft saves racing each other.
+                cur.execute(
+                    "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                    (f"supplier_invoice:{company_id}:{supplier_id}:{supplier_invoice_no}",),
+                )
+                cur.execute(
+                    """
+                    SELECT receipt_no, status
+                    FROM purchasing.purchase_receipts
+                    WHERE company_id = %s AND supplier_id = %s
+                      AND UPPER(REGEXP_REPLACE(BTRIM(supplier_invoice_no), '[[:space:]]+', ' ', 'g')) = %s
+                    ORDER BY id
+                    LIMIT 1
+                    FOR SHARE
+                    """,
+                    (company_id, supplier_id, supplier_invoice_no),
+                )
+                duplicate_invoice = cur.fetchone()
+                if duplicate_invoice is not None:
+                    raise ValueError(
+                        f"Supplier invoice {supplier_invoice_no} is already recorded "
+                        f"on Goods Receipt {duplicate_invoice['receipt_no']} "
+                        f"({duplicate_invoice['status']}). Duplicate invoice entry is blocked."
+                    )
 
             if po_id:
                 cur.execute(
@@ -679,6 +730,38 @@ def create_purchase_receipt_draft(
                     )
                     if cur.fetchone() is None:
                         raise ValueError(f"Line {line['line_no']}: owner party is invalid for this company.")
+
+                cur.execute(
+                    """SELECT i.id,i.item_code,i.item_name,
+                              u.id AS unit_id,u.code,u.name,u.decimal_places
+                       FROM master.item_variants v
+                       JOIN master.items i ON i.id=v.item_id
+                       JOIN master.units u ON u.id=%s
+                       WHERE v.id=%s AND i.company_id=%s
+                         AND i.is_active AND v.is_active AND u.is_active
+                       FOR SHARE OF i,v,u""",
+                    (line["unit_id"], line["item_variant_id"], company_id),
+                )
+                identity = cur.fetchone()
+                if identity is None:
+                    raise ValueError(f"Line {line['line_no']}: item/unit master identity is no longer active.")
+                identity = dict(identity)
+                item_master = {
+                    "id": identity["id"],
+                    "item_code": identity["item_code"],
+                    "item_name": identity["item_name"],
+                }
+                unit_master = {
+                    "id": identity["unit_id"],
+                    "code": identity["code"],
+                    "name": identity["name"],
+                    "decimal_places": identity["decimal_places"],
+                }
+                line["configuration_snapshots"] = resolve_purchase_line_configuration_snapshots(
+                    cur, company_id=company_id, effective_on=effective_on,
+                    item_master=item_master, unit_master=unit_master,
+                )
+
                 po_line_id = line["purchase_order_line_id"]
                 if po_line_id:
                     if not po_id:
@@ -706,6 +789,27 @@ def create_purchase_receipt_draft(
                 elif po_id:
                     raise ValueError(f"Line {line['line_no']}: select the matching Purchase Order line.")
 
+            # Resolve the company's single raw-material godown by its stable
+            # master code; never depend on a seeded numeric inventory-location ID.
+            cur.execute(
+                """
+                SELECT il.id
+                FROM inventory.locations il
+                JOIN core.locations cl ON cl.id = il.core_location_id
+                WHERE cl.company_id = %s
+                  AND cl.code = 'RAW_STORE'
+                  AND cl.is_active = TRUE
+                  AND il.is_active = TRUE
+                  AND il.allow_stock = TRUE
+                FOR SHARE OF il, cl
+                """,
+                (company_id,),
+            )
+            raw_store_locations = cur.fetchall()
+            warehouse_location_id = _require_single_raw_store_location(
+                raw_store_locations
+            )
+
             cur.execute(
                 "SELECT core.get_next_document_no(%s, %s) AS document_no",
                 (company_id, "PURCHASE_RECEIPT"),
@@ -721,15 +825,16 @@ def create_purchase_receipt_draft(
                     remarks, created_by
                 ) VALUES (
                     %s, %s, COALESCE(%s::date, CURRENT_DATE), %s,
-                    %s, %s, %s::date, 'DRAFT', 9, %s, %s,
+                    %s, %s, %s::date, 'DRAFT', %s, %s, %s,
                     %s, %s, %s, %s, %s, %s
                 ) RETURNING id
                 """,
                 (
                     company_id, receipt_no, receipt_date, po_id, supplier_id,
                     str(header.get("supplier_invoice_no") or "").strip() or None,
-                    invoice_date, subtotal, discount_total + header_discount,
-                    tax_total, freight, other, grand_total, remarks, created_by,
+                    invoice_date, warehouse_location_id, subtotal,
+                    discount_total + header_discount, tax_total, freight, other,
+                    grand_total, remarks, created_by,
                 ),
             )
             receipt_id = int(cur.fetchone()["id"])
@@ -743,6 +848,7 @@ def create_purchase_receipt_draft(
                         discount_amount, tax_amount, freight_amount, other_charges,
                         line_total, ownership_type_id, owner_party_id, remarks
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 0, 0, %s, %s, %s, %s)
+                    RETURNING id
                     """,
                     (
                         receipt_id, line["line_no"], line["purchase_order_line_id"],
@@ -753,6 +859,13 @@ def create_purchase_receipt_draft(
                         line["remarks"],
                     ),
                 )
+                receipt_line_id = int(cur.fetchone()["id"])
+                for snapshot in line["configuration_snapshots"]:
+                    insert_purchase_configuration_snapshot(
+                        cur, company_id=company_id, receipt_id=receipt_id,
+                        receipt_line_id=receipt_line_id, user_id=created_by,
+                        snapshot=snapshot,
+                    )
 
         write_audit_log(
             conn,
@@ -792,6 +905,16 @@ def create_purchase_receipt_draft(
                         "line_total": line["line_total"],
                         "ownership_type_id": line["ownership_type_id"],
                         "owner_party_id": line["owner_party_id"],
+                        "configuration_snapshots": [
+                            {
+                                "config_type": snapshot["config_type"],
+                                "config_key": snapshot["config_key"],
+                                "source": snapshot["source"],
+                                "configuration_version_id": snapshot["configuration_version_id"],
+                                "payload": snapshot["payload"],
+                            }
+                            for snapshot in line["configuration_snapshots"]
+                        ],
                     }
                     for line in prepared
                 ],
@@ -875,522 +998,3 @@ def approve_purchase_receipt(
                 raise ValueError("Goods Receipt was not found for this company.")
 
             cur.execute(
-                """
-                SELECT id, document_no, status
-                FROM inventory.stock_documents
-                WHERE company_id = %s
-                  AND reference_document_type = 'PURCHASE_RECEIPT'
-                  AND reference_document_id = %s
-                FOR UPDATE
-                """,
-                (company_id, receipt_id),
-            )
-            linked_docs = cur.fetchall()
-            if receipt["status"] == "APPROVED":
-                if len(linked_docs) == 1 and linked_docs[0]["status"] == "APPROVED":
-                    return {
-                        "id": receipt_id,
-                        "receipt_no": receipt["receipt_no"],
-                        "status": "APPROVED",
-                        "stock_document_no": linked_docs[0]["document_no"],
-                        "already_approved": True,
-                    }
-                raise ValueError(
-                    "Goods Receipt and linked stock-document statuses are inconsistent. "
-                    "Do not retry; reconcile the documents first."
-                )
-            if receipt["status"] != "DRAFT":
-                raise ValueError("Only a DRAFT Goods Receipt can be approved.")
-            if linked_docs:
-                raise ValueError(
-                    "A stock document is already linked to this Goods Receipt. "
-                    "Duplicate posting is blocked; reconcile the existing link."
-                )
-
-            cur.execute(
-                """
-                SELECT 1 FROM master.parties
-                WHERE id = %s AND company_id = %s
-                  AND UPPER(party_type) = 'SUPPLIER' AND is_active = TRUE
-                """,
-                (receipt["supplier_id"], company_id),
-            )
-            if cur.fetchone() is None:
-                raise ValueError("The supplier is no longer active or valid for this company.")
-            cur.execute(
-                """
-                SELECT 1 FROM inventory.locations
-                WHERE id = %s AND is_active = TRUE AND allow_stock = TRUE
-                """,
-                (receipt["warehouse_location_id"],),
-            )
-            if cur.fetchone() is None:
-                raise ValueError(
-                    "The Goods Receipt warehouse location is inactive or does not allow stock."
-                )
-            if receipt["purchase_order_id"] is not None:
-                cur.execute(
-                    """
-                    SELECT supplier_id, status
-                    FROM purchasing.purchase_orders
-                    WHERE id = %s AND company_id = %s
-                    FOR SHARE
-                    """,
-                    (receipt["purchase_order_id"], company_id),
-                )
-                linked_po = cur.fetchone()
-                if (
-                    linked_po is None
-                    or linked_po["status"] != "APPROVED"
-                    or int(linked_po["supplier_id"]) != int(receipt["supplier_id"])
-                ):
-                    raise ValueError("The linked Purchase Order is no longer approved for this supplier.")
-
-            cur.execute(
-                """
-                SELECT id, line_no, item_variant_id, received_quantity, unit_id,
-                       unit_price, discount_amount, tax_amount, batch_id,
-                       ownership_type_id, owner_party_id, process_stage_id,
-                       purchase_order_line_id, remarks
-                FROM purchasing.purchase_receipt_lines
-                WHERE purchase_receipt_id = %s
-                ORDER BY line_no, id
-                FOR UPDATE
-                """,
-                (receipt_id,),
-            )
-            lines = cur.fetchall()
-            if not lines:
-                raise ValueError("A Goods Receipt without item lines cannot be approved.")
-
-            base_values = []
-            line_discounts = []
-            weights = []
-            for line in lines:
-                quantity = Decimal(str(line["received_quantity"]))
-                price = Decimal(str(line["unit_price"]))
-                discount = Decimal(str(line["discount_amount"]))
-                if quantity <= 0 or price < 0 or discount < 0:
-                    raise ValueError(f"Receipt line {line['line_no']} has invalid quantity or cost values.")
-                if int(line["ownership_type_id"]) != 1 or line["owner_party_id"] is not None:
-                    raise ValueError(
-                        "Supplier Goods Receipts accept OWN stock only. "
-                        "PARTY-owned material must use the separate Party Stock Receipt workflow."
-                    )
-                cur.execute(
-                    """
-                    SELECT 1
-                    FROM master.item_variants v
-                    JOIN master.items i ON i.id = v.item_id
-                    WHERE v.id = %s AND v.is_active = TRUE
-                      AND i.company_id = %s AND i.is_active = TRUE
-                      AND i.is_stock_item = TRUE
-                    """,
-                    (line["item_variant_id"], company_id),
-                )
-                if cur.fetchone() is None:
-                    raise ValueError(f"Receipt line {line['line_no']} has an inactive or invalid stock item.")
-                if line["purchase_order_line_id"] is not None:
-                    if receipt["purchase_order_id"] is None:
-                        raise ValueError("A GRN line references a PO line but the GRN has no PO header.")
-                    cur.execute(
-                        """
-                        SELECT 1
-                        FROM purchasing.purchase_order_lines
-                        WHERE id = %s AND purchase_order_id = %s
-                          AND item_variant_id = %s AND unit_id = %s
-                        FOR SHARE
-                        """,
-                        (
-                            line["purchase_order_line_id"],
-                            receipt["purchase_order_id"],
-                            line["item_variant_id"],
-                            line["unit_id"],
-                        ),
-                    )
-                    if cur.fetchone() is None:
-                        raise ValueError(f"Receipt line {line['line_no']} no longer matches its PO line item or unit.")
-                elif receipt["purchase_order_id"] is not None:
-                    raise ValueError(f"Receipt line {line['line_no']} is missing its Purchase Order line.")
-                base = quantity * price
-                net = base - discount
-                if net < 0:
-                    raise ValueError(f"Receipt line {line['line_no']} discount exceeds its value.")
-                base_values.append(base)
-                line_discounts.append(discount)
-                weights.append(net)
-
-            line_discount_total = sum(line_discounts, Decimal("0"))
-            stored_discount_total = Decimal(str(receipt["discount_amount"] or 0))
-            header_discount = stored_discount_total - line_discount_total
-            if header_discount < 0:
-                raise ValueError("Stored GRN discount total does not reconcile with its line discounts.")
-            net_before_header_discount = sum(weights, Decimal("0"))
-            if header_discount > net_before_header_discount:
-                raise ValueError("Header discount exceeds the remaining Goods Receipt value.")
-            freight = Decimal(str(receipt["freight_amount"] or 0))
-            other_charges = Decimal(str(receipt["other_charges"] or 0))
-            discount_allocations = _allocate_receipt_amount(
-                header_discount, weights, label="header discount"
-            )
-            if any(allocated > available for allocated, available in zip(discount_allocations, weights)):
-                raise ValueError(
-                    "Header discount cannot be allocated at the inventory cost precision. "
-                    "Adjust the discount or line values before approval."
-                )
-            freight_allocations = _allocate_receipt_amount(
-                freight, weights, label="freight"
-            )
-            other_allocations = _allocate_receipt_amount(
-                other_charges, weights, label="other charges"
-            )
-
-            cur.execute(
-                """
-                SELECT id
-                FROM inventory.transaction_types
-                WHERE code = 'PURCHASE_RECEIPT'
-                  AND is_active = TRUE
-                  AND affects_stock = TRUE
-                  AND affects_cost = TRUE
-                  AND is_inward = TRUE
-                  AND is_outward = FALSE
-                  AND is_transfer = FALSE
-                """
-            )
-            transaction_type = cur.fetchone()
-            if transaction_type is None:
-                raise ValueError("The active inward PURCHASE_RECEIPT inventory transaction type is not configured correctly.")
-
-            stock_document_no = f"GRN-{receipt['receipt_no']}"
-            cur.execute(
-                """
-                SELECT 1 FROM inventory.stock_documents
-                WHERE company_id = %s AND document_no = %s
-                """,
-                (company_id, stock_document_no),
-            )
-            if cur.fetchone() is not None:
-                raise ValueError(
-                    f"Stock document number {stock_document_no} is already in use. "
-                    "No document was created; resolve the numbering conflict first."
-                )
-            cur.execute(
-                """
-                INSERT INTO inventory.stock_documents (
-                    company_id, document_type, document_no, document_date,
-                    status, reference_document_type, reference_document_id,
-                    reference_document_no, remarks, created_by, transaction_type_id
-                ) VALUES (
-                    %s, 'PURCHASE_RECEIPT', %s, %s, 'DRAFT',
-                    'PURCHASE_RECEIPT', %s, %s, %s, %s, %s
-                ) RETURNING id
-                """,
-                (
-                    company_id, stock_document_no, receipt["receipt_date"],
-                    receipt_id, receipt["receipt_no"],
-                    f"Created from approved Goods Receipt {receipt['receipt_no']}",
-                    approved_by, transaction_type["id"],
-                ),
-            )
-            stock_document_id = int(cur.fetchone()["id"])
-
-            for index, line in enumerate(lines):
-                quantity = Decimal(str(line["received_quantity"]))
-                landed_cost = (
-                    base_values[index]
-                    - line_discounts[index]
-                    - discount_allocations[index]
-                    + freight_allocations[index]
-                    + other_allocations[index]
-                ).quantize(quantum, rounding=ROUND_HALF_UP)
-                if landed_cost < 0:
-                    raise ValueError(f"Receipt line {line['line_no']} has a negative landed cost.")
-                unit_cost = (landed_cost / quantity).quantize(
-                    quantum, rounding=ROUND_HALF_UP
-                )
-                if (landed_cost and landed_cost.adjusted() + 1 > 14) or (unit_cost and unit_cost.adjusted() + 1 > 12):
-                    raise ValueError(
-                        f"Receipt line {line['line_no']} exceeds the Inventory cost field precision."
-                    )
-                cur.execute(
-                    """
-                    INSERT INTO inventory.stock_document_lines (
-                        stock_document_id, item_variant_id, batch_id,
-                        location_id, ownership_type_id, owner_party_id,
-                        process_stage_id, quantity_in, quantity_out,
-                        unit_cost, total_cost, reason
-                    ) VALUES (
-                        %s, %s, %s, %s, 1, NULL, %s, %s, 0,
-                        %s, %s, %s
-                    )
-                    """,
-                    (
-                        stock_document_id, line["item_variant_id"],
-                        line["batch_id"], receipt["warehouse_location_id"],
-                        line["process_stage_id"], quantity, unit_cost,
-                        landed_cost,
-                        f"Supplier GRN {receipt['receipt_no']} · line {line['line_no']}",
-                    ),
-                )
-
-            # Use the database's canonical inventory approval routine rather than
-            # bypassing its validation by inserting the stock document as APPROVED.
-            cur.execute(
-                "SELECT * FROM inventory.approve_stock_document(%s, %s)",
-                (stock_document_id, approved_by),
-            )
-            stock_approval = cur.fetchone()
-            if stock_approval is None or stock_approval["status"] != "APPROVED":
-                raise ValueError(
-                    "The inventory stock document could not be approved; the GRN approval was rolled back."
-                )
-
-            cur.execute(
-                """
-                UPDATE purchasing.purchase_receipts
-                SET status = 'APPROVED', approved_by = %s,
-                    approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s AND company_id = %s AND status = 'DRAFT'
-                """,
-                (approved_by, receipt_id, company_id),
-            )
-            if cur.rowcount != 1:
-                raise ValueError("Goods Receipt approval state changed; no stock posting was completed.")
-
-        write_audit_log(
-            conn,
-            user=user,
-            request=request,
-            action="APPROVE",
-            table_name="purchasing.purchase_receipts",
-            record_id=receipt_id,
-            document_no=receipt["receipt_no"],
-            old_values={"status": "DRAFT"},
-            new_values={
-                "status": "APPROVED",
-                "stock_document_id": stock_document_id,
-                "stock_document_no": stock_document_no,
-                "transaction_type": "PURCHASE_RECEIPT",
-                "costing_policy": {
-                    "line_discount": "deducted from stock cost",
-                    "header_discount": "allocated by net line value",
-                    "freight": "allocated by net line value",
-                    "other_charges": "allocated by net line value",
-                    "gst": "excluded from stock cost as recoverable input GST",
-                },
-                "header_discount_allocated": str(header_discount),
-                "freight_allocated": str(freight),
-                "other_charges_allocated": str(other_charges),
-                "tax_excluded": str(sum((Decimal(str(line["tax_amount"] or 0)) for line in lines), Decimal("0"))),
-                "line_count": len(lines),
-            },
-            reason="Approve supplier Goods Receipt and create approved inward stock document",
-            module="PURCHASING",
-        )
-
-    return {
-        "id": receipt_id,
-        "receipt_no": receipt["receipt_no"],
-        "status": "APPROVED",
-        "stock_document_id": stock_document_id,
-        "stock_document_no": stock_document_no,
-    }
-
-
-def post_purchase_receipt(
-    company_id: int,
-    receipt_id: int,
-    posted_by: int,
-    user,
-    request,
-) -> dict:
-    """Post the linked approved stock document and finalize PO receipt quantities."""
-    from decimal import Decimal
-
-    company_id = int(company_id)
-    receipt_id = int(receipt_id)
-    posted_by = int(posted_by)
-
-    with get_connection() as conn, conn.transaction():
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
-                (f"purchase_receipt:{company_id}:{receipt_id}",),
-            )
-            cur.execute(
-                """
-                SELECT id, receipt_no, purchase_order_id, supplier_id, status
-                FROM purchasing.purchase_receipts
-                WHERE id = %s AND company_id = %s
-                FOR UPDATE
-                """,
-                (receipt_id, company_id),
-            )
-            receipt = cur.fetchone()
-            if receipt is None:
-                raise ValueError("Goods Receipt was not found for this company.")
-
-            cur.execute(
-                """
-                SELECT id, document_no, status
-                FROM inventory.stock_documents
-                WHERE company_id = %s
-                  AND reference_document_type = 'PURCHASE_RECEIPT'
-                  AND reference_document_id = %s
-                FOR UPDATE
-                """,
-                (company_id, receipt_id),
-            )
-            linked_docs = cur.fetchall()
-            if receipt["status"] == "POSTED":
-                if len(linked_docs) == 1 and linked_docs[0]["status"] == "POSTED":
-                    return {
-                        "id": receipt_id,
-                        "receipt_no": receipt["receipt_no"],
-                        "status": "POSTED",
-                        "stock_document_no": linked_docs[0]["document_no"],
-                        "already_posted": True,
-                    }
-                raise ValueError(
-                    "Goods Receipt and linked stock-document statuses are inconsistent. "
-                    "Reconciliation is required before any retry."
-                )
-            if receipt["status"] != "APPROVED":
-                raise ValueError("Only an APPROVED Goods Receipt can be posted to Inventory.")
-            if len(linked_docs) != 1 or linked_docs[0]["status"] != "APPROVED":
-                raise ValueError(
-                    "Exactly one APPROVED linked stock document is required. "
-                    "No stock or PO quantities were changed."
-                )
-            stock_document_id = int(linked_docs[0]["id"])
-
-            cur.execute(
-                """
-                SELECT purchase_order_line_id, SUM(received_quantity) AS received_quantity,
-                       MIN(item_variant_id) AS item_variant_id,
-                       MIN(unit_id) AS unit_id,
-                       COUNT(DISTINCT item_variant_id) AS item_count,
-                       COUNT(DISTINCT unit_id) AS unit_count
-                FROM purchasing.purchase_receipt_lines
-                WHERE purchase_receipt_id = %s
-                  AND purchase_order_line_id IS NOT NULL
-                GROUP BY purchase_order_line_id
-                ORDER BY purchase_order_line_id
-                """,
-                (receipt_id,),
-            )
-            po_receipts = cur.fetchall()
-            if po_receipts and receipt["purchase_order_id"] is None:
-                raise ValueError("GRN has PO lines but no Purchase Order header; reconciliation is required.")
-            if receipt["purchase_order_id"] is not None and not po_receipts:
-                raise ValueError("PO-linked GRN has no linked PO lines; reconciliation is required.")
-            if po_receipts:
-                cur.execute(
-                    """
-                    SELECT supplier_id, status
-                    FROM purchasing.purchase_orders
-                    WHERE id = %s AND company_id = %s
-                    FOR UPDATE
-                    """,
-                    (receipt["purchase_order_id"], company_id),
-                )
-                po = cur.fetchone()
-                if (
-                    po is None
-                    or po["status"] != "APPROVED"
-                    or int(po["supplier_id"]) != int(receipt["supplier_id"])
-                ):
-                    raise ValueError("The linked Purchase Order is no longer APPROVED for this supplier; posting is blocked.")
-                for po_line in po_receipts:
-                    quantity = Decimal(str(po_line["received_quantity"]))
-                    cur.execute(
-                        """
-                        SELECT pol.ordered_quantity, pol.received_quantity,
-                               pol.item_variant_id, pol.unit_id
-                        FROM purchasing.purchase_order_lines pol
-                        WHERE pol.id = %s AND pol.purchase_order_id = %s
-                        FOR UPDATE
-                        """,
-                        (po_line["purchase_order_line_id"], receipt["purchase_order_id"]),
-                    )
-                    current = cur.fetchone()
-                    if current is None:
-                        raise ValueError("A linked Purchase Order line no longer exists.")
-                    if (
-                        int(po_line["item_count"]) != 1
-                        or int(po_line["unit_count"]) != 1
-                        or int(current["item_variant_id"]) != int(po_line["item_variant_id"])
-                        or int(current["unit_id"]) != int(po_line["unit_id"])
-                    ):
-                        raise ValueError("A GRN line no longer matches its linked PO item or unit.")
-                    remaining = Decimal(str(current["ordered_quantity"])) - Decimal(str(current["received_quantity"]))
-                    if quantity > remaining:
-                        raise ValueError(
-                            "Posting would exceed the remaining approved PO quantity "
-                            f"for PO line {po_line['purchase_order_line_id']} (remaining {remaining})."
-                        )
-                    cur.execute(
-                        """
-                        UPDATE purchasing.purchase_order_lines
-                        SET received_quantity = received_quantity + %s
-                        WHERE id = %s AND purchase_order_id = %s
-                          AND received_quantity + %s <= ordered_quantity
-                        """,
-                        (
-                            quantity,
-                            po_line["purchase_order_line_id"],
-                            receipt["purchase_order_id"],
-                            quantity,
-                        ),
-                    )
-                    if cur.rowcount != 1:
-                        raise ValueError("PO received quantity changed concurrently; posting was rolled back.")
-
-            cur.execute(
-                "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
-                (f"inventory_stock_posting:{company_id}",),
-            )
-            cur.execute(
-                "SELECT inventory.post_stock_document(%s, %s)",
-                (stock_document_id, posted_by),
-            )
-            cur.execute(
-                """
-                UPDATE purchasing.purchase_receipts
-                SET status = 'POSTED', posted_by = %s,
-                    posted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s AND company_id = %s AND status = 'APPROVED'
-                """,
-                (posted_by, receipt_id, company_id),
-            )
-            if cur.rowcount != 1:
-                raise ValueError("Goods Receipt posting state changed; transaction rolled back.")
-
-        write_audit_log(
-            conn,
-            user=user,
-            request=request,
-            action="POST",
-            table_name="purchasing.purchase_receipts",
-            record_id=receipt_id,
-            document_no=receipt["receipt_no"],
-            old_values={"status": "APPROVED"},
-            new_values={
-                "status": "POSTED",
-                "stock_document_id": stock_document_id,
-                "stock_document_no": linked_docs[0]["document_no"],
-                "purchase_order_lines_updated": len(po_receipts),
-                "inventory_posted": True,
-            },
-            reason="Post approved supplier Goods Receipt into Inventory",
-            module="PURCHASING",
-        )
-
-    return {
-        "id": receipt_id,
-        "receipt_no": receipt["receipt_no"],
-        "status": "POSTED",
-        "stock_document_id": stock_document_id,
-        "stock_document_no": linked_docs[0]["document_no"],
-    }

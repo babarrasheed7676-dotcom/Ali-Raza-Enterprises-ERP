@@ -122,4 +122,3 @@ def verify_session_token(
         return None
 
     return {"sub": subject, "iat": issued, "exp": expires, "nonce": nonce}
-

@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}Accounting Setup Readiness — {{ app_name }}{% endblock %}
+{% block breadcrumb %}Accounting / Setup Readiness{% endblock %}
+
+{% block content %}
+<div class="accounting-page">
+  <div class="page-heading">
+    <div>
+      <div class="eyebrow">FINANCIAL CONTROL REVIEW</div>
+      <h1>Accounting Setup Readiness</h1>
+      <p>Read-only check of fiscal periods, party opening-balance records and journal readiness.</p>
+    </div>
+    <a class="back-link" href="/accounting/fiscal-period-preview">Preview Fiscal Year & Monthly Periods</a>
+    <a class="back-link" href="/accounting/inventory-journal-review">Review Posted Stock Valuations</a>
+    <a class="back-link" href="/accounting">Back to Accounting</a>
+  </div>
+
+  <div class="notice warning">
+    <strong>Read-only review — no setup or financial records were changed</strong>
+    <p>{{ readiness.notice }}</p>
+  </div>
+
+  <div class="module-grid accounting-grid">
+    <section class="module-card accounting-tile">
+      <div class="module-top"><div class="module-icon">FY</div><span class="module-status">{% if readiness.periods.open_fiscal_year_count > 0 %}Open year found{% else %}Setup required{% endif %}</span></div>
+      <h3>Fiscal Years</h3>
+      <p>{{ readiness.periods.fiscal_year_count }} configured · {{ readiness.periods.open_fiscal_year_count }} open</p>
+    </section>
+    <section class="module-card accounting-tile">
+      <div class="module-top"><div class="module-icon">P</div><span class="module-status">{% if readiness.ready_for_journal_posting %}Open period found{% else %}Setup required{% endif %}</span></div>
+      <h3>Accounting Periods</h3>
+      <p>{{ readiness.periods.period_count }} configured · {{ readiness.periods.open_period_count }} open</p>
+    </section>
+    <section class="module-card accounting-tile">
+      <div class="module-top"><div class="module-icon">GJ</div><span class="module-status">{{ readiness.journal_entry_total }} journal entries</span></div>
+      <h3>General Ledger</h3>
+      <p>Journal entries currently recorded: {{ readiness.journal_entry_total }}.</p>
+      {% for status, count in readiness.journal_statuses.items() %}
+      <p>{{ status }}: {{ count }}</p>
+      {% endfor %}
+    </section>
+  </div>
+
+  <section class="module-card" style="margin-top:18px;padding:20px;">
+    <h2>Party Opening-Balance Readiness</h2>
+    <p>Existing party master/profile fields are reviewed separately from General Ledger opening journals.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Party Type</th><th>Parties</th><th>Financial Profiles</th><th>Profile Missing</th><th>Non-zero Opening Amounts</th><th>Missing Dr/Cr Direction</th></tr></thead>
+        <tbody>
+        {% for party_type, item in readiness.parties.items() %}
+          <tr>
+            <td>{{ party_type }}</td>
+            <td>{{ item.party_count }}</td>
+            <td>{{ item.financial_profile_count }}</td>
+            <td>{{ item.missing_profile_count }}</td>
+            <td>{{ item.nonzero_opening_count }}</td>
+            <td>{{ item.missing_direction_count }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">No customer or supplier records found for this company.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">Amounts are deliberately not totalled across customers and suppliers because their debit/credit directions and control accounts differ.</p>
+  </section>
+
+  <section class="module-card" style="margin-top:18px;padding:20px;">
+    <h2>Party-by-Party Opening Balance Review</h2>
+    <p>{{ party_opening_review.party_count }} parties · {{ party_opening_review.mapping_ready_count }} mappings ready for review · {{ party_opening_review.blocked_count }} require attention. Company currency: {{ party_opening_review.company_currency }}. "Mapping ready" does not mean posted.</p>
+    <p class="muted">Inactive parties: {{ party_opening_review.inactive_count }} · Unsupported party types: {{ party_opening_review.unsupported_party_type_count }} · Currency mismatches: {{ party_opening_review.currency_mismatch_count }}.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Party</th><th>Type</th><th>Opening Amount</th><th>Party Currency</th><th>Direction</th><th>Proposed Control</th><th>Review Status</th></tr></thead>
+        <tbody>
+        {% for item in party_opening_review.rows %}
+          <tr>
+            <td>{{ item.party_code }} · {{ item.party_name }}</td>
+            <td>{{ item.party_type }}</td>
+            <td>{% if item.opening_balance is none %}Not configured{% else %}{{ "%.2f"|format(item.opening_balance) }}{% endif %}</td>
+            <td>{{ item.currency }}</td>
+            <td>{{ item.direction }}</td>
+            <td>{% if item.account_code %}{{ item.account_code }} · {{ item.account_name }}{% else %}Not assigned{% endif %}</td>
+            <td>{{ item.status }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7">No parties are configured for this company.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <section style="margin-top:16px;">
+      <h3>Opening-Balance Journal Line Preview</h3>
+      <p class="muted">{{ party_opening_review.reconciliation_notice }}</p>
+      <p>Eligible party lines: {{ party_opening_review.candidate_lines|length }} · Candidate debits: {{ party_opening_review.company_currency }} {{ "%.2f"|format(party_opening_review.candidate_debit_total) }} · Candidate credits: {{ party_opening_review.company_currency }} {{ "%.2f"|format(party_opening_review.candidate_credit_total) }}.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Party</th><th>Control Account</th><th>Direction</th><th>Currency</th><th>Preview Amount</th></tr></thead>
+          <tbody>
+          {% for line in party_opening_review.candidate_lines %}
+            <tr>
+              <td>{{ line.party_code }} · {{ line.party_name }}</td>
+              <td>{{ line.account_code }} · {{ line.account_name }}</td>
+              <td>{{ line.direction }}</td>
+              <td>{{ line.currency }}</td>
+              <td>{{ "%.2f"|format(line.amount) }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5">No party opening lines are eligible for preview.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if party_opening_review.offset_account_candidates %}
+        <p>Potential offset-account candidates found (not approved for use):</p>
+        <ul>
+        {% for account in party_opening_review.offset_account_candidates %}
+          <li>{{ account.account_code }} · {{ account.account_name }} — {{ account.account_type }}{% if not account.is_active %} · Inactive{% endif %}{% if account.is_group %} · Group account{% endif %}</li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">No existing account is named or classified as Opening Balance, Clearing, or Suspense.</p>
+      {% endif %}
+      <div class="notice warning" style="margin-top:14px;">
+        <strong>Posting blocked — opening offset account and date not approved</strong>
+        <p>Retained Earnings and Owner Capital are not silently substituted. Even if party lines are individually valid, the journal must remain incomplete until the correct offset-account policy and opening date are approved. No journal has been created or posted.</p>
+      </div>
+    </section>
+  </section>
+
+  <section class="module-card" style="margin-top:18px;padding:20px;">
+    <h2>Inventory Subledger vs General Ledger</h2>
+    <p>{{ inventory_gl_reconciliation.note }}</p>
+    <p><strong>Status:</strong> {{ inventory_gl_reconciliation.status }}</p>
+    <div class="notice warning" style="margin-top:14px;">
+      <strong>Inventory-to-GL automatic posting is not connected</strong>
+      <p>{{ inventory_gl_reconciliation.posting_integration_status }}</p>
+      <p>Posted stock documents currently recorded: {{ inventory_gl_reconciliation.posted_stock_document_count }} · Linked inventory GL journal entries: {{ inventory_gl_reconciliation.gl_journal_count }}.</p>
+    </div>
+    <div class="module-grid accounting-grid">
+      <section class="module-card accounting-tile">
+        <h3>OWN Stock Value</h3>
+        <p>{{ inventory_gl_reconciliation.company_currency }} {{ "%.2f"|format(inventory_gl_reconciliation.own_stock_value) }}</p>
+        <p>{{ inventory_gl_reconciliation.stock_balance_rows }} balance rows · {{ inventory_gl_reconciliation.unvalued_balance_rows }} unvalued · {{ inventory_gl_reconciliation.negative_quantity_rows }} negative quantity</p>
+      </section>
+      <section class="module-card accounting-tile">
+        <h3>GL Inventory Net</h3>
+        <p>{{ inventory_gl_reconciliation.company_currency }} {{ "%.2f"|format(inventory_gl_reconciliation.gl_inventory_net) }}</p>
+        <p>{{ inventory_gl_reconciliation.gl_journal_count }} posted/reversed journal entries</p>
+      </section>
+      <section class="module-card accounting-tile">
+        <h3>Difference</h3>
+        <p>{{ inventory_gl_reconciliation.company_currency }} {{ "%.2f"|format(inventory_gl_reconciliation.difference) }}</p>
+        <p>OWN stock value less GL inventory net</p>
+      </section>
+    </div>
+    <p>PARTY-owned stock shown separately (excluded from company asset value): {{ inventory_gl_reconciliation.company_currency }} {{ "%.2f"|format(inventory_gl_reconciliation.party_owned_stock_value) }} across {{ inventory_gl_reconciliation.party_owned_balance_rows }} balance rows.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ownership</th><th>Company Owned</th><th>Rows</th><th>Quantity</th><th>Stock Value</th><th>Unvalued</th><th>Negative Qty</th></tr></thead>
+        <tbody>
+        {% for item in inventory_gl_reconciliation.ownership_rows %}
+          <tr>
+            <td>{{ item.ownership_code }} · {{ item.ownership_name }}</td>
+            <td>{{ "Yes" if item.is_company_owned else "No" }}</td>
+            <td>{{ item.balance_rows }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ inventory_gl_reconciliation.company_currency }} {{ "%.2f"|format(item.total_value) }}</td>
+            <td>{{ item.unvalued_rows }}</td>
+            <td>{{ item.negative_quantity_rows }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7">No stock balances found.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap" style="margin-top:14px;">
+      <table>
+        <thead><tr><th>GL Account</th><th>Debit</th><th>Credit</th><th>Net Dr/(Cr)</th><th>Posted Journals</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for account in inventory_gl_reconciliation.gl_accounts %}
+          <tr>
+            <td>{{ account.account_code }} · {{ account.account_name }}</td>
+            <td>{{ "%.2f"|format(account.debit) }}</td>
+            <td>{{ "%.2f"|format(account.credit) }}</td>
+            <td>{{ "%.2f"|format(account.net) }}</td>
+            <td>{{ account.journal_count }}</td>
+            <td>{{ "Active" if account.is_active else "Inactive" }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">No inventory GL control accounts found.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if inventory_gl_reconciliation.missing_inventory_accounts or inventory_gl_reconciliation.inactive_inventory_accounts %}
+      <div class="notice warning" style="margin-top:14px;">
+        <strong>Inventory control-account master needs review</strong>
+        <p>Missing codes: {{ inventory_gl_reconciliation.missing_inventory_accounts|join(", ") if inventory_gl_reconciliation.missing_inventory_accounts else "None" }}. Inactive codes: {{ inventory_gl_reconciliation.inactive_inventory_accounts|join(", ") if inventory_gl_reconciliation.inactive_inventory_accounts else "None" }}.</p>
+      </div>
+    {% endif %}
+    <div class="notice warning" style="margin-top:14px;">
+      <strong>Read-only reconciliation — no inventory or GL records changed</strong>
+      <p>The stock figure is a current operational snapshot, not an approved historical opening valuation. The difference is a reconciliation exception, not permission to create a journal or adjust inventory.</p>
+    </div>
+  </section>
+
+  <section class="module-card" style="margin-top:18px;padding:20px;">
+    <h2>Inventory-to-GL Mapping Readiness</h2>
+    <p>{{ inventory_gl_mapping_readiness.notice }}</p>
+    <div class="notice warning" style="margin-top:12px;">
+      <strong>{{ inventory_gl_mapping_readiness.status }}</strong>
+      <p>{{ inventory_gl_mapping_readiness.valid_candidate_count }} category account candidates passed structural checks ? {{ inventory_gl_mapping_readiness.unresolved_category_count }} category mappings need review ? {{ inventory_gl_mapping_readiness.transaction_policy_review_count }} active transaction types still need accounting policy approval.</p>
+    </div>
+    <h3>Item Category ? Candidate Inventory Account</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Category</th><th>Items</th><th>Candidate Account</th><th>Validation</th></tr></thead>
+        <tbody>
+        {% for item in inventory_gl_mapping_readiness.categories %}
+          <tr>
+            <td>{{ item.code }} ? {{ item.name }}</td>
+            <td>{{ item.item_count }}</td>
+            <td>{% if item.candidate_account_code %}{{ item.candidate_account_code }} ? {{ item.candidate_account_name }}{% else %}Not mapped{% endif %}</td>
+            <td>{{ item.status }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4">No item categories found.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <h3 style="margin-top:16px;">Transaction-Type Accounting Policy Blockers</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Transaction</th><th>Status</th><th>Remaining blocker</th></tr></thead>
+        <tbody>
+        {% for item in inventory_gl_mapping_readiness.transactions %}
+          <tr>
+            <td>{{ item.code }} ? {{ item.name }}</td>
+            <td>{{ item.status }}</td>
+            <td>{{ item.blocker }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="3">No inventory transaction types found.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="notice warning" style="margin-top:14px;">
+      <strong>Automatic inventory journal posting remains disabled</strong>
+      <p>This validator checks account structure and displays policy blockers only. It does not create mappings, journal entries, triggers, or financial records.</p>
+    </div>
+  </section>
+
+  <section class="module-card" style="margin-top:18px;padding:20px;">
+    <h2>Purchase Accounting Readiness</h2>
+    <div class="notice warning">
+      <strong>Purchase journals are not ready ? no automatic posting</strong>
+      <p>Posted GRNs: {{ inventory_gl_mapping_readiness.posted_grn_count }} ? Posted Purchase Returns: {{ inventory_gl_mapping_readiness.posted_return_count }}. No live posted purchase document is available for GL reconciliation.</p>
+    </div>
+    <h3>Required Purchase Control Accounts</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Control</th><th>Account</th><th>Validation</th><th>Accounting note</th></tr></thead>
+        <tbody>
+        {% for item in inventory_gl_mapping_readiness.purchase_account_checks %}
+          <tr>
+            <td>{{ item.label }}</td>
+            <td>{% if item.account_code %}{{ item.account_code }} ? {{ item.account_name }}{% else %}Not found{% endif %}</td>
+            <td>{{ item.status }}</td>
+            <td>{{ item.detail }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <h3 style="margin-top:16px;">Purchase Posting Blockers</h3>
+    <ul>
+      {% for item in inventory_gl_mapping_readiness.purchase_blockers %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    <h3 style="margin-top:16px;">Existing Purchase Document Statuses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Document</th><th>Status</th><th>Count</th></tr></thead>
+        <tbody>
+        {% for item in inventory_gl_mapping_readiness.receipt_status_counts %}
+          <tr><td>Goods Receipt</td><td>{{ item.status }}</td><td>{{ item.count }}</td></tr>
+        {% endfor %}
+        {% for item in inventory_gl_mapping_readiness.return_status_counts %}
+          <tr><td>Purchase Return</td><td>{{ item.status }}</td><td>{{ item.count }}</td></tr>
+        {% endfor %}
+        {% for item in inventory_gl_mapping_readiness.po_currency_counts %}
+          <tr><td>Purchase Order Currency</td><td>{{ item.currency_code or "Not set" }}</td><td>{{ item.count }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="notice warning" style="margin-top:14px;">
+      <strong>Tax and supplier balances need approved accounting treatment</strong>
+      <p>Existing Sales Tax Payable is an output-tax liability and cannot be used as an input-tax receivable. GRNI and foreign-currency receipt treatment must be resolved before purchase journal integration.</p>
+    </div>
+  </section>
+
+  <section class="module-card" style="margin-top:18px;padding:20px;">
+    <h2>Party Control Accounts</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Account Code</th><th>Account</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for account in readiness.mapped_party_controls %}
+          <tr><td>{{ account.account_code }}</td><td>{{ account.account_name }}</td><td>{{ "Active" if account.is_active else "Inactive" }}</td></tr>
+        {% else %}
+          <tr><td colspan="3">No recognized party control accounts found.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">Recognized party-control mapping codes are 1221 (Customer Receivables), 1231 (Supplier Advances), 2211 (Supplier Payables), and 2241 (Customer Advances). This page does not change mappings.</p>
+  </section>
+
+  <div class="notice warning" style="margin-top:18px;">
+    <strong>Important accounting distinction</strong>
+    <p>Party Master opening amounts are not yet posted into General Ledger. A balanced opening journal, approved posting date, party-to-control-account reconciliation and a verified fiscal period are required before reports can claim actual opening or closing balances.</p>
+  </div>
+</div>
+{% endblock %}

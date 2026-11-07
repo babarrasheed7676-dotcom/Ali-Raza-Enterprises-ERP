@@ -9,6 +9,12 @@ from app.configuration_rules import (
     OwnershipPolicy,
     PackagingRule,
     ProcessCostRule,
+    AttributeDefinition,
+    UnitConversion,
+    MeasurementProfile,
+    ProcessRoute,
+    ProcessRouteStep,
+    ConfigurationApprovalPolicy,
 )
 
 
@@ -22,6 +28,7 @@ class ConfigurationRulesTests(unittest.TestCase):
 
     def test_baby_cone_measurement_calculates_net_weight_and_yards(self):
         measurement = BabyConeMeasurement(
+            effective_from=date(2026, 10, 29),
             variant_code="TEST-BC-01",
             gross_weight_grams=Decimal("120"),
             empty_core_tare_grams=Decimal("20"),
@@ -35,6 +42,7 @@ class ConfigurationRulesTests(unittest.TestCase):
     def test_baby_cone_measurement_rejects_tare_equal_to_gross(self):
         with self.assertRaises(ValidationError):
             BabyConeMeasurement(
+                effective_from=date(2026, 10, 29),
                 variant_code="TEST-BC-01",
                 gross_weight_grams=Decimal("20"),
                 empty_core_tare_grams=Decimal("20"),
@@ -116,6 +124,80 @@ class ConfigurationRulesTests(unittest.TestCase):
                 units_per_pack=100,
                 inner_packs_per_pack=10,
             )
+
+
+    def test_choice_attribute_requires_unique_allowed_values(self):
+        with self.assertRaises(ValidationError):
+            AttributeDefinition(
+                effective_from=date(2026, 11, 5),
+                code="LIGHT",
+                label="Light",
+                data_type="choice",
+                scope="variant",
+            )
+
+    def test_text_attribute_rejects_choice_values(self):
+        with self.assertRaises(ValidationError):
+            AttributeDefinition(
+                effective_from=date(2026, 11, 5),
+                code="NOTES",
+                label="Notes",
+                data_type="text",
+                scope="product",
+                allowed_values=["A", "B"],
+            )
+
+    def test_unit_conversion_rejects_same_source_and_target(self):
+        with self.assertRaises(ValidationError):
+            UnitConversion(
+                effective_from=date(2026, 11, 5),
+                from_unit_code="KG",
+                to_unit_code="KG",
+                factor=Decimal("1"),
+            )
+
+    def test_measurement_profile_accepts_weight_per_length(self):
+        profile = MeasurementProfile(
+            effective_from=date(2026, 11, 5),
+            profile_code="BABY-CONE-GPY",
+            variant_code="BC-TEST",
+            method="weight_per_length",
+            tolerance_percent=Decimal("2.5"),
+            requires_approval=True,
+        )
+        self.assertTrue(profile.requires_approval)
+
+    def test_process_route_requires_unique_ordered_steps(self):
+        with self.assertRaises(ValidationError):
+            ProcessRoute(
+                effective_from=date(2026, 11, 5),
+                route_code="ROUTE-1",
+                route_name="Test route",
+                product_type="Nalki",
+                steps=[
+                    ProcessRouteStep(
+                        sequence_no=2,
+                        process_code="PACK",
+                        input_product_type="Nalki",
+                        output_product_type="Finished Nalki",
+                    ),
+                    ProcessRouteStep(
+                        sequence_no=1,
+                        process_code="LABEL",
+                        input_product_type="Nalki",
+                        output_product_type="Labelled Nalki",
+                    ),
+                ],
+            )
+
+    def test_configuration_approval_policy_defaults_to_separation(self):
+        policy = ConfigurationApprovalPolicy(
+            effective_from=date(2026, 11, 5),
+            config_type="BABY_CONE_MEASUREMENT",
+            required_role_code="PRODUCTION_HEAD",
+        )
+        self.assertTrue(policy.separate_requester_approver)
+        self.assertEqual(policy.minimum_approvals, 1)
 
 
 if __name__ == "__main__":

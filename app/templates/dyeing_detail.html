@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Dyeing {{ detail.order.dyeing_no }} - {{ app_name }}{% endblock %}
+{% block breadcrumb %}Production / Dyeing / {{ detail.order.dyeing_no }}{% endblock %}
+{% block content %}
+<style>
+.dy-detail{max-width:1320px;margin:0 auto}.dy-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}.dy-muted{color:var(--muted,#64748b)}.dy-card{background:var(--surface,#fff);border:1px solid var(--border,#d9dee7);border-radius:15px;padding:19px;margin:14px 0;box-shadow:0 10px 28px rgba(15,23,42,.05)}.dy-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.dy-stat{padding:13px;border:1px solid var(--border,#d9dee7);border-radius:11px;min-width:0}.dy-stat small{display:block;color:var(--muted,#64748b);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}.dy-stat strong{display:block;margin-top:6px;overflow-wrap:anywhere;font-size:17px}.dy-table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:820px}th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--border,#d9dee7);vertical-align:top}th{font-size:11px;text-transform:uppercase;color:var(--muted,#64748b)}.dy-status{display:inline-block;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:850;background:var(--surface-muted,#eef2f7)}.dy-reason{font-size:12px;color:#9a6700;max-width:260px}.dy-btn{display:inline-flex;padding:9px 14px;border:1px solid var(--border,#cbd5e1);border-radius:9px;text-decoration:none;color:var(--text,#172033);font-weight:750}.dy-kicker{font-size:11px;font-weight:850;letter-spacing:.12em;color:var(--muted,#64748b)}.dy-callout{padding:13px 15px;border-radius:10px;background:var(--surface-muted,#f1f5f9);border:1px solid var(--border,#d9dee7)}@media(max-width:760px){.dy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<div class="dy-detail">
+ <div class="dy-head"><div><div class="dy-kicker">PRODUCTION / DYEING / READ ONLY</div><h1 style="margin:5px 0">{{ detail.order.dyeing_no }}</h1><p class="dy-muted">Raw-yarn input, DYED_THREAD output, shade and unit-conversion evidence recorded for this order.</p></div><a class="dy-btn" href="/modules/production">← Production overview</a></div>
+ <section class="dy-card"><div class="dy-grid">
+  <div class="dy-stat"><small>Document date</small><strong>{{ detail.order.dyeing_date }}</strong></div>
+  <div class="dy-stat"><small>Workflow status</small><strong>{{ detail.order.status }}</strong></div>
+  <div class="dy-stat"><small>Raw yarn input</small><strong>{{ detail.material_lines|length }} line(s)</strong></div>
+  <div class="dy-stat"><small>Dyed thread output</small><strong>{{ detail.output_lines|length }} line(s)</strong></div>
+ </div><div class="dy-grid" style="margin-top:12px">
+  <div class="dy-stat"><small>Input quantity</small><strong>{{ detail.order.actual_input_quantity_kg or '—' }} KG</strong></div>
+  <div class="dy-stat"><small>Output quantity</small><strong>{{ detail.order.actual_output_quantity_kg or '—' }} KG</strong></div>
+  <div class="dy-stat"><small>Dye / chemical lines</small><strong>{{ detail.lines|length }}</strong></div>
+  <div class="dy-stat"><small>Inventory</small><strong>Not posted</strong></div>
+ </div>{% if detail.order.remarks %}<p class="dy-muted" style="margin-bottom:0">{{ detail.order.remarks }}</p>{% endif %}</section>
+
+ <section class="dy-card">
+  <div class="dy-kicker">APPROVAL CONTROL / READ-ONLY PREFLIGHT</div>
+  {% if detail.approval_readiness and detail.approval_readiness.ready %}
+   <h2 style="margin:5px 0 8px">Preflight: ready for approval review</h2>
+   <p class="dy-muted">All currently checked source, batch, shade-variant, conversion and ownership conditions passed. This is not an approval and does not move stock.</p>
+  {% elif detail.approval_readiness %}
+   <h2 style="margin:5px 0 8px">Preflight: approval blocked</h2>
+   <p class="dy-muted">Resolve the items below before approval/posting. This check is read-only.</p>
+   <ul>{% for blocker in detail.approval_readiness.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>
+  {% else %}
+   <h2 style="margin:5px 0 8px">Preflight unavailable</h2>
+   <p class="dy-muted">The order could not be checked.</p>
+  {% endif %}
+  {% if detail.approval_readiness and detail.approval_readiness.warnings %}
+   <div class="dy-callout" style="margin-top:10px"><strong>Review warnings</strong><ul>{% for warning in detail.approval_readiness.warnings %}<li>{{ warning }}</li>{% endfor %}</ul></div>
+  {% endif %}
+  {% if detail.approval_readiness %}
+   <p class="dy-hint">Checks: {{ detail.approval_readiness.checks.raw_yarn_ready }}/{{ detail.approval_readiness.checks.raw_yarn_lines }} yarn inputs ready · {{ detail.approval_readiness.checks.shade_variants_ready }}/{{ detail.approval_readiness.checks.output_lines }} shade-specific output variants ready · {{ detail.approval_readiness.checks.chemical_lines_ready }}/{{ detail.approval_readiness.checks.chemical_lines }} dye/chemical lines ready.</p>
+  {% endif %}
+  <p class="dy-hint">No approval, stock reservation, stock ledger entry or inventory valuation was created by this preflight.</p>
+ </section>
+ <section class="dy-card"><div class="dy-kicker">01 / RAW YARN INPUT</div><h2 style="margin:5px 0 4px">Raw / Fresh Thread</h2><p class="dy-muted">OWN-owned input staged at the one physical RAW_STORE as PURCHASE stock. Saving DRAFT does not reserve or deduct inventory.</p>
+  <div class="dy-table-wrap"><table><thead><tr><th>Line</th><th>Yarn variant</th><th>Batch</th><th>Input quantity</th><th>Current stock row</th><th>Process stage</th></tr></thead><tbody>
+  {% for line in detail.material_lines %}<tr>
+   <td>{{ line.line_no }}</td><td><strong>{{ line.item_name }}</strong><br><span class="dy-muted">{{ line.item_code }} · {{ line.variant_code }}</span></td>
+   <td>{{ line.batch_no or 'Not assigned in DRAFT' }}</td><td><strong>{{ line.quantity_kg }} {{ line.unit_code }}</strong></td>
+   <td>{{ line.current_available_quantity_kg }} KG</td><td>RAW_STORE / PURCHASE</td>
+  </tr>{% else %}<tr><td colspan="6">No raw-yarn lines found.</td></tr>{% endfor %}
+  </tbody></table></div>
+ </section>
+
+ <section class="dy-card"><div class="dy-kicker">02 / DYED THREAD OUTPUT</div><h2 style="margin:5px 0 4px">Finished Dyeing Output</h2><p class="dy-muted">Each output points to its exact raw-yarn source line and consumed input quantity. Output quantity may differ; no assumed yield or weight conversion is applied.</p>
+  <div class="dy-table-wrap"><table><thead><tr><th>Line</th><th>Output Yarn variant</th><th>Source line / batch</th><th>Yarn consumed</th><th>DYED_THREAD output</th><th>Brand / exact shade</th><th>Output batch</th></tr></thead><tbody>
+  {% for line in detail.output_lines %}<tr>
+   <td>{{ line.line_no }}</td><td><strong>{{ line.item_name }}</strong><br><span class="dy-muted">{{ line.item_code }} · {{ line.variant_code }}</span></td>
+   <td>#{{ line.source_line_no }} (input row {{ line.source_material_line_id }})<br><span class="dy-muted">Raw batch: {{ line.source_batch_id or 'Not assigned in DRAFT' }}</span></td>
+   <td>{{ line.source_material_quantity_kg }} KG</td><td><strong>{{ line.quantity_kg }} {{ line.unit_code }}</strong></td>
+   <td><strong>{{ line.brand_name }}</strong><br>{{ line.shade_code }} · {{ line.shade_name }}<br>{% if line.shade_variant_exact %}<span class="dy-status">Exact Yarn variant</span>{% else %}<span class="dy-status">Raw variant — approval blocked</span>{% endif %}</td>
+   <td>{% if line.output_batch_no %}<strong>{{ line.output_batch_no }}</strong>{% else %}<span class="dy-muted">Generated at posting</span>{% endif %}</td>
+  </tr>{% else %}<tr><td colspan="7">No DYED_THREAD outputs found.</td></tr>{% endfor %}
+  </tbody></table></div>
+ </section>
+
+ <section class="dy-card"><div class="dy-kicker">03 / DYES & CHEMICALS</div><h2 style="margin:5px 0 4px">Process Consumption & Conversion Evidence</h2><p class="dy-muted">Chemical and dye use is separate from yarn. Original quantities are retained; base-unit quantity is shown only when a same-unit or approved conversion snapshot exists.</p>
+  <div class="dy-table-wrap"><table><thead><tr><th>Material</th><th>Raw Yarn input source</th><th>Batch / lot</th><th>Original quantity</th><th>Base unit</th><th>Base quantity</th><th>Conversion status</th><th>Ownership</th><th>Approved configuration</th></tr></thead><tbody>
+  {% for line in detail.lines %}<tr>
+   <td><strong>{{ line.line_no }}. {{ line.item_name }}</strong><br><span class="dy-muted">{{ line.item_code }} · {{ line.variant_name }} · {{ line.category_name }}</span>{% if line.notes %}<br><span class="dy-muted">{{ line.notes }}</span>{% endif %}</td>
+   <td>{% if line.source_yarn_line_no %}<strong>Input #{{ line.source_yarn_line_no }}</strong><br><span class="dy-muted">{{ line.source_yarn_item_name }} · {{ line.source_yarn_variant_code }}</span>{% else %}<span class="dy-muted">Not linked</span>{% endif %}</td>
+   <td>{{ line.batch_no or 'Not assigned in DRAFT' }}</td>
+   <td><strong>{{ line.source_quantity }} {{ line.source_unit_code }}</strong><br><span class="dy-muted">{{ line.source_unit_name }}</span></td>
+   <td>{{ line.base_unit_code }}</td>
+   <td>{% if line.converted_quantity is not none %}<strong>{{ line.converted_quantity }} {{ line.base_unit_code }}</strong>{% else %}<span class="dy-muted">Not available</span>{% endif %}</td>
+   <td>{% set status = line.conversion_status or 'MISSING_SNAPSHOT' %}<span class="dy-status">{{ status|replace('_',' ') }}</span>{% if line.conversion_reason %}<div class="dy-reason">{{ line.conversion_reason }}</div>{% endif %}</td>
+   <td>{{ line.ownership_name }}{% if line.party_name %}<br><span class="dy-muted">{{ line.party_name }}</span>{% endif %}</td>
+   <td>{% if line.configuration_version_id %}<strong>{{ line.configuration_display_name or line.configuration_key }}</strong><br><span class="dy-muted">{{ line.configuration_key }} · v{{ line.configuration_version_no }} · ID {{ line.configuration_version_id }}</span><br><span class="dy-muted">Factor {{ line.conversion_factor }} · {{ line.rounding_places }} dp · {{ line.rounding_mode }}</span>{% elif line.conversion_status == 'NOT_REQUIRED' %}<span class="dy-muted">Not required — same unit</span>{% else %}<span class="dy-muted">No approved version pinned</span>{% endif %}</td>
+  </tr>{% else %}<tr><td colspan="9">No dye/chemical lines were recorded.</td></tr>{% endfor %}
+  </tbody></table></div>
+ </section>
+ <section class="dy-card"><div class="dy-kicker">04 / PROCESS COSTS</div><h2 style="margin:5px 0 4px">Actual Dyeing Salary & Overheads</h2><p class="dy-muted">Captured amounts in company currency (PKR). These are actual user-entered DRAFT values, not estimated rates.</p>
+  <div class="dy-grid">
+   <div class="dy-stat"><small>Labour / salary</small><strong>PKR {{ detail.order.labour_cost }}</strong></div>
+   <div class="dy-stat"><small>Machine cost</small><strong>PKR {{ detail.order.machine_cost }}</strong></div>
+   <div class="dy-stat"><small>Electricity</small><strong>PKR {{ detail.order.electricity_cost }}</strong></div>
+   <div class="dy-stat"><small>Water</small><strong>PKR {{ detail.order.water_cost }}</strong></div>
+   <div class="dy-stat"><small>Boiler / fuel</small><strong>PKR {{ detail.order.boiler_fuel_cost }}</strong></div>
+   <div class="dy-stat"><small>Drying</small><strong>PKR {{ detail.order.drying_cost }}</strong></div>
+   <div class="dy-stat"><small>Total process cost</small><strong>PKR {{ detail.order.total_process_cost }}</strong></div>
+   <div class="dy-stat"><small>Wastage quantity</small><strong>Not measured / entered</strong></div>
+  </div>
+ </section>
+ <div class="dy-callout"><strong>Control status:</strong> This page is read-only. The Dyeing order remains DRAFT-only; no stock balance, stock ledger or inventory valuation was changed. Output batch identities will be generated at posting and linked to the source raw-yarn batch. Approval/posting is not enabled in this phase.</div>
+</div>
+{% endblock %}
