@@ -79,6 +79,32 @@ class ConfigurationReferenceValidationTests(unittest.TestCase):
             payload={"process_code": "DYEING"},
         )
 
+    def test_ownership_policy_rejects_unknown_or_inactive_owner_type(self):
+        cur = FakeCursor([{"code": "OWN"}])
+        with self.assertRaisesRegex(ValueError, "PARTY"):
+            _validate_configuration_references(
+                cur, company_id=1, config_type="OWNERSHIP_POLICY",
+                payload={"allowed_owners": ["OWN", "PARTY"]},
+            )
+        self.assertIn("master.ownership_types", cur.sql)
+        self.assertEqual(cur.params, (["OWN", "PARTY"],))
+
+    def test_ownership_policy_accepts_active_own_and_party_types(self):
+        cur = FakeCursor([{"code": "OWN"}, {"code": "PARTY"}])
+        _validate_configuration_references(
+            cur, company_id=1, config_type="OWNERSHIP_POLICY",
+            payload={"allowed_owners": ["OWN", "PARTY"]},
+        )
+
+    def test_ownership_policy_requires_at_least_one_owner_reference(self):
+        cur = FakeCursor([])
+        with self.assertRaisesRegex(ValueError, "at least one active ownership type"):
+            _validate_configuration_references(
+                cur, company_id=1, config_type="OWNERSHIP_POLICY",
+                payload={"allowed_owners": []},
+            )
+        self.assertEqual(cur.sql, "")
+
     def test_other_configuration_types_do_not_require_process_references(self):
         cur = FakeCursor([])
         _validate_configuration_references(

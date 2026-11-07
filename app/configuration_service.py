@@ -104,7 +104,29 @@ def _validate_unit_conversion_units(cur, payload: dict, *, require_target_precis
 
 def _validate_configuration_references(cur, *, company_id: int, config_type: str, payload: dict) -> None:
     """Validate selected operational references against active company masters."""
-    if config_type == "MEASUREMENT_PROFILE":
+    if config_type == "OWNERSHIP_POLICY":
+        owner_codes = sorted({
+            str(code or "").strip().upper()
+            for code in payload.get("allowed_owners", [])
+        })
+        if not owner_codes or any(not code for code in owner_codes):
+            raise ValueError("Ownership Policy must select at least one active ownership type.")
+        cur.execute(
+            """SELECT upper(code) AS code
+               FROM master.ownership_types
+               WHERE is_active IS TRUE AND upper(code)=ANY(%s)
+               FOR SHARE""",
+            (owner_codes,),
+        )
+        available = {str(row["code"]).upper() for row in cur.fetchall()}
+        missing = sorted(set(owner_codes) - available)
+        if missing:
+            raise ValueError(
+                "Ownership Policy references unknown or inactive ownership type(s): "
+                + ", ".join(missing)
+            )
+
+    elif config_type == "MEASUREMENT_PROFILE":
         variant_code = str(payload.get("variant_code") or "").strip().upper()
         if not variant_code:
             raise ValueError("A real Baby Cone variant code is required.")
