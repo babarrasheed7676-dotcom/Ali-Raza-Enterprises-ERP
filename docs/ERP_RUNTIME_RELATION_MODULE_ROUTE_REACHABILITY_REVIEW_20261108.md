@@ -80,3 +80,26 @@ The expanded source scan traced five relations previously flagged for no qualifi
 - `production.dyeing_rework_orders`, `production.machine_capacities`, `production.machine_downtime`, and `production.rewinding_orders` are in the fixed machine reference tuple in `app/production_master_service.py`; `production.rewinding_orders` is also in the department reference tuple. These are SELECT EXISTS checks used by the protected machine/department update path `PUT /modules/production/api/masters/{kind}/{record_id}`, which requires `configuration.create` and uses the configuration action payload/CSRF path.
 
 All five dependencies are SELECT-only in these call sites. Four were already present in the 93-relation matrix; `production.outside_dyeing_orders` was omitted and has now been added. The candidate matrix therefore contains 94 relations, including 37 production-schema relations. These five references do not justify any write grants on the referenced production history tables.
+
+## Current data-state note for the five dynamic dependencies
+
+A consistent `REPEATABLE READ, READ ONLY` count snapshot of all 41 source-gap relations returned zero rows for all 41. The five active dynamic dependencies are therefore currently empty, but their protected SELECT call sites still require read access if those routes are to operate under a restricted database role. No INSERT/UPDATE/DELETE grant follows from these read-only checks.
+
+## Exact data state of ten routine-only relations
+
+A consistent `REPEATABLE READ, READ ONLY` count snapshot was taken for the ten relations that are not directly referenced by current app source but are dependencies of stored routines. No row values were selected.
+
+| Relation | Exact rows | Runtime disposition |
+|---|---:|---|
+| inventory.stock_ledger | 12 | Active inventory posting dependency through protected purchasing stock-posting path; keep only the exact routine-required operation in staging grant review |
+| inventory.stock_reservation_lines | 2 | Existing records; Sales reservation workflow has no current protected app route; do not grant runtime access on current route evidence |
+| inventory.stock_reservations | 2 | Existing records; Sales reservation workflow has no current protected app route; do not grant runtime access on current route evidence |
+| production.packing_fg_transfers | 2 | Existing POSTED transfer records; posting routine has no protected app route; preserve records and exclude runtime routine EXECUTE |
+| production.packing_labour | 2 | Existing records; only tied to dormant packing FG-transfer dependency in current routine/source map; preserve and exclude runtime access until route exists |
+| production.packing_material_consumption | 0 | Dormant packing FG-transfer dependency; exclude runtime access until route exists |
+| sales.dispatch_lines | 3 | Existing records; Sales & Dispatch is Planned with no protected route; preserve and exclude runtime access |
+| sales.dispatches | 3 | Existing records; Sales & Dispatch is Planned with no protected route; preserve and exclude runtime access |
+| sales.sales_order_lines | 2 | Existing records; Sales & Dispatch is Planned with no protected route; preserve and exclude runtime access |
+| sales.sales_orders | 2 | Existing records; Sales & Dispatch is Planned with no protected route; preserve and exclude runtime access |
+
+These results reinforce two separate rules: existing data must be preserved even when a module is dormant, and existing rows do not by themselves authorize the application runtime to access a table. The inventory stock ledger is distinct because the protected purchasing posting path invokes the inventory posting routine; its exact invoker permissions must be validated on restored staging.

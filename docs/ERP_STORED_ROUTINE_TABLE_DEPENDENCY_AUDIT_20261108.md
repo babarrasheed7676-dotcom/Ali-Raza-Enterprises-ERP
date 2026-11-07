@@ -119,3 +119,11 @@ Dynamic SQL in the 46 routine definitions: none found.
 Routine-source relation dependency candidates: 52 base tables.
 Final least-privilege runtime grants: not yet generated or applied.
 Live database and runtime remain unchanged.
+
+## Current row-count and route disposition of routine-only relations
+
+A single consistent `REPEATABLE READ, READ ONLY` snapshot counted the ten routine-only relations. Exact row counts: `inventory.stock_ledger` 12; `inventory.stock_reservation_lines` 2; `inventory.stock_reservations` 2; `production.packing_fg_transfers` 2; `production.packing_labour` 2; `production.packing_material_consumption` 0; `sales.dispatch_lines` 3; `sales.dispatches` 3; `sales.sales_order_lines` 2; `sales.sales_orders` 2.
+
+The stock ledger is reached by the protected purchasing stock-posting workflow through `inventory.post_stock_document`; preserve its routine-required INSERT/SELECT/UPDATE access only as validated in restored staging. Reservation and Sales relations have existing rows but no current protected Sales & Dispatch route; do not grant the runtime role access to them merely because stored routines reference them. Packing FG transfer/labour relations also contain existing records, including POSTED transfer rows, but `production.post_packing_fg_transfer` has no protected app route; preserve the records and keep runtime EXECUTE excluded. `production.packing_material_consumption` is currently empty.
+
+Counts were used only to establish presence/absence; no row contents were read or changed.

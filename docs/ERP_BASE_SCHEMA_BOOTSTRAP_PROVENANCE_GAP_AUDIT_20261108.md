@@ -40,3 +40,9 @@ Determine whether the current repository contains a reproducible baseline schema
 ## Status
 
 Repository bootstrap provenance gap documented. All actions in this audit were read-only. Live ERP, roles, ACLs, schema, data, application files and server process remain unchanged.
+
+## Live database row-count cross-check
+
+A consistent PostgreSQL `REPEATABLE READ, READ ONLY` snapshot confirmed that all 41 catalog source-gap relations currently contain zero rows. A separate snapshot of the ten stored-routine-only dependencies found nine non-empty relations: inventory.stock_ledger (12), inventory.stock_reservation_lines (2), inventory.stock_reservations (2), production.packing_fg_transfers (2), production.packing_labour (2), sales.dispatch_lines (3), sales.dispatches (3), sales.sales_order_lines (2), and sales.sales_orders (2). `production.packing_material_consumption` returned zero rows. These are counts only; no record contents were retrieved.
+
+This distinction matters for backup/provenance decisions: the 41 source-gap relations are empty in the live database at the check snapshot, while several routine-only dependencies contain existing ERP records and must be preserved even where their owning module currently lacks a protected application route.
