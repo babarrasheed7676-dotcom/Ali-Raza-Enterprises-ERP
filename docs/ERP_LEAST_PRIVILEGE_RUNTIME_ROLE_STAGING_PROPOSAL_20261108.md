@@ -38,7 +38,7 @@ PostgreSQL's global default privilege REVOKE cannot be undone by a per-schema RE
 
 Run only on a freshly restored, isolated database copy as the object-owner/admin identity. First capture a full backup and export current role, ACL, and default-ACL state.
 
-\`\`\`sql
+```sql
 -- 0. Confirm you are on the restored staging database and as the expected owner.
 SELECT current_database(), current_user, session_user;
 
@@ -84,12 +84,17 @@ GRANT USAGE ON SCHEMA
   master, production, purchasing, sales
 TO are_erp_runtime;
 
--- 6. Candidate routine EXECUTE grants only; validate each on restored staging.
-GRANT EXECUTE ON FUNCTION core.get_next_document_no(/* exact signature to confirm */)
+-- 6. Candidate routine EXECUTE grants only; exact signatures were read from
+-- the current catalog in a read-only transaction. Reconfirm on restored staging.
+GRANT EXECUTE ON FUNCTION core.get_next_document_no(bigint, character varying)
 TO are_erp_runtime;
-\`\`\`
+GRANT EXECUTE ON FUNCTION inventory.approve_stock_document(bigint, bigint)
+TO are_erp_runtime;
+GRANT EXECUTE ON FUNCTION inventory.post_stock_document(bigint, bigint)
+TO are_erp_runtime;
+```
 
-Important: the signature above is intentionally incomplete and is NOT executable as written. Resolve the exact routine identity arguments from the target database before use. The two inventory routine signatures must likewise be read from that restored database before any GRANT. Do not grant trigger-function EXECUTE to the runtime role merely because the functions are attached to triggers. Test ordinary DML with PUBLIC EXECUTE revoked; the target PostgreSQL version's actual behavior is a hard gate.
+These three grants are still staging candidates, not live approvals. Reconfirm that the signatures match the restored database before running. Do not grant trigger-function EXECUTE to the runtime role merely because the functions are attached to triggers. Test ordinary DML with PUBLIC EXECUTE revoked; the target PostgreSQL version's actual behavior is a hard gate.
 
 The routine-revoke DO block covers procedures/functions/aggregates in the eight named schemas by identity signature. Review it against the exact PostgreSQL 18 staging catalog first; do not use it as a blind production script.
 
