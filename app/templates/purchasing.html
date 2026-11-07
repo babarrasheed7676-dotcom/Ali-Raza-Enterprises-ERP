@@ -28,8 +28,7 @@
 {% elif receipt_form_mode|default(false) %}
   <div class="purchase-heading"><div><div class="eyebrow">PURCHASING · GOODS RECEIPT</div><h1>New Goods Receipt</h1><p>Purchase with an approved PO or direct purchase without a PO.</p></div><div class="purchase-count"><strong>DRAFT</strong><br>Save does not approve or post stock</div></div>
   {% if receipt_errors %}<div class="receipt-errors"><strong>Please correct these details:</strong><ul>{% for error in receipt_errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
-  <link rel="stylesheet" href="{{ url_for('static', path='/smart-entry.css') }}">
-  <form class="receipt-form" method="post" action="/modules/purchasing/receipts/new" id="goodsReceiptForm" data-smart-entry="purchase-receipt">
+  <form class="receipt-form" method="post" action="/modules/purchasing/receipts/new" id="goodsReceiptForm" data-smart-entry="purchase-receipt" data-smart-add-line="#addReceiptLine" data-smart-line-container="#receiptLines">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Alt</kbd>+<kbd>N</kbd> New line</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save DRAFT</span></div><div class="smart-entry-status" id="smartEntryStatus" role="status" aria-live="polite">Fast keyboard entry enabled.</div></div><button class="smart-entry-action" type="button" id="repeatReceiptLine">Repeat last item</button></div>
     <section class="receipt-panel"><h3>Receipt details</h3><div class="receipt-grid">
@@ -85,7 +84,6 @@
     po.addEventListener('change',()=>{const supplier=po.selectedOptions[0]?.dataset.supplier;if(supplier)document.getElementById('supplierSelect').value=supplier;sync();});gst.addEventListener('change',sync);document.getElementById('goodsReceiptForm').addEventListener('input',recalculate);sync();
   })();
   </script>
-  <script src="{{ url_for('static', path='/smart-entry.js') }}" defer></script>
 {% else %}
   <div class="purchase-heading"><div><div class="eyebrow">BUSINESS MODULE</div><h1>Purchasing</h1><p>Supplier records, procurement documents and receiving overview.</p></div><div class="purchase-count"><strong>{{ data.total }}</strong> records · {{ data.label }}</div></div>
   <nav class="purchase-tabs" aria-label="Purchasing sections">{% for item in data.sections %}<a class="purchase-tab {% if item.key == data.section %}active{% endif %}" href="/modules/purchasing?section={{ item.key }}">{{ item.label }}</a>{% endfor %}</nav>

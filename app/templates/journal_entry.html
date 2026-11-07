@@ -34,8 +34,9 @@
     <p>Entry date ka exactly one open Fiscal Year / Accounting Period hona zaroori hai. Period missing ya closed ho to save block hoga. Control accounts ke liye matching Party selection required hai.</p>
   </div>
 
-  <form method="post" action="/accounting/journal" class="module-placeholder" id="journal-form">
+  <form method="post" action="/accounting/journal" class="module-placeholder" id="journal-form" data-smart-entry="journal" data-smart-add-line="#add-journal-line" data-smart-line-container="#journal-lines">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Alt</kbd>+<kbd>N</kbd> Add journal line</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save DRAFT</span></div><div class="smart-entry-status" id="smartEntryStatus" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
     <div class="eyebrow">JOURNAL HEADER</div>
     <div class="form-grid">
       <div class="form-group">

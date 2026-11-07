@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='/smart-entry.css') }}">
 </head>
 <body>
   <aside class="sidebar">
@@ -29,6 +30,7 @@
     <header class="topbar"><div class="topbar-brand"><img class="topbar-logo" src="{{ url_for('static', path='/ali-raza-logo-hd.png') }}" alt="Ali Raza Enterprises logo"><div><span class="eyebrow">ALI RAZA ENTERPRISES</span><span class="topbar-title"> / {% block breadcrumb %}Overview{% endblock %}</span></div></div><div class="topbar-right"><span class="secure-pill">● Local system</span><div class="avatar">AR</div></div></header>
     <section class="page-content">{% block content %}{% endblock %}</section>
     <footer>Ali Raza Enterprises · Internal ERP foundation · No stock data changed by this screen</footer>
+  <script src="{{ url_for('static', path='/smart-entry.js') }}" defer></script>
   </main>
 </body>
 </html>

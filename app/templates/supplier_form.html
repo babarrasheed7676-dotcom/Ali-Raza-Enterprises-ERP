@@ -40,8 +40,9 @@
 
   
 
-  <form method="post" action="/modules/purchasing/suppliers/new" class="supplier-wrap">
+  <form method="post" action="/modules/purchasing/suppliers/new" class="supplier-wrap" id="supplier-entry-form" data-smart-entry="supplier">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save</span></div><div class="smart-entry-status" id="smartEntryStatus" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
 
     <section class="supplier-card">
       <h2>Supplier Information</h2>

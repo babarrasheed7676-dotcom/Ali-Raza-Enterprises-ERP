@@ -31,5 +31,19 @@ Date: 2026-11-08
 - Existing ERP server was left running; no restart.
 - No Goods Receipt was submitted and no business data was created.
 
+## Phase 2 rollout (same implementation session)
+- Moved the shared Smart Entry CSS and JavaScript into the global base layout; only forms opting in with `data-smart-entry` receive keyboard behavior.
+- Enabled the shared keyboard contract on New Supplier: Enter advances ordinary input fields; Ctrl+Enter uses native browser validation and the existing supplier-save endpoint.
+- Enabled the shared keyboard contract on General Journal: Alt+N invokes its existing Add line button; Ctrl+Enter submits through the existing journal DRAFT endpoint; account and party selects retain native selection behavior.
+- Goods Receipt now declares its add-line button and line container through data attributes; repeat-last-item and duplicate-item notice remain receipt-specific adapters.
+- No service, route, permission, schema or accounting rules changed.
+
+## Verification after Phase 2
+- `node --check app/static/smart-entry.js`: passed.
+- Jinja compilation: `base.html`, `purchasing.html`, `supplier_form.html`, `journal_entry.html` all passed.
+- Existing ERP health: `{"app":"ok","database":true}`.
+- Static JavaScript and CSS served HTTP 200.
+- No supplier, journal, receipt or other business document was submitted; no server restart.
+
 ## Next rollout
-Use the same engine contract for the next forms after reviewing their field rules: supplier form, purchase return, production drafts, packing, inventory and accounting. Each module must retain its own validated business rules; the shared engine must not infer stock/cost/accounting values.
+Apply the shared engine to purchase returns, production drafts, packing and inventory after reviewing each form's dynamic row behavior and module-specific validation. Accounting forms require extra care: the engine must not calculate or alter debit/credit values, and the existing server-side balance/period guards remain authoritative.
