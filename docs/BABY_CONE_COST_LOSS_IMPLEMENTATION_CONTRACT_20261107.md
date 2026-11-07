@@ -104,3 +104,13 @@ A read-only application-code review confirmed:
 - Do not expose approval or posting endpoints as part of the DRAFT cost/loss work. Existing permission codes do not authorize implementation or live permission changes by themselves.
 - Before enabling the UI, verify all role grants in the live database and add focused tests for cross-company access, CSRF failure, status races, child CRUD, audit rollback, and no stock/ledger side effects.
 
+
+## Comparison with existing production cost capture
+
+A read-only review of existing services shows why their current costing code cannot be copied into Baby Cone unchanged:
+
+- Big Cone captures three header amounts only: labour, electricity, and machine. Its `_money` validator rejects non-finite/negative values, enforces a maximum of six decimal places, and the header total is the sum of those three values. It has no detailed cost-line capture or verified output allocation basis; its readiness preflight therefore blocks approval while cost allocation remains unresolved.
+- Dyeing captures six header amounts: labour, machine, electricity, water, boiler fuel, and drying. `normalize_dyeing_process_costs` validates each as non-negative PKR numeric(20,6) and sums the six fields. This is a process-specific fixed-header model, not evidence that Baby Cone uses the same components or allocation policy.
+- Baby Cone differs from both: it has a child cost-line table with five allowed types, optional quantity/rate, required amount, and a header with only labour/electricity/machine totals. There is no verified mapping for MAINTENANCE or OTHER, and no confirmed method to roll up child rows to the header.
+
+Implementation conclusion: reuse only the general decimal-validation and transaction/audit patterns after review. Do not reuse Dyeing's six-field taxonomy, Big Cone's three-field taxonomy, or either module's header sum as Baby Cone's business rule without explicit ARE costing approval.
