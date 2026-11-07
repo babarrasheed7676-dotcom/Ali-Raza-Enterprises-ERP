@@ -15,7 +15,7 @@ Date: 2026-11-08
 
 ## Safety boundaries
 - No database, schema, records, permissions, roles, prices, GST rates, stock or ledger logic changed.
-- No autosave or browser persistence was added; unfinished form data is not silently stored.
+- No automatic autosave or cross-tab persistence was added. Explicit session-only recovery copies are enabled for Goods Receipt and Purchase Return; unfinished data is never stored without the operator clicking Save recovery copy.
 - No approval/post action was added to the entry form.
 - The normal server-side validation remains authoritative.
 - No server restart was performed.
@@ -50,5 +50,24 @@ Date: 2026-11-08
 - Static JavaScript and CSS served HTTP 200.
 - No supplier, journal, receipt or other business document was submitted; no server restart.
 
+## Phase 3 — Searchable pickers and explicit DRAFT recovery
+- Added inline search inputs to opted-in native selects with 25 or more non-empty options. The original select remains the submitted control; no IDs or values are rewritten.
+- Search filters option text and optgroup labels, reports match counts, selects a unique match with Enter, focuses the native select with ArrowDown, and clears with Escape or after selection.
+- A MutationObserver initializes pickers for newly added/cloned production and purchasing rows. Cloned search controls are rebuilt with fresh listeners rather than retaining inert copied UI.
+- Explicit Save recovery copy / Restore copy / Delete copy controls are enabled only on Goods Receipt and Purchase Return in this pilot.
+- Recovery uses the current browser tab's `sessionStorage` only, expires after 2 hours, is capped at 128 KB, and is never uploaded. It excludes hidden fields (including CSRF), password/file/submit controls, disabled/read-only controls and token-like names. No automatic save occurs.
+- Restore rebuilds dynamic line counts using the form's existing add/remove controls, restores named field values, and never submits. The operator must review the restored data and normal server validation still applies.
+- A successful DRAFT response clears the previous recovery copy; a validation error leaves it available for manual recovery.
+- Chrome headless tests passed for 50-option search, unique-match selection, cloned-row picker initialization, multi-line Goods Receipt and Purchase Return recovery, CSRF exclusion, and successful-save cleanup.
+
+## Verification after Phase 3
+- `node --check app/static/smart-entry.js`: passed.
+- Jinja compilation of all 12 opted-in templates: passed.
+- Chrome browser tests: `BROWSER_SMART_SELECT_TEST_OK`, `BROWSER_SMART_RECOVERY_TEST_OK`, `BROWSER_GOODS_RECEIPT_RECOVERY_TEST_OK`.
+- Existing ERP health: `{"app":"ok","database":true}`.
+- Static JavaScript and CSS served HTTP 200.
+- No business document was submitted; no database, schema, stock, ledger, permission or accounting logic changed; no server restart.
+- Backups: `app/static/smart-entry.js.large_select_backup_20261108_020635`, `app/static/smart-entry.css.large_select_backup_20261108_020635`, `app/templates/purchasing.html.recovery_backup_20261108_021058`.
+
 ## Next rollout
-Continue the rollout to remaining production drafts and inventory after reviewing each form's dynamic row behavior and module-specific validation. Accounting forms require extra care: the engine must not calculate or alter debit/credit values, and the existing server-side balance/period guards remain authoritative.
+Continue searchable picker coverage across the remaining opted-in forms and extend recovery only after each multi-section form's row-recreation and validation behavior is reviewed. Accounting forms require extra care: the engine must not calculate or alter debit/credit values, and the existing server-side balance/period guards remain authoritative.

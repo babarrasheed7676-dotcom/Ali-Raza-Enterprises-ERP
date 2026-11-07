@@ -6,4 +6,10 @@
 .smart-entry-action{padding:8px 11px;border:1px solid var(--border,#40506a);border-radius:8px;background:var(--surface,#111c2b);color:inherit;cursor:pointer}
 .smart-entry-action:hover{border-color:var(--accent,#2563eb)}
 .receipt-form [data-smart-field]:focus,.receipt-form input:focus,.receipt-form select:focus,.receipt-form textarea:focus{outline:2px solid var(--accent,#2563eb);outline-offset:1px}
-@media(max-width:700px){.smart-entry-toolbar{align-items:flex-start}.smart-entry-hints{gap:6px}}
+.smart-select-search{display:block;width:100%;min-width:0;min-height:36px;margin:0 0 5px;padding:7px 10px;border:1px solid var(--border,#40506a);border-radius:8px;background:var(--surface,#111c2b);color:var(--text,inherit);font:inherit;font-size:12px}
+.smart-select-search:focus{outline:2px solid var(--accent,#2563eb);outline-offset:1px}
+.smart-select-result{display:block;min-height:15px;margin:0 0 3px;font-size:11px;color:var(--muted,#8490a2)}
+.smart-recovery-controls{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px}
+.smart-recovery-controls .smart-entry-action{font-size:11px;padding:6px 9px}
+.smart-recovery-note{font-size:10px;color:var(--muted,#8490a2)}
+@media(max-width:700px){.smart-entry-toolbar{align-items:flex-start}.smart-entry-hints{gap:6px}.smart-recovery-controls{width:100%}}
