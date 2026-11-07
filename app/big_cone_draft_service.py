@@ -182,6 +182,14 @@ def get_big_cone_draft_form_data(company_id: int) -> dict[str, Any]:
     }
 
 
+def _draft_reconciliation_summary(total_input: Decimal, total_output: Decimal) -> dict[str, Any]:
+    """Keep measured wastage separate from the arithmetic input/output difference."""
+    return {
+        "wastage_quantity_kg": None,
+        "unreconciled_difference_kg": str(total_input - total_output),
+    }
+
+
 def create_big_cone_draft(*, company_id: int, user: dict, request: Any,
                           big_cone_date: date, source_dyeing_order_id: int,
                           department_id: int, machine_id: int, remarks: str,
@@ -318,7 +326,7 @@ def create_big_cone_draft(*, company_id: int, user: dict, request: Any,
                                  output_quantity_kg,wastage_quantity_kg,total_process_cost""",
                     (company_id,big_cone_no,big_cone_date,department_id,machine_id,source_order_id,
                      total_input,total_input_cones,total_output,total_output_cones,
-                     total_input-total_output,costs["labour_cost"],costs["electricity_cost"],
+                     Decimal("0"),costs["labour_cost"],costs["electricity_cost"],
                      costs["machine_cost"],costs["total_process_cost"],user_id,remarks or None),
                 )
                 order = dict(cur.fetchone())
@@ -367,8 +375,9 @@ def create_big_cone_draft(*, company_id: int, user: dict, request: Any,
                     table_name="production.big_cone_orders",record_id=order["id"],
                     document_no=big_cone_no,new_values={**order,"source_dyeing_no":source_order["dyeing_no"],
                         "line_count":len(material_rows),"process_costs_pkr":{k:str(v) for k,v in costs.items()}},
-                    reason="Big Cone header, source lineage, output allocation and process costs saved as DRAFT only; no inventory posting or stock reservation.",
+                    reason="Big Cone header, source lineage, output allocation and process costs saved as DRAFT only; wastage is unmeasured (database-required zero placeholder), and input/output difference remains unreconciled; no inventory posting or stock reservation.",
                     module="PRODUCTION")
     return {"id": int(order["id"]), "big_cone_no": big_cone_no, "status": "DRAFT",
             "line_count": len(material_rows), "input_quantity_kg": str(total_input),
-            "output_quantity_kg": str(total_output), "wastage_quantity_kg": str(total_input-total_output)}
+            "output_quantity_kg": str(total_output),
+            **_draft_reconciliation_summary(total_input, total_output)}

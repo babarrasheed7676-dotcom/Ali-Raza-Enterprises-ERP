@@ -1,7 +1,7 @@
 import unittest
 from decimal import Decimal
 
-from app.big_cone_draft_service import normalize_big_cone_lines, _money
+from app.big_cone_draft_service import normalize_big_cone_lines, _money, _draft_reconciliation_summary
 
 
 def _line(**overrides):
@@ -24,6 +24,16 @@ class BigConeDraftValidationTests(unittest.TestCase):
         self.assertEqual(rows[0]["input_quantity_kg"], Decimal("10.000"))
         self.assertEqual(rows[0]["output_quantity_kg"], Decimal("9.750"))
         self.assertEqual(rows[0]["destination_type"], "BABY_CONE")
+
+    def test_draft_difference_is_not_reported_as_measured_wastage(self):
+        summary = _draft_reconciliation_summary(Decimal("10.000"), Decimal("9.750"))
+        self.assertIsNone(summary["wastage_quantity_kg"])
+        self.assertEqual(summary["unreconciled_difference_kg"], "0.250")
+
+    def test_zero_difference_still_does_not_claim_measured_wastage(self):
+        summary = _draft_reconciliation_summary(Decimal("10.000"), Decimal("10.000"))
+        self.assertIsNone(summary["wastage_quantity_kg"])
+        self.assertEqual(summary["unreconciled_difference_kg"], "0.000")
 
     def test_reject_output_greater_than_input(self):
         with self.assertRaisesRegex(ValueError, "output cannot exceed"):
