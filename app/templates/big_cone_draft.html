@@ -72,10 +72,10 @@
     <p class="production-muted">Enter input quantity only for the Dyeing line(s) being used. Each output line is linked to its exact input line. Quantities are KG; cone counts are optional.</p>
     <div class="bc-grid" aria-live="polite" style="margin:12px 0">
       <div class="bc-note"><strong>Selected input</strong><div id="bc-total-input">0.000 KG</div></div>
-      <div class="bc-note"><strong>Expected output</strong><div id="bc-total-output">0.000 KG</div></div>
-      <div class="bc-note"><strong>Process difference</strong><div id="bc-total-loss">0.000 KG</div></div>
+      <div class="bc-note"><strong>Entered output</strong><div id="bc-total-output">0.000 KG</div></div>
+      <div class="bc-note"><strong>Unreconciled input/output difference</strong><div id="bc-total-loss">0.000 KG</div></div>
     </div>
-    <div class="production-muted" id="bc-total-note" aria-live="polite">Live estimate from entered rows only; saving still creates a DRAFT.</div>
+    <div class="production-muted" id="bc-total-note" aria-live="polite">Live estimate only. Difference is not measured wastage; it may include reusable or returned material and must be reconciled separately.</div>
     <div style="overflow-x:auto">
       <table class="bc-table">
         <thead><tr><th>Dyeing document</th><th>Source line / Yarn</th><th>Batch</th><th>Ownership / Owner</th><th>Available KG</th><th>Input KG</th><th>Input cones</th><th>Output KG</th><th>Output cones</th><th>Next destination</th></tr></thead>
@@ -173,8 +173,8 @@
     document.getElementById('bc-total-note').textContent = invalidRows
       ? `${invalidRows} line(s) need correction: output KG/cones cannot exceed input KG/cones.`
       : entered
-        ? `${entered} source line(s) entered · estimate only; server validates availability and saves DRAFT only.`
-        : 'Enter a positive input quantity to see live totals. No stock is moved.';
+        ? `${entered} source line(s) entered · estimate only; difference is unreconciled, not measured wastage. Server validates availability and saves DRAFT only.`
+        : 'Enter a positive input quantity to see live totals. Difference is not measured wastage; reconcile reusable/returned material separately. No stock is moved.';
   };
   sourceRows.forEach(row => row.querySelectorAll('[name="input_quantity_kg"], [name="output_quantity_kg"], [name="input_cones"], [name="output_cones"]').forEach(field => field.addEventListener('input', updateTotals)));
   sourceSelect.addEventListener('change', updateTotals);
