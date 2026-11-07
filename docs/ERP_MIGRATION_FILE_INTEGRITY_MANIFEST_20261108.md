@@ -89,3 +89,17 @@ A follow-up parser compared trigger names declared in the 31 migration files wit
 - No unexpected current trigger name was found outside that reconciled set.
 
 This name-level reconciliation supports the migration/trigger inventory but does not replace checking trigger definitions, timing, enabled state, function ownership, or SECURITY INVOKER behavior on restored staging.
+
+## Function-name reconciliation against archive, migrations and live catalog
+
+A name-level comparison was made between the latest 125-table archive TOC, the 31 migration files, and the current PostgreSQL application-schema routine catalog:
+
+- Latest archive: **21 distinct function names**.
+- Migration files: **52 CREATE/CREATE OR REPLACE FUNCTION statements**, resolving to **31 distinct schema-qualified function names**.
+- Current live catalog: **46 distinct schema-qualified function names**.
+- All 21 archive function names still exist in the current catalog.
+- All 46 current function names are accounted for by the archive or migration source set; no current function name was unexplained.
+- The only migration-created function name not present in the current catalog is `production.assert_party_use_request_link`, intentionally removed by migration 012 when the two party-use link triggers were replaced.
+- Five function names overlap between the archive and migration source sets, reflecting later replacement/update definitions.
+
+This is a name-level reconciliation only. It does not compare overloaded signatures, full function bodies, owners, ACLs, volatility, SECURITY INVOKER/DEFINER flags, or exact trigger attachment behavior. Those remain staging-validation requirements.
