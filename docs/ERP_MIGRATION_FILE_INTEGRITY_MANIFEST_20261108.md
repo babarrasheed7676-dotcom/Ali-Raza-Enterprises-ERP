@@ -78,3 +78,14 @@ A second static pass checked every migration file for transaction boundaries and
 - These properties do not establish full idempotency. Other `ALTER TABLE`, `CREATE INDEX`, constraint, function and trigger statements may also fail if replayed against an already-migrated schema.
 
 **Deployment rule:** on a restored staging database, determine the exact migration boundary first, then execute each missing migration once in filename order with preconditions, postconditions and recorded hash/result. Never replay the full directory against the live database or assume `BEGIN/COMMIT` makes a migration safe to rerun.
+
+## Trigger-name reconciliation against the live catalog
+
+A follow-up parser compared trigger names declared in the 31 migration files with the current PostgreSQL trigger catalog:
+
+- Migration files contain 45 CREATE TRIGGER statements but only 43 unique trigger names; two source-line trigger names are deliberately re-created in the later immutability migration.
+- Four DROP TRIGGER names occur in the migration set. Two party-use link triggers are intentionally removed by migration 012 and are absent from the current catalog. Two Big Cone/Baby Cone source-output triggers are dropped and re-created by migration 024 and are present currently.
+- Current application schemas have 44 non-internal triggers. The set reconciles exactly to 41 unique migration-created triggers still present plus three pre-existing triggers: `inventory.stock_documents.trg_protect_stock_document`, `production.packing_material_consumption.trg_validate_packing_material_quantity`, and `production.packing_material_consumption.trg_validate_packing_material_stock_line`.
+- No unexpected current trigger name was found outside that reconciled set.
+
+This name-level reconciliation supports the migration/trigger inventory but does not replace checking trigger definitions, timing, enabled state, function ownership, or SECURITY INVOKER behavior on restored staging.
