@@ -32,3 +32,16 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Private operational artifacts — keep out of public/source sync
+*.pdf
+*.dump
+*.log
+*.pid
+/logs/
+/database/backups/
+**/database/backups/
+create_babar_admin_local.py
+nalki_audit_search.txt
+TIMESTAMPTZ
+configuration_render_test.*
