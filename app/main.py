@@ -56,7 +56,7 @@ from .packing_random_source_service import get_random_packing_source_candidates
 from .packing_random_draft_service import create_random_packing_draft
 from .production_service import get_production_dashboard_data
 from .production_master_service import get_production_masters, save_production_master
-from .big_cone_draft_service import get_big_cone_draft_form_data, create_big_cone_draft
+from .big_cone_draft_service import get_big_cone_draft_form_data, create_big_cone_draft, get_big_cone_readiness
 from .baby_cone_measurement_service import get_baby_cone_measurement_draft_options
 from .configuration_runtime_service import save_baby_cone_measurement_draft
 from .dyeing_draft_service import (
@@ -1607,7 +1607,7 @@ async def big_cone_draft_save(request: Request):
 
     if result:
         return RedirectResponse(
-            url="/modules/production/big-cone/new?" + urlencode({"saved": "1", "ref": result["big_cone_no"]}),
+            url=f"/modules/production/big-cone/{result['id']}/readiness",
             status_code=303,
         )
 
@@ -1621,6 +1621,26 @@ async def big_cone_draft_save(request: Request):
             "saved": False, "ref": "", "errors": errors, "form": form,
         },
         status_code=422,
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@app.get(
+    "/modules/production/big-cone/{big_cone_order_id}/readiness",
+    response_class=HTMLResponse,
+    dependencies=[Depends(require_permission("production.view"))],
+)
+def big_cone_readiness_page(request: Request, big_cone_order_id: int):
+    user = get_current_user(request)
+    try:
+        data = get_big_cone_readiness(user["company_id"], big_cone_order_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    response = templates.TemplateResponse(
+        request=request,
+        name="big_cone_readiness.html",
+        context={"app_name": settings.app_name, "data": data},
     )
     response.headers["Cache-Control"] = "no-store"
     return response

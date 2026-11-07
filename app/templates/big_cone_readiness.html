@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Big Cone Readiness · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Production / Big Cone / Readiness{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">PRODUCTION · BIG CONE · READ-ONLY</div>
+    <h1>Approval Readiness · {{ data.order.big_cone_no }}</h1>
+    <p>This is a read-only preflight. It does not approve, reserve, post, or move stock.</p>
+  </div>
+  <a class="back-link" href="/modules/production/big-cone/new">← Big Cone drafts</a>
+</div>
+<style>
+.bc-panel{border:1px solid var(--border,#d9dee7);border-radius:14px;background:var(--surface,#fff);padding:18px;margin:16px 0}
+.bc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.bc-metric{padding:14px;border:1px solid var(--border,#d9dee7);border-radius:10px}
+.bc-label{font-size:12px;color:var(--muted,#64748b);font-weight:650}
+.bc-value{font-size:20px;font-weight:750;margin-top:5px;overflow-wrap:anywhere}
+.bc-blocker{padding:11px 13px;border:1px solid var(--border,#d9dee7);border-left:4px solid #bd8731;border-radius:9px;margin:9px 0}
+.bc-table{width:100%;border-collapse:collapse;min-width:760px}
+.bc-table th,.bc-table td{padding:9px;border-bottom:1px solid var(--border,#d9dee7);text-align:left}
+.bc-muted{color:var(--muted,#64748b)}
+</style>
+<section class="bc-panel">
+  <div class="bc-grid">
+    <div class="bc-metric"><div class="bc-label">Document status</div><div class="bc-value">{{ data.order.status }}</div></div>
+    <div class="bc-metric"><div class="bc-label">Input total</div><div class="bc-value">{{ data.input_total_kg }} KG</div></div>
+    <div class="bc-metric"><div class="bc-label">Output total</div><div class="bc-value">{{ data.output_total_kg }} KG</div></div>
+    <div class="bc-metric"><div class="bc-label">Unreconciled difference</div><div class="bc-value">{{ data.unreconciled_difference_kg }} KG</div></div>
+    <div class="bc-metric"><div class="bc-label">Measured wastage</div><div class="bc-value">Not recorded</div></div>
+    <div class="bc-metric"><div class="bc-label">Captured process cost</div><div class="bc-value">PKR {{ data.process_cost_pkr }}</div></div>
+  </div>
+  <p class="bc-muted">A positive input/output difference is not automatically wastage. It may include reusable or returned yarn and requires actual reconciliation.</p>
+</section>
+<section class="bc-panel">
+  <h2>Approval blockers</h2>
+  <p><strong>Not ready for approval.</strong> This page intentionally does not offer an approval or posting action.</p>
+  {% for blocker in data.blockers %}<div class="bc-blocker">{{ blocker }}</div>{% endfor %}
+</section>
+<section class="bc-panel">
+  <h2>Source material and current stock</h2>
+  <div style="overflow-x:auto">
+    <table class="bc-table">
+      <thead><tr><th>Line</th><th>Item / Batch</th><th>Ownership</th><th>Draft input KG</th><th>Current source stock KG</th><th>Other Big Cone allocations KG</th></tr></thead>
+      <tbody>
+      {% for line in data.materials %}
+        <tr>
+          <td>{{ line.line_no }}</td>
+          <td>{{ line.item_code }} · {{ line.item_name }} · {{ line.variant_code }}<br><small>{{ line.batch_no or "No batch" }}</small></td>
+          <td>{{ line.ownership_code }}{% if line.party_name %}<br>{{ line.party_name }}{% endif %}</td>
+          <td>{{ line.input_quantity_kg }}</td>
+          <td>{{ line.current_source_stock_kg }}</td>
+          <td>{{ line.other_big_cone_allocations_kg }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="bc-muted">No material input lines found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="bc-panel">
+  <h2>Output lineage</h2>
+  <div style="overflow-x:auto">
+    <table class="bc-table">
+      <thead><tr><th>Line</th><th>Item / Batch</th><th>Ownership</th><th>Output KG</th><th>Next process</th><th>Source input line</th></tr></thead>
+      <tbody>
+      {% for line in data.outputs %}
+        <tr><td>{{ line.line_no }}</td><td>{{ line.item_code }} · {{ line.item_name }} · {{ line.variant_code }}<br><small>{{ line.batch_no or "No batch" }}</small></td><td>{{ line.ownership_code }}{% if line.party_name %}<br>{{ line.party_name }}{% endif %}</td><td>{{ line.quantity_kg }}</td><td>{{ line.destination_type }}</td><td>#{{ line.source_material_line_id }}</td></tr>
+      {% else %}
+        <tr><td colspan="6" class="bc-muted">No output lines found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

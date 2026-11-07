@@ -381,3 +381,127 @@ def create_big_cone_draft(*, company_id: int, user: dict, request: Any,
             "line_count": len(material_rows), "input_quantity_kg": str(total_input),
             "output_quantity_kg": str(total_output),
             **_draft_reconciliation_summary(total_input, total_output)}
+
+
+def get_big_cone_readiness(company_id: int, big_cone_order_id: int) -> dict[str, Any]:
+    """Read-only preflight. It never reserves, approves, posts, or changes stock."""
+    company_id = int(company_id)
+    big_cone_order_id = int(big_cone_order_id)
+    if company_id <= 0 or big_cone_order_id <= 0:
+        raise ValueError("Select a valid Big Cone document.")
+
+    with get_connection() as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute("SET TRANSACTION READ ONLY")
+                cur.execute(
+                    """SELECT id,big_cone_no,big_cone_date,status,source_dyeing_order_id,
+                              input_quantity_kg,output_quantity_kg,wastage_quantity_kg,
+                              labour_cost,electricity_cost,machine_cost,total_process_cost,
+                              approved_at,posted_at
+                       FROM production.big_cone_orders
+                       WHERE id=%s AND company_id=%s""",
+                    (big_cone_order_id, company_id),
+                )
+                order = cur.fetchone()
+                if not order:
+                    raise ValueError("Big Cone document was not found in this company.")
+
+                cur.execute(
+                    """SELECT ml.id,ml.line_no,ml.quantity_kg AS input_quantity_kg,
+                              ml.item_variant_id,ml.batch_id,ml.location_id,
+                              ml.ownership_type_id,ml.owner_party_id,ml.process_stage_id,
+                              ml.unit_cost,ml.total_cost,
+                              own.code AS ownership_code,p.party_name,
+                              i.item_code,i.item_name,v.variant_code,b.batch_no,
+                              COALESCE(sb.quantity,0) AS current_source_stock_kg,
+                              COALESCE((
+                                SELECT SUM(other_ml.quantity_kg)
+                                FROM production.big_cone_material_lines other_ml
+                                JOIN production.big_cone_orders other_order
+                                  ON other_order.id=other_ml.big_cone_order_id
+                                WHERE other_ml.source_dyeing_output_line_id=ml.source_dyeing_output_line_id
+                                  AND other_order.status NOT IN ('CANCELLED','REVERSED')
+                                  AND other_order.id<>ml.big_cone_order_id
+                              ),0) AS other_big_cone_allocations_kg,
+                              ml.source_dyeing_output_line_id
+                       FROM production.big_cone_material_lines ml
+                       JOIN master.ownership_types own ON own.id=ml.ownership_type_id
+                       JOIN master.item_variants v ON v.id=ml.item_variant_id
+                       JOIN master.items i ON i.id=v.item_id
+                       LEFT JOIN master.parties p ON p.id=ml.owner_party_id
+                       LEFT JOIN inventory.batches b ON b.id=ml.batch_id
+                       LEFT JOIN inventory.stock_balances sb
+                         ON sb.company_id=%s
+                        AND sb.item_variant_id=ml.item_variant_id
+                        AND sb.batch_id IS NOT DISTINCT FROM ml.batch_id
+                        AND sb.location_id IS NOT DISTINCT FROM ml.location_id
+                        AND sb.ownership_type_id=ml.ownership_type_id
+                        AND sb.owner_party_id IS NOT DISTINCT FROM ml.owner_party_id
+                        AND sb.process_stage_id IS NOT DISTINCT FROM ml.process_stage_id
+                       WHERE ml.big_cone_order_id=%s
+                       ORDER BY ml.line_no""",
+                    (company_id, big_cone_order_id),
+                )
+                materials = [dict(row) for row in cur.fetchall()]
+                cur.execute(
+                    """SELECT ol.id,ol.line_no,ol.quantity_kg,ol.destination_type,
+                              ol.unit_cost,ol.total_cost,ol.source_material_line_id,
+                              own.code AS ownership_code,p.party_name,
+                              i.item_code,i.item_name,v.variant_code,b.batch_no
+                       FROM production.big_cone_output_lines ol
+                       JOIN master.ownership_types own ON own.id=ol.ownership_type_id
+                       JOIN master.item_variants v ON v.id=ol.item_variant_id
+                       JOIN master.items i ON i.id=v.item_id
+                       LEFT JOIN master.parties p ON p.id=ol.owner_party_id
+                       LEFT JOIN inventory.batches b ON b.id=ol.batch_id
+                       WHERE ol.big_cone_order_id=%s
+                       ORDER BY ol.line_no""",
+                    (big_cone_order_id,),
+                )
+                outputs = [dict(row) for row in cur.fetchall()]
+
+    input_total = Decimal(str(order["input_quantity_kg"] or 0))
+    output_total = Decimal(str(order["output_quantity_kg"] or 0))
+    difference = input_total - output_total
+    process_cost = Decimal(str(order["total_process_cost"] or 0))
+    blockers = []
+    if str(order["status"]) != "DRAFT":
+        blockers.append(f"Document status is {order['status']}; this screen does not change its status.")
+    if not materials or not outputs:
+        blockers.append("Material input or output lineage is incomplete.")
+    for material in materials:
+        input_kg = Decimal(str(material["input_quantity_kg"]))
+        stock_kg = Decimal(str(material["current_source_stock_kg"]))
+        if stock_kg < input_kg:
+            blockers.append(
+                f"Input line {material['line_no']}: current DYEING-stage stock is {stock_kg} KG; draft input is {input_kg} KG."
+            )
+        if material["ownership_code"] == "PARTY" and material["unit_cost"] is None:
+            blockers.append(f"Input line {material['line_no']}: PARTY locked unit rate is missing.")
+    if difference != 0:
+        blockers.append(
+            f"{difference} KG remains unreconciled. This is not measured wastage and cannot be treated as a stock return."
+        )
+    if process_cost > 0:
+        blockers.append(
+            "Captured labour/electricity/machine process cost has no verified output-line allocation basis yet."
+        )
+    else:
+        blockers.append(
+            "No Big Cone process-cost allocation has been verified; confirm actual cost capture before approval."
+        )
+
+    return {
+        "order": dict(order),
+        "materials": materials,
+        "outputs": outputs,
+        "input_total_kg": str(input_total),
+        "output_total_kg": str(output_total),
+        "unreconciled_difference_kg": str(difference),
+        "measured_wastage_kg": None,
+        "process_cost_pkr": str(process_cost),
+        "blockers": blockers,
+        "ready_for_approval": False,
+        "read_only": True,
+    }
