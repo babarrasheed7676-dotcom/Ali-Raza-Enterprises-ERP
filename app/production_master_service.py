@@ -122,12 +122,20 @@ def save_production_master(*, kind: str, payload: dict, company_id: int,
                         name = _text(payload.get("name",old["name"]), "Department name", 100)
                         description = _text(payload.get("description",old["description"]), "Description", 300, required=False)
                         if old["is_active"] and not active:
+                            department_refs = (
+                                "baby_cone_orders", "big_cone_orders", "dyeing_orders",
+                                "nalki_orders", "outside_labeling_orders", "packing_orders",
+                                "production_orders", "production_targets", "rewinding_orders",
+                            )
+                            reference_sql = " OR ".join(
+                                f"EXISTS(SELECT 1 FROM production.{table} WHERE department_id=%s AND company_id=%s)"
+                                for table in department_refs
+                            )
                             cur.execute(
-                                """SELECT EXISTS(SELECT 1 FROM master.machines
-                                                   WHERE department_id=%s AND company_id=%s AND is_active)
-                                      OR EXISTS(SELECT 1 FROM production.big_cone_orders
-                                                 WHERE department_id=%s AND company_id=%s) AS in_use""",
-                                (rid,company_id,rid,company_id))
+                                "SELECT EXISTS(SELECT 1 FROM master.machines WHERE department_id=%s AND company_id=%s) OR "
+                                + reference_sql + " AS in_use",
+                                tuple(value for _ in range(1 + len(department_refs)) for value in (rid, company_id)),
+                            )
                             if cur.fetchone()["in_use"]:
                                 raise ValueError("Department is in use by an active machine or Big Cone history. Deactivate/remove dependencies through their approved workflow first.")
                         cur.execute(
@@ -163,11 +171,32 @@ def save_production_master(*, kind: str, payload: dict, company_id: int,
                         unit_id = _positive_id(payload.get("capacity_unit_id",old["capacity_unit_id"]), "capacity unit", optional=True)
                         power = _optional_decimal(payload.get("rated_power_kw",old["rated_power_kw"]), "Rated power")
                         code = old["machine_code"]
-                        if old["is_active"] and not active:
-                            cur.execute("SELECT EXISTS(SELECT 1 FROM production.big_cone_orders WHERE machine_id=%s AND company_id=%s) AS in_use",
-                                        (rid,company_id))
-                            if cur.fetchone()["in_use"]:
-                                raise ValueError("Machine is referenced by Big Cone history and cannot be deactivated.")
+                        machine_refs = (
+                            ("baby_cone_orders", True), ("big_cone_orders", True),
+                            ("dyeing_orders", True), ("dyeing_rework_orders", True),
+                            ("machine_capacities", False), ("machine_downtime", True),
+                            ("nalki_orders", True), ("production_executions", False),
+                            ("production_orders", True), ("production_targets", True),
+                            ("rewinding_orders", True),
+                        )
+                        reference_sql_parts = []
+                        reference_params = []
+                        for table, company_scoped in machine_refs:
+                            condition = "machine_id=%s"
+                            reference_params.append(rid)
+                            if company_scoped:
+                                condition += " AND company_id=%s"
+                                reference_params.append(company_id)
+                            reference_sql_parts.append(
+                                f"EXISTS(SELECT 1 FROM production.{table} WHERE {condition})"
+                            )
+                        cur.execute("SELECT " + " OR ".join(reference_sql_parts) + " AS in_use",
+                                    tuple(reference_params))
+                        machine_in_use = bool(cur.fetchone()["in_use"])
+                        if old["is_active"] and not active and machine_in_use:
+                            raise ValueError("Machine is referenced by production history, capacity or downtime records and cannot be deactivated.")
+                        if int(old["department_id"] or 0) != department_id and machine_in_use:
+                            raise ValueError("Machine department cannot be changed after production history, capacity or downtime records reference it.")
                     if (capacity is None) != (unit_id is None):
                         raise ValueError("Enter both capacity quantity and capacity unit, or leave both blank.")
                     cur.execute("SELECT id FROM core.departments WHERE id=%s AND company_id=%s AND is_active=TRUE FOR SHARE",
