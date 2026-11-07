@@ -6,6 +6,8 @@ Static AST scan of Python files under app/. It inspects literal SQL passed to ex
 
 Files scanned: 41; qualified table-reference hits: 598; distinct candidate tables: 70.
 
+The literal-SQL scan found no qualified DELETE FROM or TRUNCATE TABLE statements in these execute/executemany call arguments. This supports withholding broad DELETE/TRUNCATE from the runtime candidate, but it is not proof that no dynamic, concatenated, unqualified, or external path uses them.
+
 | Candidate table | SQL operations observed | Source files |
 |---|---|---|
 | accounting.accounts | FROM (3 files), JOIN (1 files) | app/accounting/journal_service.py, app/accounting/report_service.py, app/main.py |
