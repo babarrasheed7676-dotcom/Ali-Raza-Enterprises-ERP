@@ -167,6 +167,17 @@ class ConfigurationRulesTests(unittest.TestCase):
         )
         self.assertTrue(profile.requires_approval)
 
+    def test_measurement_profile_rejects_unimplemented_methods(self):
+        for method in ("piece_weight", "manual"):
+            with self.subTest(method=method):
+                with self.assertRaises(ValidationError):
+                    MeasurementProfile(
+                        effective_from=date(2026, 11, 5),
+                        profile_code="BABY-CONE-TEST",
+                        variant_code="BC-TEST",
+                        method=method,
+                    )
+
     def test_process_route_requires_unique_ordered_steps(self):
         with self.assertRaises(ValidationError):
             ProcessRoute(

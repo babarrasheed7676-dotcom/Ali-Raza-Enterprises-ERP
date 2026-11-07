@@ -352,7 +352,7 @@
         <tr><td>APPROVAL_POLICY</td><td>Configuration approval workflow checks policy, requester separation and approver count.</td><td><span class="config-tag">Integrated ? configuration governance</span></td></tr>
         <tr><td>UNIT_CONVERSION</td><td>Dyeing DRAFT captures the selected source quantity and unit without converting it. The resolver accepts APPROVED, date-effective rules only; the current MG-TO-KG version is PENDING, so conversion is correctly blocked. No stock/purchasing posting consumer.</td><td><span class="config-tag">Partial ? DRAFT source capture; conversion blocked</span></td></tr>
         <tr><td>BABY_CONE_MEASUREMENT</td><td>Legacy one-off measurement definition remains validation-only; the operational path uses MEASUREMENT_PROFILE.</td><td><span class="config-tag">Validation only</span></td></tr>
-        <tr><td>MEASUREMENT_PROFILE</td><td>Flexible Baby Cone measurement profiles can be configured whenever factory measurements are confirmed. Supported methods: weight per length, piece weight, or manual. Create a new DRAFT version for each required setup; approved effective versions are pinned to DRAFT measurements. No assumed 1,500-yard weight or fixed tolerance.</td><td><span class="config-tag">Flexible ? configure when required</span></td></tr>
+        <tr><td>MEASUREMENT_PROFILE</td><td>Flexible Baby Cone measurement profiles can be configured whenever factory measurements are confirmed. Currently supported operational method: weight per length. Piece-weight and manual modes remain unavailable until the measurement record schema is safely extended. Create a new DRAFT version for each required setup; approved effective versions are pinned to DRAFT measurements. No assumed 1,500-yard weight or fixed tolerance.</td><td><span class="config-tag">Flexible ? configure when required</span></td></tr>
         <tr><td>OWNERSHIP_POLICY</td><td>Separate Nalki OWN-only and Dyeing OWN + controlled PARTY starters are available. Approved effective-policy resolver, DRAFT-line PARTY-use request queue, independent approve/reject, locked PKR rate and request-to-line link are connected. Nalki remains OWN-only unless a separately approved policy changes it. Final consumption/cost transaction snapshots and costing consumer remain pending.</td><td><span class="config-tag">Policy + request/approval connected ? posting snapshot pending</span></td></tr>
         <tr><td>PROCESS_COST_RULE</td><td>No costing/labour consumer is connected. Preserve existing factory rules: Dyeing and Big Cone salary plus overhead; Nalki theka including packing; Baby Cone salary, not theka.</td><td><span class="config-tag">Not connected ? costing protected</span></td></tr>
         <tr><td>ATTRIBUTE_DEFINITION</td><td>No extensible attribute storage exists under master schema; items/variants currently use fixed columns. Operational integration needs a reviewed attribute-value schema and master form validation.</td><td><span class="config-tag">Blocked ? storage/schema not present</span></td></tr>
@@ -726,7 +726,7 @@
       ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['from_unit_code','Source unit (from)','unit',true],['to_unit_code','Target unit (to)','unit',true],['factor','Conversion factor','decimal',true],['rounding_places','Rounding places','integer'],['active','Active','bool']
     ],
     MEASUREMENT_PROFILE:[
-      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['profile_code','Profile code','text',true],['variant_code','Variant code','text',true],['method','Measurement method','enum:weight_per_length,piece_weight,manual',true],['tolerance_percent','Tolerance (%)','decimal'],['requires_operator','Requires operator','bool'],['requires_approval','Requires approval','bool'],['active','Active','bool']
+      ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['profile_code','Profile code','text',true],['variant_code','Variant code','text',true],['method','Measurement method','enum:weight_per_length',true],['tolerance_percent','Tolerance (%)','decimal'],['requires_operator','Requires operator','bool'],['requires_approval','Requires approval','bool'],['active','Active','bool']
     ],
     PROCESS_ROUTE:[
       ['effective_from','Effective from','date',true],['effective_to','Effective to','date'],['route_code','Route code','text',true],['route_name','Route name','text',true],['product_type','Product type','text',true],['steps','Ordered process steps','steps',true],['active','Active','bool']
@@ -998,3 +998,17 @@
       config_key: configKey,
       on_date: onDate
     });
+    try {
+      const response = await fetch('/configuration/api/effective?'+params.toString(), {credentials:'same-origin', headers:{'Accept':'application/json'}});
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.detail || 'Effective lookup failed.');
+      status.textContent = result.configuration ? 'An approved version is effective on this date.' : 'No approved version is effective on this date.';
+      resultBox.textContent = JSON.stringify(result, null, 2);
+    } catch (error) { status.textContent = error.message; }
+  });
+  refreshHistory();
+})();
+</script>
+</div><!-- /.configuration-page -->
+
+{% endblock %}

@@ -179,7 +179,7 @@ class UnitConversion(EffectivePeriod):
 class MeasurementProfile(EffectivePeriod):
     profile_code: str = Field(min_length=1, max_length=60)
     variant_code: str = Field(min_length=1, max_length=60)
-    method: Literal["weight_per_length", "piece_weight", "manual"]
+    method: Literal["weight_per_length"]
     tolerance_percent: Decimal = Field(default=Decimal("0"), ge=0, le=100)
     requires_operator: bool = True
     requires_approval: bool = False
