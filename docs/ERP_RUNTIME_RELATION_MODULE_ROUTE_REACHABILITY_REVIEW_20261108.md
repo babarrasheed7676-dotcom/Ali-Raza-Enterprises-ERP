@@ -2,7 +2,7 @@
 
 ## Purpose and safety boundary
 
-This review advances the 93-relation consolidated candidate matrix by reconciling each relation's schema/module owner with the current module registry, imported service layer, and route evidence in app/main.py. It is a source-level reachability classification, not a final privilege grant list.
+This review advances the 94-relation consolidated candidate matrix by reconciling each relation's schema/module owner with the current module registry, imported service layer, and route evidence in app/main.py. It is a source-level reachability classification, not a final privilege grant list.
 
 No application code, database object, role, ACL, DSN, data, or running process was changed. No server restart was performed.
 
@@ -22,7 +22,7 @@ No application code, database object, role, ACL, DSN, data, or running process w
 
 ## Relation-level module classification for the consolidated 93 candidates
 
-The schema prefix is a reliable module ownership signal, but not proof that every operation on every relation is reachable. Use the following interpretation for each row of ERP_CONSOLIDATED_RUNTIME_TABLE_ACCESS_CANDIDATE_MATRIX_20261108.md:
+The schema prefix is a reliable module ownership signal, but not proof that every operation on every relation is reachable. Use the following interpretation for each row of the 94-relation ERP_CONSOLIDATED_RUNTIME_TABLE_ACCESS_CANDIDATE_MATRIX_20261108.md:
 
 | Schema prefix | Relations in candidate matrix | Reachability conclusion |
 |---|---:|---|
