@@ -1566,16 +1566,18 @@ async def big_cone_draft_save(request: Request):
     lengths = {len(x) for x in (source_ids, input_qty, input_cones, output_qty, output_cones, destinations)}
     errors = ["Big Cone input rows are incomplete; refresh the form and try again."] if len(lengths) > 1 else []
     lines = []
-    for index, source_id in enumerate(source_ids):
-        if not (input_qty[index] or "").strip():
+    for source_id, input_value, input_cone_value, output_value, output_cone_value, destination_value in zip(
+        source_ids, input_qty, input_cones, output_qty, output_cones, destinations
+    ):
+        if not (input_value or "").strip():
             continue
         lines.append({
             "source_dyeing_output_line_id": source_id,
-            "input_quantity_kg": input_qty[index],
-            "input_cones": input_cones[index],
-            "output_quantity_kg": output_qty[index],
-            "output_cones": output_cones[index],
-            "destination_type": destinations[index],
+            "input_quantity_kg": input_value,
+            "input_cones": input_cone_value,
+            "output_quantity_kg": output_value,
+            "output_cones": output_cone_value,
+            "destination_type": destination_value,
         })
     form["lines"] = lines
     form["line_values"] = {
