@@ -156,7 +156,7 @@ def get_configuration_examples() -> dict:
         },
         "MEASUREMENT_PROFILE": {
             "label": "Measurement profile",
-            "help": "Flexible setup: choose weight_per_length, piece_weight or manual when the factory measurement method is confirmed. Replace the placeholder variant code and set the real tolerance; this starter creates only an editable DRAFT example and assumes no production weight.",
+            "help": "Baby Cone currently supports the measured weight_per_length method only. Piece-weight and manual methods are not enabled until their measurement schema and workflow are implemented. Replace the placeholder variant code and confirm the real tolerance; this starter creates only an editable DRAFT example and assumes no production weight.",
             "key": "BABY-CONE-WEIGHT-LENGTH",
             "name": "Baby Cone weight and length profile",
             "payload": {
