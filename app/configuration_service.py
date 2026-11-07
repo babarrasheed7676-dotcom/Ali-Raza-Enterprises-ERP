@@ -126,6 +126,22 @@ def _validate_configuration_references(cur, *, company_id: int, config_type: str
                 + ", ".join(missing)
             )
 
+    elif config_type == "UNIT_DEFINITION":
+        base_unit_code = str(payload.get("base_unit_code") or "").strip().upper()
+        if base_unit_code:
+            cur.execute(
+                """SELECT code
+                   FROM master.units
+                   WHERE upper(code)=%s AND is_active IS TRUE
+                   FOR SHARE""",
+                (base_unit_code,),
+            )
+            if not cur.fetchone():
+                raise ValueError(
+                    "Unit Definition references an unknown or inactive base unit: "
+                    + base_unit_code
+                )
+
     elif config_type == "PACKAGING_RULE":
         product_code = str(payload.get("product_code") or "").strip().upper()
         if product_code:

@@ -108,6 +108,32 @@ class ConfigurationReferenceValidationTests(unittest.TestCase):
             )
         self.assertEqual(cur.sql, "")
 
+    def test_unit_definition_rejects_unknown_or_inactive_base_unit(self):
+        cur = FakeCursor([])
+        with self.assertRaisesRegex(ValueError, "inactive base unit: UNKNOWN"):
+            _validate_configuration_references(
+                cur, company_id=1, config_type="UNIT_DEFINITION",
+                payload={"base_unit_code": "unknown"},
+            )
+        self.assertIn("master.units", cur.sql)
+        self.assertEqual(cur.params, ("UNKNOWN",))
+
+    def test_unit_definition_accepts_active_base_unit(self):
+        cur = FakeCursor([{"code": "KG"}])
+        _validate_configuration_references(
+            cur, company_id=1, config_type="UNIT_DEFINITION",
+            payload={"base_unit_code": "kg"},
+        )
+        self.assertEqual(cur.params, ("KG",))
+
+    def test_unit_definition_allows_base_unit_to_be_unspecified(self):
+        cur = FakeCursor([])
+        _validate_configuration_references(
+            cur, company_id=1, config_type="UNIT_DEFINITION",
+            payload={"code": "CUSTOM", "factor_to_base": "1"},
+        )
+        self.assertEqual(cur.sql, "")
+
     def test_packaging_rule_rejects_unknown_or_inactive_product_item(self):
         cur = FakeCursor([])
         with self.assertRaisesRegex(ValueError, "inactive product item: NOT_REAL"):
