@@ -52,3 +52,34 @@ This distinction matters for backup/provenance decisions: the 41 source-gap rela
 The six valid custom-format archives listed above were each passed through PostgreSQL 18.6 `pg_restore --schema-only --file NUL` and `pg_restore --data-only --file NUL`. **All 12 extraction checks returned exit code 0** (schema and data extraction for each of six archives). Output was discarded to the Windows NUL device; no extracted schema/data files were created, no restore connection was opened, and no database was modified. This verifies archive readability/decompression for the selected schema and data sections, but it is not a full restore test or row-level application integrity validation.
 
 The zero-byte `ali_raza_erp_pre_config_supersession_20261105_204110.dump` remains excluded and failed the basic archive/TOC review.
+
+## Backup schema inventory versus current catalog
+
+A schema-only extraction from each of the six readable archives was parsed locally and compared with the current 130 application base tables from a consistent read-only catalog snapshot. Temporary extracted SQL was deleted after counting; no raw schema dump was added to the repository.
+
+| Verified archive | CREATE TABLE entries | Current tables absent from that archive |
+|---|---:|---:|
+| `ali_raza_erp_pre_configuration_20261105.dump` | 120 | 10 |
+| `ali_raza_erp_pre_config_approval_20261105.dump` | 123 | 7 |
+| `ali_raza_erp_pre_packing_config_snapshot_20261105.dump` | 124 | 6 |
+| `ali_raza_erp_pre_packing_phase2g_20261105.dump` | 123 | 7 |
+| `ali_raza_erp_pre_packing_snapshot_guard_20261105.dump` | 125 | 5 |
+| `ali_raza_erp_pre_purchasing_config_snapshot_20261105.dump` | 125 | 5 |
+
+The two latest 125-table snapshots are each missing the same five current relations:
+
+- `purchasing.purchase_configuration_snapshots` — migration `20261105_008_purchasing_configuration_snapshots.sql`
+- `production.baby_cone_configuration_snapshots` — migration `20261106_009_baby_cone_configuration_snapshots.sql`
+- `production.baby_cone_measurements` — migration `20261106_010_baby_cone_measurement_drafts.sql`
+- `production.ownership_use_requests` — migration `20261106_011_ownership_use_requests.sql`
+- `production.dyeing_unit_conversion_snapshots` — migration `20261107_018_dyeing_unit_conversion_snapshots.sql`
+
+For these latest snapshots, the remaining 125 application table definitions match the current catalog set exactly; there were no archive-only application tables in the comparison. This gives a concrete migration boundary for the five listed objects and establishes a reproducible historical schema starting point, subject to an approved isolated restore test. Earlier archives have earlier table counts and should not be mixed as if they were interchangeable full-current snapshots.
+
+The table comparison is limited to application base-table names and does not prove that every function, trigger, extension, owner, ACL, or data row is identical to the current live database. The six archive extraction checks succeeded, but no restore test has been performed.
+
+## Migration tracking ledger check
+
+A read-only catalog search across all application schemas found no base table whose name matches `%migration%`, `%schema_version%`, or `%alembic%`. The repository also has no Alembic migration runner/configuration in the active files scanned, and the README explicitly says SQL migrations are not run automatically. Therefore the database does not expose a migration ledger that can reliably prove which numbered scripts were applied or in what order.
+
+Do not infer applied migration status solely from the current table count or backup filename. For a future staging rebuild, record each migration filename, SHA-256 hash, execution timestamp, operator, result, and post-migration object checks in an external deployment manifest or a formally approved migration ledger. Create a database-resident ledger only through a reviewed migration and explicit approval; no such table was added during this audit.
