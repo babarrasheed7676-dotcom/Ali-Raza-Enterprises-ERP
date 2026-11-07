@@ -43,12 +43,13 @@
           </select>
           <input type="hidden" name="configuration_snapshot_id" id="bcSnapshotId" value="">
         </label>
-        <label>Gross weight (grams)<input name="gross_weight_grams" type="number" min="0.000001" step="any" required></label>
-        <label>Empty core tare (grams)<input name="empty_core_tare_grams" type="number" min="0" step="any" value="0" required></label>
-        <label>Measured length (yards)<input name="measured_yards" type="number" min="0.000001" step="any" required></label>
-        <label>Required length (yards, optional)<input name="required_yards" type="number" min="0.000001" step="any"></label>
+        <label>Gross weight (grams)<input id="bcGross" name="gross_weight_grams" type="number" min="0.000001" step="any" required></label>
+        <label>Empty core tare (grams)<input id="bcTare" name="empty_core_tare_grams" type="number" min="0" step="any" value="0" required></label>
+        <label>Measured length (yards)<input id="bcYards" name="measured_yards" type="number" min="0.000001" step="any" required></label>
+        <label>Required length (yards, optional)<input id="bcRequiredYards" name="required_yards" type="number" min="0.000001" step="any"></label>
         <label class="wide">Operator code<input name="operator_code" maxlength="60" placeholder="Enter operator code"></label>
       </div>
+      <div class="bc-measure-success" id="bcMeasurePreview" aria-live="polite">Enter gross weight, tare and measured yards to preview the calculated values. Preview only; the server recalculates and retains full precision.</div>
       <p class="bc-measure-help">Net yarn = gross weight ? empty-core tare. Grams/yard = net yarn ? measured yards. Required kg = grams/yard ? required yards ? 1000. Full precision is retained; the approved profile version is pinned.</p>
       <button class="btn btn-primary" type="submit">Save Measurement DRAFT</button>
     </form>
@@ -58,6 +59,37 @@
         const snapshot = document.getElementById('bcSnapshotId');
         const sync = () => { snapshot.value = select.selectedOptions[0]?.dataset.snapshot || ''; };
         select.addEventListener('change', sync); sync();
+
+        const gross = document.getElementById('bcGross');
+        const tare = document.getElementById('bcTare');
+        const yards = document.getElementById('bcYards');
+        const requiredYards = document.getElementById('bcRequiredYards');
+        const preview = document.getElementById('bcMeasurePreview');
+        const fmt = value => value.toLocaleString(undefined, {maximumFractionDigits: 6});
+        const updatePreview = () => {
+          const g = Number(gross.value), t = Number(tare.value), y = Number(yards.value);
+          if (!gross.value || !yards.value || !Number.isFinite(g) || !Number.isFinite(t) ||
+              !Number.isFinite(y) || g <= t || y <= 0 || t < 0) {
+            preview.textContent = 'Enter valid values. Gross weight must exceed tare, and measured yards must be greater than zero.';
+            return;
+          }
+          const net = g - t;
+          const gramsPerYard = net / y;
+          let summary = 'Net yarn: ' + fmt(net) + ' g  |  Grams per yard: ' + fmt(gramsPerYard) + ' g/yd';
+          if (requiredYards.value) {
+            const target = Number(requiredYards.value);
+            if (!Number.isFinite(target) || target <= 0) {
+              preview.textContent = summary + '  |  Required length must be greater than zero.';
+              return;
+            }
+            summary += '  |  Estimated yarn for required length: ' + fmt((gramsPerYard * target) / 1000) + ' kg';
+          }
+          preview.textContent = summary + '  |  Preview only; server recalculates on save.';
+        };
+        [gross, tare, yards, requiredYards].forEach(input => {
+          input.addEventListener('input', updatePreview);
+        });
+        updatePreview();
       })();
     </script>
     {% else %}
