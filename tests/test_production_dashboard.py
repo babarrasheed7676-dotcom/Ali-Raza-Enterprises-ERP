@@ -1,6 +1,9 @@
 import unittest
 
-from app.production_service import PROCESS_ORDER_SOURCES, _status_summary, _big_cone_register_rows
+from app.production_service import (
+    PROCESS_ORDER_SOURCES, _status_summary,
+    _big_cone_register_rows, _baby_cone_register_rows,
+)
 
 
 class ProductionDashboardTests(unittest.TestCase):
@@ -61,6 +64,33 @@ class ProductionDashboardTests(unittest.TestCase):
         }])
         self.assertEqual(rows[0]["unreconciled_difference_kg"], 0)
         self.assertEqual(rows[0]["process_cost"], 0)
+
+
+    def test_baby_cone_register_counts_evidence_without_inventing_wastage(self):
+        rows = _baby_cone_register_rows([{
+            "id": 9, "baby_cone_no": "BABY-0009", "baby_cone_date": "2026-11-07",
+            "status": "DRAFT", "input_quantity_kg": "10.000",
+            "output_quantity_kg": "9.750", "total_process_cost": "42.50",
+            "material_line_count": 2, "output_line_count": 3,
+            "measurement_count": 3, "cost_line_count": 2, "loss_line_count": 1,
+        }])
+        self.assertEqual(rows[0]["unreconciled_difference_kg"], 0.250)
+        self.assertEqual(rows[0]["measurement_count"], 3)
+        self.assertEqual(rows[0]["cost_line_count"], 2)
+        self.assertEqual(rows[0]["loss_line_count"], 1)
+        self.assertNotIn("wastage_quantity_kg", rows[0])
+
+    def test_baby_cone_register_handles_empty_and_null_values(self):
+        self.assertEqual(_baby_cone_register_rows([]), [])
+        rows = _baby_cone_register_rows([{
+            "id": 1, "baby_cone_no": "BABY-0001", "baby_cone_date": "2026-11-07",
+            "status": "DRAFT", "input_quantity_kg": None,
+            "output_quantity_kg": None, "total_process_cost": None,
+        }])
+        self.assertEqual(rows[0]["unreconciled_difference_kg"], 0)
+        self.assertEqual(rows[0]["measurement_count"], 0)
+        self.assertEqual(rows[0]["cost_line_count"], 0)
+        self.assertEqual(rows[0]["loss_line_count"], 0)
 
 
 if __name__ == "__main__":

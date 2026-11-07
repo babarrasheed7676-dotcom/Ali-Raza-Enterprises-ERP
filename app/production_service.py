@@ -52,6 +52,30 @@ def _big_cone_register_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
+def _baby_cone_register_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Normalize read-only Baby Cone register rows; never infer measured wastage."""
+    result = []
+    for row in rows:
+        input_kg = Decimal(str(row.get("input_quantity_kg") or 0))
+        output_kg = Decimal(str(row.get("output_quantity_kg") or 0))
+        result.append({
+            "id": int(row["id"]),
+            "baby_cone_no": str(row["baby_cone_no"]),
+            "baby_cone_date": row["baby_cone_date"],
+            "status": str(row["status"]),
+            "input_quantity_kg": input_kg,
+            "output_quantity_kg": output_kg,
+            "unreconciled_difference_kg": input_kg - output_kg,
+            "process_cost": Decimal(str(row.get("total_process_cost") or 0)),
+            "material_line_count": int(row.get("material_line_count") or 0),
+            "output_line_count": int(row.get("output_line_count") or 0),
+            "measurement_count": int(row.get("measurement_count") or 0),
+            "cost_line_count": int(row.get("cost_line_count") or 0),
+            "loss_line_count": int(row.get("loss_line_count") or 0),
+        })
+    return result
+
+
 def get_production_dashboard_data(company_id: int) -> dict[str, Any]:
     """Read company-scoped production activity and setup readiness only.
 
@@ -151,6 +175,28 @@ def get_production_dashboard_data(company_id: int) -> dict[str, Any]:
                 recent_big_cone_orders = _big_cone_register_rows(cur.fetchall())
 
                 cur.execute(
+                    """SELECT o.id,o.baby_cone_no,o.baby_cone_date,o.status,
+                              o.input_quantity_kg,o.output_quantity_kg,o.total_process_cost,
+                              (SELECT count(*) FROM production.baby_cone_material_lines ml
+                               WHERE ml.baby_cone_order_id=o.id) AS material_line_count,
+                              (SELECT count(*) FROM production.baby_cone_output_lines ol
+                               WHERE ol.baby_cone_order_id=o.id) AS output_line_count,
+                              (SELECT count(*) FROM production.baby_cone_measurements m
+                               JOIN production.baby_cone_output_lines ol ON ol.id=m.baby_cone_output_line_id
+                               WHERE ol.baby_cone_order_id=o.id) AS measurement_count,
+                              (SELECT count(*) FROM production.baby_cone_cost_lines cl
+                               WHERE cl.baby_cone_order_id=o.id) AS cost_line_count,
+                              (SELECT count(*) FROM production.baby_cone_loss_lines ll
+                               WHERE ll.baby_cone_order_id=o.id) AS loss_line_count
+                       FROM production.baby_cone_orders o
+                       WHERE o.company_id=%s
+                       ORDER BY o.created_at DESC,o.id DESC
+                       LIMIT 10""",
+                    (company_id,),
+                )
+                recent_baby_cone_orders = _baby_cone_register_rows(cur.fetchall())
+
+                cur.execute(
                     "SELECT count(*) AS total FROM master.machines WHERE company_id=%s AND is_active=true",
                     (company_id,),
                 )
@@ -183,6 +229,7 @@ def get_production_dashboard_data(company_id: int) -> dict[str, Any]:
         "targets": targets,
         "recent_dyeing_orders": recent_dyeing_orders,
         "recent_big_cone_orders": recent_big_cone_orders,
+        "recent_baby_cone_orders": recent_baby_cone_orders,
         "active_machines": active_machines,
         "active_departments": active_departments,
         "active_process_stages": len(stages),
