@@ -75,6 +75,18 @@
         addButton.click();
         return;
       }
+      if (event.key === "Enter" && !event.shiftKey && event.target.matches("select")) {
+        const selectFields = [...form.elements].filter(el =>
+          el.matches &&
+          el.matches("input:not([type=hidden]):not([disabled]),select:not([disabled]),textarea:not([disabled])") &&
+          el.getClientRects().length && !el.readOnly
+        );
+        const selectIndex = selectFields.indexOf(event.target);
+        if (selectIndex >= 0 && selectIndex < selectFields.length - 1) {
+          requestAnimationFrame(() => selectFields[selectIndex + 1].focus());
+        }
+        return;
+      }
       if (event.key !== "Enter" || event.shiftKey ||
           event.target.matches("textarea,select,button,[type=submit]")) return;
       const fields = [...form.elements].filter(el =>

@@ -4,10 +4,10 @@ Date: 2026-11-08
 ## Scope delivered
 - Added reusable presentation primitives in `app/static/smart-entry.css`.
 - Added the Smart Entry keyboard/controller layer in `app/static/smart-entry.js`.
-- Enabled the engine on the Goods Receipt DRAFT form only (`data-smart-entry="purchase-receipt"`).
+- First piloted on Goods Receipt, then opted in across Purchase Return, New Supplier, General Journal, Big Cone, Dyeing, Baby Cone Measurement, 100-Shade Packing and Random 100-Piece Packing.
 - Added visible keyboard guidance and a live status region.
-- Enter advances between ordinary input fields; native selects keep their normal Enter/type-to-select behavior.
-- Alt+N adds a blank receipt line.
+- Enter advances between fields; native selects keep their normal type-to-select behavior and then move focus forward.
+- Alt+N adds a line on Goods Receipt, Purchase Return and General Journal where each form has one unambiguous add-line action.
 - Ctrl+Enter invokes the browser's normal form validation and submits the existing DRAFT route.
 - Repeat last item copies variant, unit, PO-line selection and unit price; quantity, discounts, GST amount and remarks are reset for deliberate re-entry.
 - Repeated item variants show a non-blocking warning; the operator remains in control.
@@ -49,4 +49,4 @@ Date: 2026-11-08
 - No supplier, journal, receipt or other business document was submitted; no server restart.
 
 ## Next rollout
-Continue the rollout to remaining production drafts, packing and inventory after reviewing each form's dynamic row behavior and module-specific validation. Accounting forms require extra care: the engine must not calculate or alter debit/credit values, and the existing server-side balance/period guards remain authoritative.
+Continue the rollout to remaining production drafts and inventory after reviewing each form's dynamic row behavior and module-specific validation. Accounting forms require extra care: the engine must not calculate or alter debit/credit values, and the existing server-side balance/period guards remain authoritative.
