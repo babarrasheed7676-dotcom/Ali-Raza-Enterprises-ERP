@@ -2,9 +2,10 @@
    UI assistance only: no posting, stock, pricing, tax-rate or accounting decisions. */
 (() => {
   "use strict";
+  let autofocusClaimed = false;
   document.querySelectorAll("form[data-smart-entry]").forEach(form => {
     const mode = form.dataset.smartEntry;
-    const status = form.querySelector("#smartEntryStatus");
+    const status = form.querySelector(".smart-entry-status");
     const announce = message => { if (status) status.textContent = message; };
     const addButton = form.dataset.smartAddLine
       ? form.querySelector(form.dataset.smartAddLine) : null;
@@ -62,12 +63,15 @@
       if (event.ctrlKey && event.key === "Enter") {
         event.preventDefault();
         const submitter = form.querySelector('button[type="submit"],input[type="submit"]');
-        if (submitter?.disabled) {
+        if (!submitter) {
+          announce("This form has no available save action.");
+          return;
+        }
+        if (submitter.disabled) {
           announce("Save is disabled until this form's setup requirements are ready.");
           return;
         }
-        if (submitter) form.requestSubmit(submitter);
-        else form.requestSubmit();
+        form.requestSubmit(submitter);
         return;
       }
       if (event.altKey && event.key.toLowerCase() === "n" && addButton) {
@@ -121,6 +125,9 @@
       [...form.elements].find(el => el.matches &&
         el.matches("input:not([type=hidden]):not([disabled]),select:not([disabled])") &&
         el.getClientRects().length);
-    first?.focus({preventScroll:true});
+    if (!autofocusClaimed && first) {
+      first.focus({preventScroll:true});
+      autofocusClaimed = true;
+    }
   });
 })();

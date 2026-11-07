@@ -37,7 +37,8 @@
   <section class="pm-panel">
     <div class="eyebrow">DEPARTMENT MASTER</div><h2 id="deptFormTitle">Add department</h2>
     <p class="pm-help">Examples of possible process departments can be entered by an authorized administrator. No departments are pre-created.</p>
-    <form id="departmentForm">
+    <form id="departmentForm" data-smart-entry="production-department">
+      <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save</span></div><div class="smart-entry-status" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
       <input type="hidden" name="record_id">
       <div class="pm-form">
         <div class="pm-field"><label>Department code *</label><input name="code" maxlength="30" required placeholder="e.g. DYEING"></div>
@@ -59,7 +60,8 @@
   <section class="pm-panel">
     <div class="eyebrow">MACHINE MASTER</div><h2 id="machineFormTitle">Add machine</h2>
     <p class="pm-help">Machine must belong to an active department. Capacity is optional and requires a unit when entered. Rated power is optional.</p>
-    <form id="machineForm">
+    <form id="machineForm" data-smart-entry="production-machine">
+      <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save</span></div><div class="smart-entry-status" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
       <input type="hidden" name="record_id">
       <div class="pm-form">
         <div class="pm-field"><label>Machine code *</label><input name="machine_code" maxlength="30" required placeholder="e.g. BC-01"></div>
