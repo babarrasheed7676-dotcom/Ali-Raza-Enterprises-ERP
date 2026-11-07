@@ -183,7 +183,7 @@ def get_configuration_examples() -> dict:
                 "steps": [
                     {
                         "sequence_no": 1,
-                        "process_code": "NALKI_PRODUCTION",
+                        "process_code": "NALKI",
                         "input_product_type": "LARGE_CONE",
                         "output_product_type": "NALKI",
                         "optional": False,

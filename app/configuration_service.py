@@ -101,6 +101,58 @@ def _validate_unit_conversion_units(cur, payload: dict, *, require_target_precis
             )
 
 
+
+def _validate_configuration_references(cur, *, company_id: int, config_type: str, payload: dict) -> None:
+    """Validate selected operational references against active company masters."""
+    if config_type == "MEASUREMENT_PROFILE":
+        variant_code = str(payload.get("variant_code") or "").strip().upper()
+        if not variant_code:
+            raise ValueError("A real Baby Cone variant code is required.")
+        cur.execute(
+            """SELECT v.id
+               FROM master.item_variants v
+               JOIN master.items i ON i.id=v.item_id
+               WHERE i.company_id=%s
+                 AND upper(i.item_code)='BABY_CONE'
+                 AND upper(v.variant_code)=%s
+                 AND i.is_active IS TRUE AND v.is_active IS TRUE
+               FOR SHARE OF v,i""",
+            (int(company_id), variant_code),
+        )
+        matches = cur.fetchall()
+        if len(matches) != 1:
+            if not matches:
+                raise ValueError(
+                    "Measurement Profile must reference an existing active variant under the BABY_CONE item."
+                )
+            raise ValueError(
+                "Measurement Profile variant code is ambiguous; use a unique active Baby Cone variant."
+            )
+
+    elif config_type == "PROCESS_ROUTE":
+        codes = sorted({
+            str(step.get("process_code") or "").strip().upper()
+            for step in payload.get("steps", [])
+        })
+        if not codes or any(not code for code in codes):
+            raise ValueError("Every process route step must select an active process stage.")
+        cur.execute(
+            """SELECT upper(code) AS code
+               FROM master.process_stages
+               WHERE company_id=%s AND is_active IS TRUE
+                 AND upper(code)=ANY(%s)
+               FOR SHARE""",
+            (int(company_id), codes),
+        )
+        available = {str(row["code"]).upper() for row in cur.fetchall()}
+        missing = sorted(set(codes) - available)
+        if missing:
+            raise ValueError(
+                "Process route references unknown or inactive process stage(s): "
+                + ", ".join(missing)
+            )
+
+
 def _next_approval_count(existing_approver_ids, actor_id: int) -> int:
     """Count distinct independent approvers and prevent duplicate votes."""
     approvers = {int(value) for value in existing_approver_ids}
@@ -171,6 +223,9 @@ def create_configuration_draft(
                     if config_key != expected_key:
                         raise ValueError(f"Unit conversion key must be {expected_key} for the selected direction.")
                     _validate_unit_conversion_units(cur, validated_payload)
+                _validate_configuration_references(
+                    cur, company_id=company_id, config_type=config_type, payload=validated_payload
+                )
                 lock_key = f"{company_id}:{config_type}:{config_key}"
                 cur.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (lock_key,))
                 cur.execute(
