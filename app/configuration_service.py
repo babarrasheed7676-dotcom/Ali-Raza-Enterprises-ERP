@@ -126,6 +126,38 @@ def _validate_configuration_references(cur, *, company_id: int, config_type: str
                 + ", ".join(missing)
             )
 
+    elif config_type == "PACKAGING_RULE":
+        product_code = str(payload.get("product_code") or "").strip().upper()
+        if product_code:
+            cur.execute(
+                """SELECT item_code
+                   FROM master.items
+                   WHERE company_id=%s AND upper(item_code)=%s
+                     AND is_active IS TRUE
+                   FOR SHARE""",
+                (int(company_id), product_code),
+            )
+            if not cur.fetchone():
+                raise ValueError(
+                    "Packaging Rule references an unknown or inactive product item: "
+                    + product_code
+                )
+
+        unit_code = str(payload.get("base_unit_code") or "").strip().upper()
+        if unit_code:
+            cur.execute(
+                """SELECT code
+                   FROM master.units
+                   WHERE upper(code)=%s AND is_active IS TRUE
+                   FOR SHARE""",
+                (unit_code,),
+            )
+            if not cur.fetchone():
+                raise ValueError(
+                    "Packaging Rule references an unknown or inactive base unit: "
+                    + unit_code
+                )
+
     elif config_type == "MEASUREMENT_PROFILE":
         variant_code = str(payload.get("variant_code") or "").strip().upper()
         if not variant_code:

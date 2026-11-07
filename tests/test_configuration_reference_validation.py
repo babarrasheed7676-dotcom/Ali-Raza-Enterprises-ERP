@@ -16,6 +16,9 @@ class FakeCursor:
     def fetchall(self):
         return self.rows
 
+    def fetchone(self):
+        return self.rows[0] if self.rows else None
+
 
 class ConfigurationReferenceValidationTests(unittest.TestCase):
     def test_measurement_profile_requires_active_baby_cone_variant(self):
@@ -105,7 +108,43 @@ class ConfigurationReferenceValidationTests(unittest.TestCase):
             )
         self.assertEqual(cur.sql, "")
 
-    def test_other_configuration_types_do_not_require_process_references(self):
+    def test_packaging_rule_rejects_unknown_or_inactive_product_item(self):
+        cur = FakeCursor([])
+        with self.assertRaisesRegex(ValueError, "inactive product item: NOT_REAL"):
+            _validate_configuration_references(
+                cur, company_id=1, config_type="PACKAGING_RULE",
+                payload={"product_code": "NOT_REAL"},
+            )
+        self.assertIn("master.items", cur.sql)
+        self.assertEqual(cur.params, (1, "NOT_REAL"))
+
+    def test_packaging_rule_accepts_active_product_item(self):
+        cur = FakeCursor([{"item_code": "NALKI"}])
+        _validate_configuration_references(
+            cur, company_id=1, config_type="PACKAGING_RULE",
+            payload={"product_code": "nalki"},
+        )
+        self.assertEqual(cur.params, (1, "NALKI"))
+
+    def test_packaging_rule_rejects_unknown_or_inactive_base_unit(self):
+        cur = FakeCursor([])
+        with self.assertRaisesRegex(ValueError, "inactive base unit: UNKNOWN"):
+            _validate_configuration_references(
+                cur, company_id=1, config_type="PACKAGING_RULE",
+                payload={"base_unit_code": "UNKNOWN"},
+            )
+        self.assertIn("master.units", cur.sql)
+        self.assertEqual(cur.params, ("UNKNOWN",))
+
+    def test_packaging_rule_accepts_active_base_unit(self):
+        cur = FakeCursor([{"code": "PCS"}])
+        _validate_configuration_references(
+            cur, company_id=1, config_type="PACKAGING_RULE",
+            payload={"base_unit_code": "pcs"},
+        )
+        self.assertEqual(cur.params, ("PCS",))
+
+    def test_packaging_rule_allows_unlinked_generic_rule(self):
         cur = FakeCursor([])
         _validate_configuration_references(
             cur, company_id=1, config_type="PACKAGING_RULE",
