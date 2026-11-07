@@ -6,10 +6,10 @@
   <div>
     <div class="eyebrow">PRODUCTION CONTROL</div>
     <h1>Production Overview</h1>
-    <p>Process-wise status and setup readiness. Dyeing material DRAFT entry and Baby Cone measurement DRAFT capture are available; measurement does not post stock.</p>
+    <p>Process-wise status and setup readiness. Dyeing and Big Cone DRAFT entry, plus Baby Cone measurement capture, are available only when verified source and setup prerequisites are ready; no draft action posts stock.</p>
   </div>
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-    {% if can_create_dyeing %}<a class="btn btn-primary" href="/modules/production/dyeing/new">+ New Dyeing Draft</a><a class="btn btn-secondary" href="/modules/production/baby-cone/measurements">Baby Cone Measurement</a>{% endif %}
+    {% if can_create_dyeing %}<a class="btn btn-primary" href="/modules/production/dyeing/new">+ New Dyeing Draft</a><a class="btn btn-secondary" href="/modules/production/big-cone/new">+ Big Cone Draft</a><a class="btn btn-secondary" href="/modules/production/masters">Departments &amp; Machines</a><a class="btn btn-secondary" href="/modules/production/baby-cone/measurements">Baby Cone Measurement</a>{% endif %}
     <a class="back-link" href="/">&#8592; Back to overview</a>
   </div>
 </div>

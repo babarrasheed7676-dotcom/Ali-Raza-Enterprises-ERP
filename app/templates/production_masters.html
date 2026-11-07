@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Department & Machine Masters · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Production / Department & Machine Masters{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><div class="eyebrow">PRODUCTION SETUP</div><h1>Department & Machine Masters</h1>
+    <p>Maintain production departments and their machines. These are process resources, not separate warehouses.</p></div>
+  <a class="back-link" href="/modules/production">← Production overview</a>
+</div>
+<style>
+.pm-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0}
+.pm-metric,.pm-panel{border:1px solid var(--border,#d9dee7);border-radius:14px;padding:16px;background:var(--surface,#fff)}
+.pm-value{font-size:27px;font-weight:750;margin-top:5px}
+.pm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.pm-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.pm-field{display:flex;flex-direction:column;gap:5px}.pm-field.full{grid-column:1/-1}
+.pm-field label{font-size:12px;color:var(--muted,#64748b);font-weight:650}
+.pm-field input,.pm-field select,.pm-field textarea{width:100%;padding:10px;border:1px solid var(--border,#cbd5e1);border-radius:8px;background:var(--surface,#fff);color:inherit}
+.pm-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.pm-table-wrap{overflow-x:auto}.pm-table{width:100%;border-collapse:collapse;min-width:520px}
+.pm-table th,.pm-table td{padding:10px 8px;border-bottom:1px solid var(--border,#d9dee7);text-align:left;font-size:13px}
+.pm-table th{color:var(--muted,#64748b);font-size:11px;text-transform:uppercase}
+.pm-pill{display:inline-block;padding:3px 8px;border-radius:20px;background:var(--surface-muted,#eef1f5);font-size:11px}
+.pm-help{color:var(--muted,#64748b);font-size:12px;line-height:1.5}
+.pm-message{padding:10px 12px;border-radius:9px;margin:12px 0;background:var(--surface-muted,#eef1f5)}
+.pm-edit{border:0;background:transparent;color:var(--accent,#2563eb);cursor:pointer;font:inherit;font-weight:650}
+@media(max-width:850px){.pm-grid{grid-template-columns:1fr}.pm-form{grid-template-columns:1fr}}
+</style>
+<div class="pm-metrics">
+  <section class="pm-metric"><div class="eyebrow">ACTIVE DEPARTMENTS</div><div class="pm-value">{{ data.active_departments }}</div></section>
+  <section class="pm-metric"><div class="eyebrow">ACTIVE MACHINES</div><div class="pm-value">{{ data.active_machines }}</div></section>
+  <section class="pm-metric"><div class="eyebrow">SINGLE GODOWN POLICY</div><div class="pm-value" style="font-size:19px">Preserved</div><div class="pm-help">No warehouse/location is created here.</div></section>
+</div>
+{% if not can_edit %}<div class="pm-message">Read-only access. Production master changes require the Production Create permission.</div>{% endif %}
+<div id="pmMessage" class="pm-message" role="status" hidden></div>
+<div class="pm-grid">
+  <section class="pm-panel">
+    <div class="eyebrow">DEPARTMENT MASTER</div><h2 id="deptFormTitle">Add department</h2>
+    <p class="pm-help">Examples of possible process departments can be entered by an authorized administrator. No departments are pre-created.</p>
+    <form id="departmentForm">
+      <input type="hidden" name="record_id">
+      <div class="pm-form">
+        <div class="pm-field"><label>Department code *</label><input name="code" maxlength="30" required placeholder="e.g. DYEING"></div>
+        <div class="pm-field"><label>Department name *</label><input name="name" maxlength="100" required placeholder="Department name"></div>
+        <div class="pm-field full"><label>Description</label><input name="description" maxlength="300" placeholder="Optional notes"></div>
+        <div class="pm-field"><label>Active status</label><select name="is_active"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+      </div>
+      <div class="pm-actions">
+        {% if can_edit %}<button class="btn btn-primary" type="submit">Save department</button><button class="btn btn-secondary" type="button" data-reset="departmentForm">Clear</button>{% endif %}
+      </div>
+    </form>
+    <div class="pm-table-wrap" style="margin-top:18px"><table class="pm-table"><thead><tr><th>Code / name</th><th>Machines</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for d in data.departments %}
+      <tr><td><strong>{{ d.code }}</strong><br>{{ d.name }}</td><td>{{ d.machine_count }} total / {{ d.active_machine_count }} active</td><td><span class="pm-pill">{{ "Active" if d.is_active else "Inactive" }}</span></td>
+      <td>{% if can_edit %}<button class="pm-edit" type="button" data-edit-department data-id="{{ d.id }}" data-code="{{ d.code }}" data-name="{{ d.name }}" data-description="{{ d.description or '' }}" data-active="{{ 'true' if d.is_active else 'false' }}">Edit</button>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="4">No departments configured.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <section class="pm-panel">
+    <div class="eyebrow">MACHINE MASTER</div><h2 id="machineFormTitle">Add machine</h2>
+    <p class="pm-help">Machine must belong to an active department. Capacity is optional and requires a unit when entered. Rated power is optional.</p>
+    <form id="machineForm">
+      <input type="hidden" name="record_id">
+      <div class="pm-form">
+        <div class="pm-field"><label>Machine code *</label><input name="machine_code" maxlength="30" required placeholder="e.g. BC-01"></div>
+        <div class="pm-field"><label>Machine name *</label><input name="machine_name" maxlength="100" required placeholder="Machine name"></div>
+        <div class="pm-field"><label>Machine type *</label><input name="machine_type" maxlength="50" required placeholder="e.g. BIG_CONE"></div>
+        <div class="pm-field"><label>Department *</label><select name="department_id" required><option value="">Select department</option>{% for d in data.departments if d.is_active %}<option value="{{ d.id }}">{{ d.code }} · {{ d.name }}</option>{% endfor %}</select></div>
+        <div class="pm-field"><label>Capacity quantity</label><input name="capacity_quantity" type="number" min="0" step="0.001" placeholder="Optional"></div>
+        <div class="pm-field"><label>Capacity unit</label><select name="capacity_unit_id"><option value="">Not specified</option>{% for u in data.units %}<option value="{{ u.id }}">{{ u.code }} · {{ u.name }}</option>{% endfor %}</select></div>
+        <div class="pm-field"><label>Rated power (kW)</label><input name="rated_power_kw" type="number" min="0" step="0.001" placeholder="Optional"></div>
+        <div class="pm-field"><label>Active status</label><select name="is_active"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+      </div>
+      <div class="pm-actions">
+        {% if can_edit %}<button class="btn btn-primary" type="submit">Save machine</button><button class="btn btn-secondary" type="button" data-reset="machineForm">Clear</button>{% endif %}
+      </div>
+    </form>
+    <div class="pm-table-wrap" style="margin-top:18px"><table class="pm-table"><thead><tr><th>Machine</th><th>Department</th><th>Capacity / power</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for m in data.machines %}
+      <tr><td><strong>{{ m.machine_code }}</strong><br>{{ m.machine_name }}<br><span class="pm-help">{{ m.machine_type }}</span></td>
+      <td>{{ m.department_code or "—" }}<br>{{ m.department_name or "Unassigned" }}</td>
+      <td>{{ m.capacity_quantity if m.capacity_quantity is not none else "—" }} {{ m.capacity_unit_code or "" }}<br>{{ m.rated_power_kw if m.rated_power_kw is not none else "—" }} kW</td>
+      <td><span class="pm-pill">{{ "Active" if m.is_active else "Inactive" }}</span></td>
+      <td>{% if can_edit %}<button class="pm-edit" type="button" data-edit-machine data-id="{{ m.id }}" data-code="{{ m.machine_code }}" data-name="{{ m.machine_name }}" data-type="{{ m.machine_type }}" data-department="{{ m.department_id or '' }}" data-capacity="{{ m.capacity_quantity if m.capacity_quantity is not none else '' }}" data-unit="{{ m.capacity_unit_id or '' }}" data-power="{{ m.rated_power_kw if m.rated_power_kw is not none else '' }}" data-active="{{ 'true' if m.is_active else 'false' }}">Edit</button>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="5">No machines configured.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+</div>
+<script>
+(() => {
+  const csrf = {{ csrf_token|tojson }};
+  const message = document.getElementById('pmMessage');
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  function showMessage(text, bad=false) {
+    message.hidden = false; message.textContent = text;
+    message.style.borderLeft = bad ? '4px solid #b45309' : '4px solid #15803d';
+  }
+  function resetForm(id) {
+    const form = document.getElementById(id); form.reset(); form.elements.record_id.value = '';
+    document.getElementById(id === 'departmentForm' ? 'deptFormTitle' : 'machineFormTitle').textContent = id === 'departmentForm' ? 'Add department' : 'Add machine';
+  }
+  document.querySelectorAll('[data-reset]').forEach(b => b.addEventListener('click', () => resetForm(b.dataset.reset)));
+  function editFill(formId, values, title) {
+    const form = document.getElementById(formId);
+    Object.entries(values).forEach(([key,value]) => { if (form.elements[key]) form.elements[key].value = value; });
+    document.getElementById(formId === 'departmentForm' ? 'deptFormTitle' : 'machineFormTitle').textContent = title;
+    form.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  document.querySelectorAll('[data-edit-department]').forEach(b => b.addEventListener('click', () => editFill('departmentForm',{
+    record_id:b.dataset.id,code:b.dataset.code,name:b.dataset.name,description:b.dataset.description,is_active:b.dataset.active
+  },'Edit department · '+b.dataset.code)));
+  document.querySelectorAll('[data-edit-machine]').forEach(b => b.addEventListener('click', () => editFill('machineForm',{
+    record_id:b.dataset.id,machine_code:b.dataset.code,machine_name:b.dataset.name,machine_type:b.dataset.type,
+    department_id:b.dataset.department,capacity_quantity:b.dataset.capacity,capacity_unit_id:b.dataset.unit,
+    rated_power_kw:b.dataset.power,is_active:b.dataset.active
+  },'Edit machine · '+b.dataset.code)));
+  async function saveForm(form, kind) {
+    const data = Object.fromEntries(new FormData(form).entries());
+    const recordId = data.record_id; delete data.record_id;
+    if (kind === 'DEPARTMENT') {
+      if (recordId) { delete data.code; }
+    } else if (recordId) { delete data.machine_code; }
+    for (const key of ['capacity_quantity','capacity_unit_id','rated_power_kw']) if (data[key] === '') data[key] = null;
+    data.is_active = data.is_active === 'true';
+    const url = '/modules/production/api/masters/'+kind+(recordId ? '/'+encodeURIComponent(recordId) : '');
+    const response = await fetch(url,{method:recordId?'PUT':'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-CSRF-Token':csrf,'Accept':'application/json'},body:JSON.stringify(data)});
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || 'Could not save master record.');
+    showMessage(kind+' saved successfully. Refreshing the verified master list…');
+    window.location.reload();
+  }
+  document.getElementById('departmentForm').addEventListener('submit', async e => {
+    e.preventDefault(); try { await saveForm(e.currentTarget,'DEPARTMENT'); } catch(err) { showMessage(err.message,true); }
+  });
+  document.getElementById('machineForm').addEventListener('submit', async e => {
+    e.preventDefault(); try { await saveForm(e.currentTarget,'MACHINE'); } catch(err) { showMessage(err.message,true); }
+  });
+})();
+</script>
+{% endblock %}

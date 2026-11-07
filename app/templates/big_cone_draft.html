@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}New Big Cone Draft · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Production / Big Cone / New Draft{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">PRODUCTION · BIG CONE</div>
+    <h1>New Big Cone DRAFT</h1>
+    <p>Exact posted Dyeing DYED_THREAD source selection. Save creates a DRAFT only; no stock movement or posting.</p>
+  </div>
+  <a class="back-link" href="/modules/production">&#8592; Production overview</a>
+</div>
+<style>
+.bc-panel{border:1px solid var(--border,#d9dee7);border-radius:14px;background:var(--surface,#fff);padding:18px;margin:16px 0}
+.bc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:13px}
+.bc-field label{display:block;font-size:12px;font-weight:650;color:var(--muted,#64748b);margin-bottom:6px}
+.bc-field input,.bc-field select,.bc-field textarea{width:100%;min-height:40px;padding:9px 10px;border:1px solid var(--border,#cbd5e1);border-radius:8px;background:var(--surface,#fff);color:var(--text,#172033)}
+.bc-table{width:100%;border-collapse:collapse;min-width:1100px}
+.bc-table th,.bc-table td{padding:9px;border-bottom:1px solid var(--border,#d9dee7);text-align:left;vertical-align:middle}
+.bc-table th{font-size:12px;color:var(--muted,#64748b)}
+.bc-table input,.bc-table select{width:100%;min-width:88px;min-height:36px;padding:7px;border:1px solid var(--border,#cbd5e1);border-radius:7px;background:var(--surface,#fff);color:var(--text,#172033)}
+.bc-note{padding:13px 15px;border:1px solid var(--border,#d9dee7);border-left:4px solid #c18b32;border-radius:10px;margin:14px 0}
+.bc-success{padding:13px 15px;border:1px solid var(--border,#d9dee7);border-left:4px solid #39865b;border-radius:10px;margin:14px 0}
+.bc-error{padding:10px 12px;border-radius:8px;background:var(--surface-muted,#f1f3f6);margin:7px 0}
+@media(max-width:700px){.bc-panel{padding:13px}}
+</style>
+
+{% if saved %}
+<div class="bc-success"><strong>Big Cone DRAFT saved: {{ ref }}</strong><div>No stock movement, inventory posting or approval was performed.</div></div>
+{% endif %}
+{% for error in errors %}<div class="bc-error" role="alert">{{ error }}</div>{% endfor %}
+
+{% if not data.raw_store_ready or not data.dyeing_stage_ready or not data.big_cone_stage_ready or not data.departments or not data.machines or not data.has_sources %}
+<div class="bc-note">
+  <strong>Big Cone DRAFT entry is currently locked until its prerequisites are ready.</strong>
+  <ul>
+    <li>Single RAW_STORE godown: {{ "Ready" if data.raw_store_ready else "Missing" }}</li>
+    <li>Active DYEING and BIG_CONE process stages: {{ "Ready" if data.dyeing_stage_ready and data.big_cone_stage_ready else "Missing" }}</li>
+    <li>Active department: {{ "Ready" if data.departments else "Not configured" }}</li>
+    <li>Active machine: {{ "Ready" if data.machines else "Not configured" }}</li>
+    <li>Available POSTED Dyeing DYED_THREAD source lines: {{ "Available" if data.has_sources else "None found" }}</li>
+  </ul>
+  <p class="production-muted">No sample machine, department, Dyeing output or stock has been created. Complete the genuine upstream setup and posting first.</p>
+</div>
+{% endif %}
+
+<form method="post" action="/modules/production/big-cone/new">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <section class="bc-panel">
+    <h2>Document details</h2>
+    <div class="bc-grid">
+      <div class="bc-field"><label for="big_cone_date">Big Cone date</label><input id="big_cone_date" type="date" name="big_cone_date" value="{{ form.big_cone_date or today }}" required></div>
+      <div class="bc-field"><label for="source_dyeing_order_id">Source Dyeing document</label>
+        <select id="source_dyeing_order_id" name="source_dyeing_order_id" required>
+          <option value="">Select POSTED Dyeing document</option>
+          {% for order in data.source_orders %}<option value="{{ order.id }}" {% if form.source_dyeing_order_id|string == order.id|string %}selected{% endif %}>{{ order.dyeing_no }} · {{ order.dyeing_date }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="bc-field"><label for="department_id">Department</label><select id="department_id" name="department_id" required><option value="">Select department</option>{% for d in data.departments %}<option value="{{ d.id }}">{{ d.code }} · {{ d.name }}</option>{% endfor %}</select></div>
+      <div class="bc-field"><label for="machine_id">Machine</label><select id="machine_id" name="machine_id" required><option value="">Select machine</option>{% for m in data.machines %}<option value="{{ m.id }}">{{ m.machine_code }} · {{ m.machine_name }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="bc-grid" style="margin-top:14px">
+      <div class="bc-field"><label for="labour_cost">Labour cost (PKR)</label><input id="labour_cost" name="labour_cost" inputmode="decimal" value="{{ form.labour_cost or '0' }}"></div>
+      <div class="bc-field"><label for="electricity_cost">Electricity cost (PKR)</label><input id="electricity_cost" name="electricity_cost" inputmode="decimal" value="{{ form.electricity_cost or '0' }}"></div>
+      <div class="bc-field"><label for="machine_cost">Machine cost (PKR)</label><input id="machine_cost" name="machine_cost" inputmode="decimal" value="{{ form.machine_cost or '0' }}"></div>
+    </div>
+    <div class="bc-field" style="margin-top:14px"><label for="remarks">Remarks</label><textarea id="remarks" name="remarks" rows="2" maxlength="1000">{{ form.remarks or '' }}</textarea></div>
+  </section>
+
+  <section class="bc-panel">
+    <h2>Material input and Big Cone output</h2>
+    <p class="production-muted">Enter input quantity only for the Dyeing line(s) being used. Each output line is linked to its exact input line. Quantities are KG; cone counts are optional.</p>
+    <div style="overflow-x:auto">
+      <table class="bc-table">
+        <thead><tr><th>Dyeing document</th><th>Source line / Yarn</th><th>Batch</th><th>Ownership / Owner</th><th>Available KG</th><th>Input KG</th><th>Input cones</th><th>Output KG</th><th>Output cones</th><th>Next destination</th></tr></thead>
+        <tbody>
+        {% for order in data.source_orders %}
+          {% for line in order.lines %}
+          <tr>
+            <td>{{ order.dyeing_no }}<input type="hidden" name="source_dyeing_output_line_id" value="{{ line.source_line_id }}"></td>
+            <td><strong>#{{ line.line_no }} · {{ line.item_code }}</strong><br>{{ line.item_name }}<br><small>{{ line.variant_code }}</small></td>
+            <td>{{ line.batch_no or "No batch" }}</td>
+            <td>{{ line.ownership_code }}{% if line.party_name %}<br>{{ line.party_name }}{% endif %}</td>
+            <td>{{ line.available_kg }}</td>
+            <td><input name="input_quantity_kg" type="number" min="0.001" max="{{ line.available_kg }}" step="0.001" placeholder="KG"></td>
+            <td><input name="input_cones" type="number" min="0" step="0.001" placeholder="Optional"></td>
+            <td><input name="output_quantity_kg" type="number" min="0.001" step="0.001" placeholder="KG"></td>
+            <td><input name="output_cones" type="number" min="0" step="0.001" placeholder="Optional"></td>
+            <td><select name="destination_type"><option value="BABY_CONE">Baby Cone</option><option value="NALKI">Nalki</option><option value="DIRECT_SALE">Direct Sale</option><option value="OTHER">Other / Conversion</option></select></td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="10" class="production-muted">No eligible posted Dyeing output lines are available. DRAFT entry remains locked.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <button class="btn btn-primary" type="submit" {% if not data.setup_ready %}disabled{% endif %}>Save Big Cone DRAFT</button>
+    <span class="production-muted">Save only · no approval · no posting · no stock movement</span>
+  </div>
+</form>
+{% endblock %}
