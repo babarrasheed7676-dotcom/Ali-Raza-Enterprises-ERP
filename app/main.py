@@ -58,6 +58,7 @@ from .production_service import get_production_dashboard_data
 from .production_master_service import get_production_masters, save_production_master
 from .big_cone_draft_service import get_big_cone_draft_form_data, create_big_cone_draft, get_big_cone_readiness
 from .baby_cone_measurement_service import get_baby_cone_measurement_draft_options
+from .baby_cone_draft_service import get_baby_cone_draft_source_preflight
 from .configuration_runtime_service import save_baby_cone_measurement_draft
 from .dyeing_draft_service import (
     get_dyeing_draft_form_data, create_dyeing_draft,
@@ -1501,6 +1502,23 @@ async def baby_cone_measurement_save(request: Request):
         url="/modules/production/baby-cone/measurements?saved=1",
         status_code=303,
     )
+
+
+@app.get(
+    "/modules/production/baby-cone/sources",
+    response_class=HTMLResponse,
+    dependencies=[Depends(require_permission("production.view"))],
+)
+def baby_cone_source_preflight_page(request: Request):
+    user = get_current_user(request)
+    data = get_baby_cone_draft_source_preflight(user["company_id"])
+    response = templates.TemplateResponse(
+        request=request,
+        name="baby_cone_source_preflight.html",
+        context={"app_name": settings.app_name, "data": data},
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.get(

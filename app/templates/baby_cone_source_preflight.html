@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Baby Cone Source Preflight · {{ app_name }}{% endblock %}
+{% block breadcrumb %}Production / Baby Cone / Source Preflight{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">PRODUCTION · BABY CONE</div>
+    <h1>Baby Cone source preflight</h1>
+    <p>Verify POSTED Large Cone output and exact source-stock availability before any Baby Cone DRAFT workflow is enabled.</p>
+  </div>
+  <a class="back-link" href="/modules/production">&#8592; Production overview</a>
+</div>
+<style>
+.bc-preflight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:13px;margin:18px 0}
+.bc-preflight-card{border:1px solid var(--border,#d9dee7);border-radius:12px;padding:15px;background:var(--surface,#fff)}
+.bc-preflight-card strong{display:block;font-size:22px;margin-top:5px}
+.bc-preflight-panel{border:1px solid var(--border,#d9dee7);border-radius:14px;padding:17px;background:var(--surface,#fff);margin:16px 0}
+.bc-preflight-table{width:100%;border-collapse:collapse;min-width:1050px}
+.bc-preflight-table th,.bc-preflight-table td{padding:10px 8px;border-bottom:1px solid var(--border,#d9dee7);text-align:left;vertical-align:top}
+.bc-preflight-table th{font-size:12px;color:var(--muted,#64748b)}
+.bc-preflight-note{padding:13px 15px;border:1px solid var(--border,#d9dee7);border-left:4px solid #c18b32;border-radius:10px;margin:14px 0}
+.bc-preflight-status{display:inline-block;padding:4px 8px;border-radius:18px;background:var(--surface-muted,#eef1f5);font-size:11px}
+</style>
+<div class="bc-preflight-grid">
+  <div class="bc-preflight-card"><div class="eyebrow">ELIGIBLE SOURCE LINES</div><strong>{{ data.eligible_source_count }}</strong></div>
+  <div class="bc-preflight-card"><div class="eyebrow">BLOCKED SOURCE LINES</div><strong>{{ data.blocked_source_count }}</strong></div>
+  <div class="bc-preflight-card"><div class="eyebrow">RAW_STORE GODOWN</div><strong>{{ "Ready" if data.raw_store_ready else "Missing" }}</strong></div>
+  <div class="bc-preflight-card"><div class="eyebrow">PROCESS STAGES</div><strong>{{ "Ready" if data.big_cone_stage_ready and data.baby_cone_stage_ready else "Missing" }}</strong></div>
+</div>
+<div class="bc-preflight-note">
+  <strong>Read-only checkpoint.</strong>
+  <p style="margin:6px 0 0">Baby Cone input must come from POSTED Large Cone output marked BABY_CONE, at the single RAW_STORE godown and BIG_CONE process stage. PARTY-owned source requires a captured rate. No stock is reserved or moved here.</p>
+  <ul>
+    <li>Departments: {{ "Ready" if data.departments else "Not configured" }}</li>
+    <li>Machines: {{ "Ready" if data.machines else "Not configured" }}</li>
+    <li>Source eligibility: {{ "At least one valid source is available" if data.source_ready else "No eligible posted Large Cone source found" }}</li>
+  </ul>
+  <p style="margin-bottom:0"><strong>Draft creation remains disabled</strong> until material, output, measurement-profile, labour/overhead and loss rules are verified together.</p>
+</div>
+<section class="bc-preflight-panel">
+  <div class="eyebrow">SOURCE LINE REGISTER</div>
+  <h2>POSTED Large Cone → Baby Cone</h2>
+  <div style="overflow-x:auto;margin-top:12px">
+    <table class="bc-preflight-table">
+      <thead><tr><th>Large Cone</th><th>Output line</th><th>Yarn / Variant</th><th>Batch</th><th>Ownership / Party</th><th>Source KG</th><th>Already allocated KG</th><th>Exact stock KG</th><th>Available KG</th><th>Rate</th><th>Eligibility</th></tr></thead>
+      <tbody>
+      {% for line in data.sources %}
+        <tr>
+          <td><strong>{{ line.big_cone_no }}</strong><br>{{ line.big_cone_date }}</td>
+          <td>#{{ line.line_no }} · ID {{ line.source_output_line_id }}</td>
+          <td>{{ line.item_code }} · {{ line.item_name }}<br>{{ line.variant_code }}</td>
+          <td>{{ line.batch_no or "No batch" }}</td>
+          <td>{{ line.ownership_code }}{% if line.party_name %}<br>{{ line.party_name }}{% endif %}</td>
+          <td>{{ "%.3f"|format(line.source_quantity_kg) }}</td>
+          <td>{{ "%.3f"|format(line.allocated_kg) }}</td>
+          <td>{{ "%.3f"|format(line.current_source_stock_kg) }}</td>
+          <td>{{ "%.3f"|format(line.available_kg) }}</td>
+          <td>{% if line.unit_cost is not none %}{{ "%.6f"|format(line.unit_cost) }} / KG{% else %}Not captured{% endif %}</td>
+          <td>{% if line.eligible %}<span class="bc-preflight-status">Eligible</span>{% elif line.party_rate_missing %}<span class="bc-preflight-status">PARTY rate missing</span>{% else %}<span class="bc-preflight-status">No available KG</span>{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="11" class="production-muted">No POSTED Large Cone BABY_CONE output lines are currently available. No sample source or stock has been created.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="bc-preflight-panel">
+  <h2>Next workflow gates</h2>
+  <ol>
+    <li>Confirm eligible source material and exact OWN/PARTY ownership/rate.</li>
+    <li>Define Baby Cone material and measured output linkage to the source line.</li>
+    <li>Use only the approved effective measurement profile for the exact variant.</li>
+    <li>Verify salary/labour and overhead capture; Baby Cone is not Nalki theka.</li>
+    <li>Define how measured loss is entered and reconciled before approval/posting.</li>
+  </ol>
+  <p class="production-muted">This screen is a source preflight only. It does not create a document, cost, measurement, loss line, reservation, or stock ledger entry.</p>
+</section>
+{% endblock %}
