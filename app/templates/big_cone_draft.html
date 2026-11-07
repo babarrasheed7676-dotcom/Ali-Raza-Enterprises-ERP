@@ -70,6 +70,12 @@
   <section class="bc-panel">
     <h2>Material input and Big Cone output</h2>
     <p class="production-muted">Enter input quantity only for the Dyeing line(s) being used. Each output line is linked to its exact input line. Quantities are KG; cone counts are optional.</p>
+    <div class="bc-grid" aria-live="polite" style="margin:12px 0">
+      <div class="bc-note"><strong>Selected input</strong><div id="bc-total-input">0.000 KG</div></div>
+      <div class="bc-note"><strong>Expected output</strong><div id="bc-total-output">0.000 KG</div></div>
+      <div class="bc-note"><strong>Process difference</strong><div id="bc-total-loss">0.000 KG</div></div>
+    </div>
+    <div class="production-muted" id="bc-total-note" aria-live="polite">Live estimate from entered rows only; saving still creates a DRAFT.</div>
     <div style="overflow-x:auto">
       <table class="bc-table">
         <thead><tr><th>Dyeing document</th><th>Source line / Yarn</th><th>Batch</th><th>Ownership / Owner</th><th>Available KG</th><th>Input KG</th><th>Input cones</th><th>Output KG</th><th>Output cones</th><th>Next destination</th></tr></thead>
@@ -132,6 +138,34 @@
   };
   sourceSelect.addEventListener('change', filterSourceRows);
   filterSourceRows();
+
+  const fmt = value => `${value.toFixed(3)} KG`;
+  const updateTotals = () => {
+    let input = 0;
+    let output = 0;
+    let entered = 0;
+    sourceRows.forEach(row => {
+      if (row.hidden) return;
+      const inputField = row.querySelector('[name="input_quantity_kg"]');
+      const outputField = row.querySelector('[name="output_quantity_kg"]');
+      const inValue = Number(inputField.value);
+      const outValue = Number(outputField.value);
+      if (inputField.value.trim() && Number.isFinite(inValue) && inValue > 0) {
+        input += inValue;
+        entered += 1;
+      }
+      if (outputField.value.trim() && Number.isFinite(outValue) && outValue > 0) output += outValue;
+    });
+    document.getElementById('bc-total-input').textContent = fmt(input);
+    document.getElementById('bc-total-output').textContent = fmt(output);
+    document.getElementById('bc-total-loss').textContent = fmt(input - output);
+    document.getElementById('bc-total-note').textContent = entered
+      ? `${entered} source line(s) entered · estimate only; server validates availability and saves DRAFT only.`
+      : 'Enter a positive input quantity to see live totals. No stock is moved.';
+  };
+  sourceRows.forEach(row => row.querySelectorAll('[name="input_quantity_kg"], [name="output_quantity_kg"]').forEach(field => field.addEventListener('input', updateTotals)));
+  sourceSelect.addEventListener('change', updateTotals);
+  updateTotals();
 })();
 </script>
 {% endblock %}
