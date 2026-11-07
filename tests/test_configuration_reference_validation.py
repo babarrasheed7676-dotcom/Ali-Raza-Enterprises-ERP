@@ -62,6 +62,23 @@ class ConfigurationReferenceValidationTests(unittest.TestCase):
             payload={"steps": [{"process_code": "NALKI"}]},
         )
 
+
+    def test_process_cost_rule_rejects_unknown_or_inactive_stage(self):
+        cur = FakeCursor([{"code": "DYEING"}])
+        with self.assertRaisesRegex(ValueError, "UNKNOWN_STAGE"):
+            _validate_configuration_references(
+                cur, company_id=1, config_type="PROCESS_COST_RULE",
+                payload={"process_code": "UNKNOWN_STAGE"},
+            )
+        self.assertEqual(cur.params, (1, ["UNKNOWN_STAGE"]))
+
+    def test_process_cost_rule_accepts_active_stage(self):
+        cur = FakeCursor([{"code": "DYEING"}])
+        _validate_configuration_references(
+            cur, company_id=1, config_type="PROCESS_COST_RULE",
+            payload={"process_code": "DYEING"},
+        )
+
     def test_other_configuration_types_do_not_require_process_references(self):
         cur = FakeCursor([])
         _validate_configuration_references(

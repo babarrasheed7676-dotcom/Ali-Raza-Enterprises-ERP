@@ -129,13 +129,18 @@ def _validate_configuration_references(cur, *, company_id: int, config_type: str
                 "Measurement Profile variant code is ambiguous; use a unique active Baby Cone variant."
             )
 
-    elif config_type == "PROCESS_ROUTE":
-        codes = sorted({
-            str(step.get("process_code") or "").strip().upper()
-            for step in payload.get("steps", [])
-        })
+    elif config_type in {"PROCESS_ROUTE", "PROCESS_COST_RULE"}:
+        if config_type == "PROCESS_ROUTE":
+            codes = sorted({
+                str(step.get("process_code") or "").strip().upper()
+                for step in payload.get("steps", [])
+            })
+            label = "Process route"
+        else:
+            codes = [str(payload.get("process_code") or "").strip().upper()]
+            label = "Process cost rule"
         if not codes or any(not code for code in codes):
-            raise ValueError("Every process route step must select an active process stage.")
+            raise ValueError(f"Every {label.lower()} must select an active process stage.")
         cur.execute(
             """SELECT upper(code) AS code
                FROM master.process_stages
@@ -148,7 +153,7 @@ def _validate_configuration_references(cur, *, company_id: int, config_type: str
         missing = sorted(set(codes) - available)
         if missing:
             raise ValueError(
-                "Process route references unknown or inactive process stage(s): "
+                f"{label} references unknown or inactive process stage(s): "
                 + ", ".join(missing)
             )
 
