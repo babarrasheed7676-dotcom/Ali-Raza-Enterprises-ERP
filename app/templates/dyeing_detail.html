@@ -86,13 +86,8 @@
    <div class="dy-stat"><small>Boiler / fuel</small><strong>PKR {{ detail.order.boiler_fuel_cost }}</strong></div>
    <div class="dy-stat"><small>Drying</small><strong>PKR {{ detail.order.drying_cost }}</strong></div>
    <div class="dy-stat"><small>Total process cost</small><strong>PKR {{ detail.order.total_process_cost }}</strong></div>
-   {% set output_kg = detail.order.actual_output_quantity_kg or 0 %}
-   {% if output_kg > 0 %}
-    {% set process_cost_per_output_kg = (detail.order.total_process_cost or 0) / output_kg %}
-    <div class="dy-stat"><small>Process overhead per output KG</small><strong>PKR {{ '%.4f'|format(process_cost_per_output_kg) }}</strong><span class="dy-muted">Process cost only; excludes yarn and dye/chemical material cost.</span></div>
-   {% else %}
-    <div class="dy-stat"><small>Process overhead per output KG</small><strong>Not available</strong><span class="dy-muted">No positive dyed-thread output quantity.</span></div>
-   {% endif %}
+   <div class="dy-stat"><small>Fiber-wise cost allocation</small><strong>Not calculated</strong><span class="dy-muted">No blended per-KG rate is inferred across Cotton / Polyester / PC.</span></div>
+
    {% if detail.order.wastage_quantity_kg is not none %}
     <div class="dy-stat"><small>Recorded measured wastage</small><strong>{{ '%.3f'|format(detail.order.wastage_quantity_kg) }} KG</strong><span class="dy-muted">Stored value; verify its measurement evidence before approval.</span></div>
    {% else %}
