@@ -19,9 +19,10 @@
     </div>
     <p class="rnd-muted">For each shade, total allocated pieces must equal the finished-box quantity. If a shade is split across source lines, enter the split quantities so their total equals the box count. Each selected source line is saved as a separate traceable packing item.</p>
   </section>
-  <form id="randomPackingForm" method="post" action="/modules/packing/random/new">
+  <form id="randomPackingForm" method="post" action="/modules/packing/random/new" data-smart-entry="random-packing">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input type="hidden" id="randomAllocations" name="allocations_json" value="{{ packing_form.allocations_json or '' }}">
+    <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save DRAFT</span></div><div class="smart-entry-status" id="smartEntryStatus" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
     <section class="rnd-panel">
       <h3>Verified source lines</h3>
       {% if candidates %}

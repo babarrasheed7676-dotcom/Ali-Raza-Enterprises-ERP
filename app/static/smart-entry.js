@@ -77,9 +77,11 @@
       }
       if (event.key !== "Enter" || event.shiftKey ||
           event.target.matches("textarea,select,button,[type=submit]")) return;
-      const fields = [...form.querySelectorAll(
-        "input:not([type=hidden]):not([disabled]),select:not([disabled]),textarea:not([disabled])"
-      )].filter(el => el.getClientRects().length && !el.readOnly);
+      const fields = [...form.elements].filter(el =>
+        el.matches &&
+        el.matches("input:not([type=hidden]):not([disabled]),select:not([disabled]),textarea:not([disabled])") &&
+        el.getClientRects().length && !el.readOnly
+      );
       const index = fields.indexOf(event.target);
       if (index < 0 || index === fields.length - 1) return;
       event.preventDefault();
@@ -104,8 +106,9 @@
     }
     form.addEventListener("submit", () => announce("Submitting form for server validation…"));
     const first = form.querySelector("[data-smart-autofocus]") ||
-      [...form.querySelectorAll("input:not([type=hidden]):not([disabled]),select:not([disabled])")]
-        .find(el => el.getClientRects().length);
+      [...form.elements].find(el => el.matches &&
+        el.matches("input:not([type=hidden]):not([disabled]),select:not([disabled])") &&
+        el.getClientRects().length);
     first?.focus({preventScroll:true});
   });
 })();

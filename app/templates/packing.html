@@ -13,8 +13,9 @@
     <div><strong>Regular / small box</strong><span>10 Nalki pieces. Existing item PACK_BOX-STD represents this regular box only.</span></div>
     <div><strong>Finished wall box</strong><span>Separate 100-piece finished product: 100 unique shades × 1 piece each. It is not PACK_BOX-STD.</span></div>
   </div>
-  <form class="packing-form" method="post" action="/modules/packing/new" id="packingForm">
+  <form class="packing-form" method="post" action="/modules/packing/new" id="packingForm" data-smart-entry="packing">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save DRAFT</span></div><div class="smart-entry-status" id="smartEntryStatus" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
     <section class="packing-panel"><h3>Order details</h3><div class="packing-grid">
       <div class="packing-field"><label>Packing date *</label><input type="date" name="packing_date" required value="{{ packing_form.packing_date or today }}"></div>
       <div class="packing-field"><label>Brand *</label><select name="brand_id" id="packingBrand" required><option value="">Select brand</option>{% for b in form_data.brands %}<option value="{{ b.brand_id }}" {% if packing_form.brand_id|string == b.brand_id|string %}selected{% endif %}>{{ b.brand_name }} · {{ b.shade_count }} shades · OWN stock in {{ b.available_shades }}/{{ b.shade_count }} shades</option>{% endfor %}</select></div>
