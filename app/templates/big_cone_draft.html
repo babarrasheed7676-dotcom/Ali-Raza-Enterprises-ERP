@@ -56,8 +56,8 @@
           {% for order in data.source_orders %}<option value="{{ order.id }}" {% if form.source_dyeing_order_id|string == order.id|string %}selected{% endif %}>{{ order.dyeing_no }} · {{ order.dyeing_date }}</option>{% endfor %}
         </select>
       </div>
-      <div class="bc-field"><label for="department_id">Department</label><select id="department_id" name="department_id" required><option value="">Select department</option>{% for d in data.departments %}<option value="{{ d.id }}">{{ d.code }} · {{ d.name }}</option>{% endfor %}</select></div>
-      <div class="bc-field"><label for="machine_id">Machine</label><select id="machine_id" name="machine_id" required><option value="">Select machine</option>{% for m in data.machines %}<option value="{{ m.id }}">{{ m.machine_code }} · {{ m.machine_name }}</option>{% endfor %}</select></div>
+      <div class="bc-field"><label for="department_id">Department</label><select id="department_id" name="department_id" required><option value="">Select department</option>{% for d in data.departments %}<option value="{{ d.id }}" {% if form.department_id|string == d.id|string %}selected{% endif %}>{{ d.code }} · {{ d.name }}</option>{% endfor %}</select></div>
+      <div class="bc-field"><label for="machine_id">Machine</label><select id="machine_id" name="machine_id" required><option value="">Select machine</option>{% for m in data.machines %}<option value="{{ m.id }}" data-department-id="{{ m.department_id }}" {% if form.machine_id|string == m.id|string %}selected{% endif %}>{{ m.machine_code }} · {{ m.machine_name }}</option>{% endfor %}</select></div>
     </div>
     <div class="bc-grid" style="margin-top:14px">
       <div class="bc-field"><label for="labour_cost">Labour cost (PKR)</label><input id="labour_cost" name="labour_cost" inputmode="decimal" value="{{ form.labour_cost or '0' }}"></div>
@@ -103,6 +103,23 @@
 </form>
 <script>
 (() => {
+  const departmentSelect = document.getElementById('department_id');
+  const machineSelect = document.getElementById('machine_id');
+  const filterMachines = () => {
+    const departmentId = departmentSelect.value;
+    let selectedStillValid = false;
+    Array.from(machineSelect.options).forEach(option => {
+      if (!option.value) return;
+      const allowed = Boolean(departmentId) && option.dataset.departmentId === departmentId;
+      option.disabled = !allowed;
+      option.hidden = !allowed;
+      if (allowed && option.selected) selectedStillValid = true;
+    });
+    if (!selectedStillValid) machineSelect.value = '';
+  };
+  departmentSelect.addEventListener('change', filterMachines);
+  filterMachines();
+
   const sourceSelect = document.getElementById('source_dyeing_order_id');
   const sourceRows = Array.from(document.querySelectorAll('tr[data-source-order-id]'));
   const filterSourceRows = () => {
