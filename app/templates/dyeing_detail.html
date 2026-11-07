@@ -95,7 +95,7 @@
    {% endif %}
    {% if detail.order.actual_input_quantity_kg is not none and detail.order.actual_output_quantity_kg is not none %}
     {% set process_balance_kg = detail.order.actual_input_quantity_kg - detail.order.actual_output_quantity_kg %}
-    <div class="dy-stat"><small>Unreconciled input / output balance</small><strong>{{ '%.3f'|format(process_balance_kg) }} KG</strong><span class="dy-muted">Calculated difference only; not recorded as measured wastage.</span></div>
+    <div class="dy-stat"><small>Unreconciled input / output balance</small><strong>{{ '%.3f'|format(process_balance_kg) }} KG</strong><span class="dy-muted">Unreconciled difference only. It may include reusable or returned yarn; reconcile separately. Never treat this figure as measured wastage.</span></div>
    {% else %}
     <div class="dy-stat"><small>Unreconciled input / output balance</small><strong>Not available</strong><span class="dy-muted">Input or output total has not been recorded.</span></div>
    {% endif %}
