@@ -53,6 +53,12 @@ class ConfigurationExampleTests(unittest.TestCase):
         self.assertEqual(payload["steps"][0]["input_product_type"], "LARGE_CONE")
         self.assertNotEqual(payload["steps"][0]["input_product_type"], "BABY_CONE")
 
+    def test_baby_cone_example_help_matches_only_supported_measurement_method(self):
+        example = get_configuration_examples()["MEASUREMENT_PROFILE"]
+        self.assertEqual(example["payload"]["method"], "weight_per_length")
+        self.assertIn("currently supports the measured weight_per_length method only", example["help"])
+        self.assertIn("not enabled until their measurement schema and workflow are implemented", example["help"])
+
     def test_baby_cone_approval_policy_targets_operational_measurement_profile(self):
         from app.configuration_rules import ConfigurationApprovalPolicy
         policy = get_configuration_examples()["APPROVAL_POLICY"]["payload"]
