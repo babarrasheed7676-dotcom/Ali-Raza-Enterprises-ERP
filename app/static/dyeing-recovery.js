@@ -70,8 +70,9 @@
       if (!raw) return null;
       const saved = JSON.parse(raw);
       if (saved.version !== 2 || saved.path !== location.pathname ||
-          !Number.isFinite(saved.savedAt) || Date.now()-saved.savedAt > ttl ||
-          !saved.sections || !saved.scalars) {
+          !Number.isFinite(saved.savedAt) || saved.savedAt > Date.now()+60000 ||
+          Date.now()-saved.savedAt > ttl || new Blob([raw]).size > 131072 ||
+          !saved.sections || !saved.scalars || typeof saved.scalars !== "object" || Array.isArray(saved.scalars)) {
         sessionStorage.removeItem(key);
         return null;
       }
@@ -124,13 +125,20 @@
   }
   save.addEventListener("click", () => {
     try {
+      for (const section of sections) {
+        const count = rowsFor(section).length;
+        if (count < 1 || count > limit) {
+          announce("Recovery not saved: each Dyeing section must contain 1 to " + limit + " rows.");
+          return;
+        }
+      }
       const saved = {
         version:2,path:location.pathname,savedAt:Date.now(),
         scalars:readScalars(),
         sections:Object.fromEntries(sections.map(section => [section.id,readSection(section)]))
       };
       const encoded = JSON.stringify(saved);
-      if (encoded.length > 128000) {
+      if (new Blob([encoded]).size > 131072) {
         announce("Recovery copy is too large. Shorten notes and try again.");
         return;
       }

@@ -141,3 +141,18 @@ A dedicated client-side adapter draft was created at `app/static/dyeing-recovery
 No Dyeing service, route, database, stock, ledger, costing, posting, role, permission or accounting code was changed. No business document was submitted and no server restart occurred. Backups created before work:
 - `app/static/smart-entry.js.dyeing_adapter_backup_20261108_031758`
 - `app/templates/dyeing_draft.html.dyeing_adapter_backup_20261108_031758`
+
+## Phase 9 — Chrome headless adapter edge-case verification (2026-11-08)
+
+The dormant Dyeing recovery adapter was tightened before any activation:
+- Save now refuses a section count outside 1–100 instead of writing a snapshot that the restore validator would immediately reject.
+- Snapshot size is measured in UTF-8 bytes with Blob and capped at 131,072 bytes on both save and restore.
+- Restore rejects malformed JSON, expired snapshots, timestamps more than one minute in the future, oversized payloads, non-object scalar payloads, and invalid per-section row arrays; invalid snapshots are cleared safely.
+- No auto-save was added. Save/Restore/Delete remain explicit controls.
+
+A Chrome headless browser harness on the authorized PC exercised the adapter against the same form IDs, row classes, field names, add/remove controls, source-line rebuilding and chemical batch-filter event flow:
+- Core dependency/recovery checks: **7/7 passed** (three independent section counts, material values, multiple output source lines, PARTY batch after variant/ownership/party filtering, scalar fields, ineligible batch blank + warning).
+- Edge cases: **6/6 passed** (malformed snapshot, expired snapshot, oversized snapshot, 101-row rejection, no invalid snapshot saved, exact 100-row boundary accepted).
+- Combined: **13/13 passed**.
+
+**Activation remains gated.** These are isolated browser-harness tests, not a signed-in end-to-end run against the live authenticated Dyeing page. The live template still does not load this adapter and has no recovery opt-in; therefore current production entry behavior is unchanged. Before activation, still require route-integrated checks of successful-save cleanup and 422 retention using the actual rendered page and confirmation that the browser's tab storage is available. No business document was submitted. No DB/schema/service/route/stock/ledger/costing/posting/permission/accounting changes and no server restart.
