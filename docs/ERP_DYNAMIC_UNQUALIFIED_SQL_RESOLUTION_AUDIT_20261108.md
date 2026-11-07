@@ -14,7 +14,7 @@ This audit extends (does not replace) the 7 November direct SQL candidate matrix
 - Six apparent unqualified names from the regex pass were SQL aliases, keywords, or CTE identifiers (including OF, SET, WHERE, l, descendants, own_stage_stock), not confirmed unqualified base tables.
 - The earlier schema-qualified-only scan recorded 598 qualified table-reference hits and 70 distinct table candidates. The 638 figure uses a broader clause matcher and must not be substituted for the earlier qualified-only metric.
 
-No confirmed unqualified base-table access was identified in the 12 dynamic sites reviewed. Dynamic fragments were traced to finite in-source maps, tuples, or fixed dictionaries listed below. This does not cover SQL constructed outside Python, external scripts, runtime database clients, or arbitrary indirect SQL in every stored routine.
+No unqualified base-table identifier was confirmed in the reviewed dynamic SQL: the runtime statements use schema-qualified names assembled from fixed source-controlled identifiers. A broader repository-wide scan later found the production PROCESS_ORDER_SOURCES tuple and verified that it adds production.outside_dyeing_orders to the candidate relation set. This does not cover SQL constructed outside Python, external scripts, runtime database clients, or arbitrary indirect SQL in every stored routine.
 
 ## Dynamic SQL sites resolved
 
@@ -26,6 +26,7 @@ No confirmed unqualified base-table access was identified in the 12 dynamic site
 | app/packing_random_draft_service.py | source table lock | production.nalki_output_lines; production.outside_labeling_return_lines | SELECT FOR UPDATE | SOURCE_TABLE_BY_TYPE uses the two fixed random source constants |
 | app/packing_random_draft_service.py | source-id column | production.packing_source_allocations.nalki_output_line_id OR .outside_labeling_return_line_id | INSERT | source type chooses one of two literal column names; target table remains fixed |
 | app/production_master_service.py | department usage scan | production.baby_cone_orders, big_cone_orders, dyeing_orders, nalki_orders, outside_labeling_orders, packing_orders, production_orders, production_targets, rewinding_orders; plus master.machines | SELECT EXISTS | finite local tuple of literal table names |
+| app/production_service.py | PROCESS_ORDER_SOURCES list composition | production.production_orders, production.dyeing_orders, production.big_cone_orders, production.baby_cone_orders, production.rewinding_orders, production.nalki_orders, production.outside_dyeing_orders, production.outside_labeling_orders, production.packing_orders | SELECT count/status summaries | fixed tuple of table names; psycopg.sql.Identifier applies schema/table identifiers, no request input |
 | app/production_master_service.py | machine usage scan | production.baby_cone_orders, big_cone_orders, dyeing_orders, dyeing_rework_orders, machine_capacities, machine_downtime, nalki_orders, production_executions, production_orders, production_targets, rewinding_orders | SELECT EXISTS | finite local tuple of literal table names |
 | app/purchasing_service.py | SELECT COUNT(*) + spec["from_where"] | See purchasing section table map below | SELECT | section key resolves into fixed PURCHASING_SECTIONS dictionary |
 | app/accounting/report_service.py | purchase status loop | purchasing.purchase_receipts; purchasing.purchase_returns | SELECT | two fixed tuple values |
@@ -71,6 +72,7 @@ These are read paths in the generic section listing query. They do not by themse
 ## Status
 
 - Dynamic Python SQL sites: manually traced to finite source-controlled identifier sets.
+- The PROCESS_ORDER_SOURCES list in app/production_service.py is a fixed tuple rendered as schema-qualified SELECT queries; its table set is included in the consolidated matrix. This follow-up adds production.outside_dyeing_orders as the 94th unique candidate relation.
 - Confirmed unqualified base-table names in reviewed dynamic sites: none.
 - Purchasing section list query object map: extracted for all eight sections.
 - Final runtime grant matrix: still incomplete pending routine-body dependencies, migrations/scripts, route reachability, and restored-database validation.

@@ -31,13 +31,13 @@ The schema prefix is a reliable module ownership signal, but not proof that ever
 | core | 12 | Shared identity, authorization, company, fiscal-period, department and sequence dependencies. User/role/permission reads support auth; document sequence UPDATE is required only for the specific document-creation paths. Audit INSERT is source evidence, but actual audit coverage remains separately incomplete. |
 | inventory | 9 | Inventory read helpers and stock-document workflows exist. Stock ledger/reservation tables are routine-only dependencies in the current source matrix; exact execution is gated by protected purchasing routes and trigger behavior. |
 | master | 14 | Shared master data is consumed by configuration, purchasing, production and accounting pages/services. Several finite dynamic lookups are source-controlled; retain per-table and per-operation scoping. |
-| production | 36 | Mixed status: reachable partial draft/readiness/measurement/master routes coexist with dormant or planned production tables. Do not grant all production relations merely because the schema is used. Routine-only packing FG transfer dependencies remain excluded. |
+| production | 37 | Mixed status: reachable partial draft/readiness/measurement/master routes coexist with dormant or planned production tables. Do not grant all production relations merely because the schema is used. Routine-only packing FG transfer dependencies remain excluded. |
 | purchasing | 12 | Receipt/return workflows are route-reachable and protected. Requisition, order, landed-cost, quality and supplier-price relations require individual route/service proof; do not treat every purchasing candidate as active write access. |
 | sales | 4 | All four candidates are only present through dormant stored routines; Sales & Dispatch is Planned and no protected app route/service caller was found. Exclude from runtime grants. |
 
 The three production routine-only relations are production.packing_fg_transfers, production.packing_labour, and production.packing_material_consumption. They are dependencies of the unrouted production.post_packing_fg_transfer routine. Exclude runtime access until a protected feature is implemented.
 
-*Counts above are grouped by the 93-row candidate matrix's schema prefixes and routine-only dependency notes; they are not counts of proven reachable write grants.*
+*Counts above are grouped by the 94-row candidate matrix's schema prefixes and routine-only dependency notes; they are not counts of proven reachable write grants.*
 
 ## Exact route evidence and constraints
 
@@ -71,3 +71,12 @@ The three production routine-only relations are production.packing_fg_transfers,
 ## Status
 
 Source-level module/route reconciliation added. It narrows the candidate set conceptually but intentionally does not manufacture per-table grants where route evidence is incomplete. Live ERP remains untouched.
+
+## Follow-up — five dynamic SELECT dependencies confirmed
+
+The expanded source scan traced five relations previously flagged for no qualified literal reference to protected application paths:
+
+- `production.outside_dyeing_orders` and `production.rewinding_orders` are included in the fixed `PROCESS_ORDER_SOURCES` tuple in `app/production_service.py`. The production dashboard uses schema-qualified identifiers generated from this fixed tuple and runs inside a READ ONLY transaction. The module route is permission-gated through `MODULE_PERMISSIONS` before `get_production_dashboard_data()` is called.
+- `production.dyeing_rework_orders`, `production.machine_capacities`, `production.machine_downtime`, and `production.rewinding_orders` are in the fixed machine reference tuple in `app/production_master_service.py`; `production.rewinding_orders` is also in the department reference tuple. These are SELECT EXISTS checks used by the protected machine/department update path `PUT /modules/production/api/masters/{kind}/{record_id}`, which requires `configuration.create` and uses the configuration action payload/CSRF path.
+
+All five dependencies are SELECT-only in these call sites. Four were already present in the 93-relation matrix; `production.outside_dyeing_orders` was omitted and has now been added. The candidate matrix therefore contains 94 relations, including 37 production-schema relations. These five references do not justify any write grants on the referenced production history tables.

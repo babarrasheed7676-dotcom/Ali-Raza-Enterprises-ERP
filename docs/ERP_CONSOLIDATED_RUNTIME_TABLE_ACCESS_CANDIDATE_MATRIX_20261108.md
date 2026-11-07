@@ -4,7 +4,7 @@
 
 This is a merged source-evidence matrix, not an approved GRANT script. It combines the 7 November Python direct-SQL candidate matrix, the 8 November stored-routine relation matrix, and the manually resolved finite Python identifier maps. A table may appear because a dormant routine or read-only list references it; inclusion does not prove that the current web runtime should receive access. Route reachability, trigger invocation, sequence behavior, and restored-database validation remain separate gates.
 
-- Unique candidate relations in this merged source set: **93**.
+- Unique candidate relations in this merged source set: **94**.
 - Python literal operations are inherited from the prior AST matrix; dynamic operations are manually traced to finite source-controlled identifier maps and list query composition.
 - Stored-routine operations are extracted from the 46 live routine definitions and filtered against actual catalog relations.
 - No live ACL, role, owner, DSN, or data changes were made.
@@ -74,6 +74,7 @@ This is a merged source-evidence matrix, not an approved GRANT script. It combin
 | production.machine_downtime | None | SELECT | None | finite source-controlled identifier map/list |
 | production.nalki_orders | None | None | SELECT | routine-only source dependency; check route reachability |
 | production.nalki_output_lines | None | SELECT | SELECT | finite source-controlled identifier map/list |
+| production.outside_dyeing_orders | None | SELECT | None | finite source-controlled PROCESS_ORDER_SOURCES tuple in app/production_service.py |
 | production.outside_labeling_orders | None | SELECT | SELECT | finite source-controlled identifier map/list |
 | production.outside_labeling_return_lines | None | SELECT | SELECT | finite source-controlled identifier map/list |
 | production.ownership_use_requests | FROM, INSERT INTO, UPDATE | None | SELECT | Python source candidate; validate route and exact operation |

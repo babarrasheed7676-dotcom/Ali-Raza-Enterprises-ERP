@@ -28,7 +28,7 @@ These objects have a stored-routine dependency; their runtime relevance depends 
 
 ## No qualified reference in active app/migration/test files or stored-routine matrix
 
-These are candidates for module/schema lifecycle review only. They may be reserved for planned functionality, historical migrations, or external workflows. Do not classify as deletable without owner confirmation and full reference checks.
+These 41 relations had no schema-qualified literal reference in the original scan. A broader whole-repository source scan subsequently found five fixed, source-controlled dynamic table references (listed in the correction section below); the remaining 36 have no active application-code name hit in the expanded scan. They may still be reserved for planned functionality, historical migrations, or external workflows. Do not classify any of them as deletable without owner confirmation and full reference checks.
 - core.system_settings
 - inventory.opening_stock
 - inventory.stock_adjustments
@@ -82,3 +82,19 @@ These are candidates for module/schema lifecycle review only. They may be reserv
 ## Status
 
 Read-only inventory and source-reference comparison complete. No schema objects or permissions were changed.
+
+## Correction — fixed dynamic source references found in the expanded scan
+
+A broader repository scan examined 177 current text/source files (Python, SQL, Markdown, text, JSON, TOML, YAML and batch files), excluding virtual-environment, backup, log and database-backup directories. It found five of the 41 listed relations referenced by active application code through fixed source-controlled table-name tuples and schema-qualified dynamic SQL. These had no schema-qualified literal match in the original scan, which is why they were false positives in the original “no source reference” interpretation.
+
+| Relation | Source path | Operation | Protected route / runtime path |
+|---|---|---|---|
+| production.dyeing_rework_orders | app/production_master_service.py, machine_refs | SELECT EXISTS | PUT /modules/production/api/masters/{kind}/{record_id}; configuration.create; used only in machine-in-use check |
+| production.machine_capacities | app/production_master_service.py, machine_refs | SELECT EXISTS | Same protected machine update path; prevents deactivation/change when referenced |
+| production.machine_downtime | app/production_master_service.py, machine_refs | SELECT EXISTS | Same protected machine update path; prevents deactivation/change when referenced |
+| production.rewinding_orders | app/production_master_service.py, department_refs and machine_refs; app/production_service.py, PROCESS_ORDER_SOURCES | SELECT EXISTS; SELECT count/status summary | Protected production module GET and protected production master update path |
+| production.outside_dyeing_orders | app/production_service.py, PROCESS_ORDER_SOURCES | SELECT count/status summary | Protected production module GET; query runs in the read-only production dashboard transaction |
+
+The production dashboard builds SQL with psycopg.sql.Identifier from a fixed tuple; no request value selects a table. The production master reference checks similarly concatenate only fixed internal table names and use bound values. The operations on these five relations are SELECT-only in the reviewed paths. Their inclusion in the runtime candidate matrix does not authorize INSERT, UPDATE or DELETE.
+
+**Revised interpretation:** 5 of the 41 relations have active application-code references through controlled dynamic SQL; the other 36 have no application-code name hit in this expanded scan. All 41 still had no schema-qualified literal match in the original scan and remain in the foreign-key/backup provenance review. `production.outside_dyeing_orders` was missing from the prior 93-relation candidate matrix; it has now been added, bringing the matrix to 94 unique candidate relations.
