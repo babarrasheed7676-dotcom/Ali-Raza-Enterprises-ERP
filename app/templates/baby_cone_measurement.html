@@ -36,18 +36,18 @@
           <select name="baby_cone_output_line_id" required>
             <option value="">Select DRAFT output / variant</option>
             {% for item in data %}
-            <option value="{{ item.output_line_id }}" data-snapshot="{{ item.configuration_snapshot_id }}">
+            <option value="{{ item.output_line_id }}" data-snapshot="{{ item.configuration_snapshot_id }}" {% if form.baby_cone_output_line_id|string == item.output_line_id|string %}selected{% endif %}>
               {{ item.baby_cone_no }} ? {{ item.variant_code }} ? {{ item.variant_name }} ? {{ item.profile_code }} ? v{{ item.configuration_version_id }}
             </option>
             {% endfor %}
           </select>
           <input type="hidden" name="configuration_snapshot_id" id="bcSnapshotId" value="">
         </label>
-        <label>Gross weight (grams)<input id="bcGross" name="gross_weight_grams" type="number" min="0.000001" step="any" required></label>
-        <label>Empty core tare (grams)<input id="bcTare" name="empty_core_tare_grams" type="number" min="0" step="any" value="0" required></label>
-        <label>Measured length (yards)<input id="bcYards" name="measured_yards" type="number" min="0.000001" step="any" required></label>
-        <label>Required length (yards, optional)<input id="bcRequiredYards" name="required_yards" type="number" min="0.000001" step="any"></label>
-        <label class="wide">Operator code<input name="operator_code" maxlength="60" placeholder="Enter operator code"></label>
+        <label>Gross weight (grams)<input id="bcGross" name="gross_weight_grams" type="number" min="0.000001" step="any" value="{{ form.gross_weight_grams or '' }}" required></label>
+        <label>Empty core tare (grams)<input id="bcTare" name="empty_core_tare_grams" type="number" min="0" step="any" value="{{ form.empty_core_tare_grams if form.empty_core_tare_grams is defined else '0' }}" required></label>
+        <label>Measured length (yards)<input id="bcYards" name="measured_yards" type="number" min="0.000001" step="any" value="{{ form.measured_yards or '' }}" required></label>
+        <label>Required length (yards, optional)<input id="bcRequiredYards" name="required_yards" type="number" min="0.000001" step="any" value="{{ form.required_yards or '' }}"></label>
+        <label class="wide">Operator code<input name="operator_code" maxlength="60" placeholder="Enter operator code" value="{{ form.operator_code or '' }}"></label>
       </div>
       <div class="bc-measure-success" id="bcMeasurePreview" aria-live="polite">Enter gross weight, tare and measured yards to preview the calculated values. Preview only; the server recalculates and retains full precision.</div>
       <p class="bc-measure-help">Net yarn = gross weight ? empty-core tare. Grams/yard = net yarn ? measured yards. Required kg = grams/yard ? required yards ? 1000. Full precision is retained; the approved profile version is pinned.</p>

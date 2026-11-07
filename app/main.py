@@ -1428,6 +1428,7 @@ def baby_cone_measurement_page(request: Request, saved: str = ""):
             "csrf_token": request.cookies.get("are_erp_csrf", ""),
             "saved": saved == "1",
             "error": "",
+            "form": {},
         },
     )
 
@@ -1454,10 +1455,18 @@ async def baby_cone_measurement_save(request: Request):
         raise HTTPException(status_code=403, detail="CSRF validation failed.")
 
     user = get_current_user(request)
+    form = {
+        "baby_cone_output_line_id": (parsed.get("baby_cone_output_line_id") or [""])[0].strip(),
+        "gross_weight_grams": (parsed.get("gross_weight_grams") or [""])[0].strip(),
+        "empty_core_tare_grams": (parsed.get("empty_core_tare_grams") or [""])[0].strip(),
+        "measured_yards": (parsed.get("measured_yards") or [""])[0].strip(),
+        "required_yards": (parsed.get("required_yards") or [""])[0].strip(),
+        "operator_code": (parsed.get("operator_code") or [""])[0].strip(),
+    }
     try:
-        output_line_id = int((parsed.get("baby_cone_output_line_id") or [""])[0])
+        output_line_id = int(form["baby_cone_output_line_id"])
         snapshot_id = int((parsed.get("configuration_snapshot_id") or [""])[0])
-        required_yards_text = (parsed.get("required_yards") or [""])[0].strip()
+        required_yards_text = form["required_yards"]
         with get_connection() as conn:
             with conn.transaction():
                 with conn.cursor() as cur:
@@ -1467,10 +1476,10 @@ async def baby_cone_measurement_save(request: Request):
                         baby_cone_output_line_id=output_line_id,
                         configuration_snapshot_id=snapshot_id,
                         user_id=user["id"],
-                        gross_weight_grams=(parsed.get("gross_weight_grams") or [""])[0],
-                        empty_core_tare_grams=(parsed.get("empty_core_tare_grams") or [""])[0],
-                        measured_yards=(parsed.get("measured_yards") or [""])[0],
-                        operator_code=(parsed.get("operator_code") or [""])[0],
+                        gross_weight_grams=form["gross_weight_grams"],
+                        empty_core_tare_grams=form["empty_core_tare_grams"],
+                        measured_yards=form["measured_yards"],
+                        operator_code=form["operator_code"],
                         required_yards=required_yards_text or None,
                     )
     except (ValueError, TypeError) as exc:
@@ -1484,6 +1493,7 @@ async def baby_cone_measurement_save(request: Request):
                 "csrf_token": cookie_token,
                 "saved": False,
                 "error": str(exc),
+                "form": form,
             },
             status_code=422,
         )
