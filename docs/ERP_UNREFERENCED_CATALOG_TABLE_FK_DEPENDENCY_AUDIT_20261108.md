@@ -90,3 +90,22 @@ A second read-only source scan searched all 41 table names as whole identifiers 
 ## Status
 
 Catalog FK dependency and migration-history name checks complete for all 41 flagged relations. Live database remained read-only; no schema cleanup or privilege changes performed.
+
+## Database-backup archive provenance check
+
+The migration directory did not contain names for these 41 relations, so the seven custom-format PostgreSQL archives under database/backups were inspected with PostgreSQL 18.6 `pg_restore --list` only. No archive was restored and no data was extracted or modified.
+
+Six valid archives each contain both a TABLE definition entry and a TABLE DATA archive entry for **all 41 of the 41 flagged relations**:
+
+- `ali_raza_erp_pre_configuration_20261105.dump`
+- `ali_raza_erp_pre_config_approval_20261105.dump`
+- `ali_raza_erp_pre_packing_config_snapshot_20261105.dump`
+- `ali_raza_erp_pre_packing_phase2g_20261105.dump`
+- `ali_raza_erp_pre_packing_snapshot_guard_20261105.dump`
+- `ali_raza_erp_pre_purchasing_config_snapshot_20261105.dump`
+
+The archive named `ali_raza_erp_pre_config_supersession_20261105_204110.dump` had no readable TOC entries and a reported size of approximately 0.0 MB; it is not counted as evidence of a valid snapshot and should be separately checked for truncation before anyone relies on it.
+
+This establishes that the 41 tables are part of multiple November 5, 2026 database backup snapshots, despite the absence of matching names in the current migration directory and active source scan. `TABLE DATA` entries mean the archives include data sections for these relations; this TOC-only inspection does **not** establish that any given table contains non-zero rows.
+
+**Conclusion updated:** the 41 relations are not safe deletion candidates. Their absence from the current source/migration scan is a source-coverage or workflow-activation question, not evidence that the database objects are accidental. Retain them pending schema/bootstrap provenance and business workflow reconciliation. Do not widen runtime grants solely because backup entries exist.
