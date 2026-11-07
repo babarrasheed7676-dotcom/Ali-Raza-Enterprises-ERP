@@ -383,6 +383,40 @@ def create_big_cone_draft(*, company_id: int, user: dict, request: Any,
             **_draft_reconciliation_summary(total_input, total_output)}
 
 
+def _big_cone_stock_dimension_shortfalls(materials: list[dict]) -> list[str]:
+    """Compare all active Big Cone draft claims with stock at each exact stock dimension."""
+    grouped = {}
+    for material in materials:
+        key = (
+            material["item_variant_id"], material["batch_id"], material["location_id"],
+            material["ownership_type_id"], material["owner_party_id"], material["process_stage_id"],
+        )
+        group = grouped.setdefault(key, {
+            "input_kg": Decimal("0"),
+            "other_draft_kg": Decimal("0"),
+            "stock_kg": Decimal(str(material["current_source_stock_kg"])),
+            "lines": [],
+        })
+        group["input_kg"] += Decimal(str(material["input_quantity_kg"]))
+        # The correlated query returns the same dimension total on every matching row.
+        group["other_draft_kg"] = max(
+            group["other_draft_kg"],
+            Decimal(str(material["other_active_draft_allocations_kg"])),
+        )
+        group["lines"].append(str(material["line_no"]))
+
+    blockers = []
+    for group in grouped.values():
+        claimed = group["input_kg"] + group["other_draft_kg"]
+        if claimed > group["stock_kg"]:
+            blockers.append(
+                "DYEING-stage stock is insufficient for Big Cone line(s) "
+                f"{', '.join(group['lines'])}: this draft plus other active drafts claim "
+                f"{claimed} KG, while current exact-dimension stock is {group['stock_kg']} KG."
+            )
+    return blockers
+
+
 def get_big_cone_readiness(company_id: int, big_cone_order_id: int) -> dict[str, Any]:
     """Read-only preflight. It never reserves, approves, posts, or changes stock."""
     company_id = int(company_id)
@@ -421,9 +455,15 @@ def get_big_cone_readiness(company_id: int, big_cone_order_id: int) -> dict[str,
                                 JOIN production.big_cone_orders other_order
                                   ON other_order.id=other_ml.big_cone_order_id
                                 WHERE other_ml.source_dyeing_output_line_id=ml.source_dyeing_output_line_id
-                                  AND other_order.status NOT IN ('CANCELLED','REVERSED')
+                                  AND other_order.status IN ('DRAFT','APPROVED')
                                   AND other_order.id<>ml.big_cone_order_id
-                              ),0) AS other_big_cone_allocations_kg,
+                                  AND other_ml.item_variant_id=ml.item_variant_id
+                                  AND other_ml.batch_id IS NOT DISTINCT FROM ml.batch_id
+                                  AND other_ml.location_id IS NOT DISTINCT FROM ml.location_id
+                                  AND other_ml.ownership_type_id=ml.ownership_type_id
+                                  AND other_ml.owner_party_id IS NOT DISTINCT FROM ml.owner_party_id
+                                  AND other_ml.process_stage_id IS NOT DISTINCT FROM ml.process_stage_id
+                              ),0) AS other_active_draft_allocations_kg,
                               ml.source_dyeing_output_line_id
                        FROM production.big_cone_material_lines ml
                        JOIN master.ownership_types own ON own.id=ml.ownership_type_id
@@ -470,13 +510,8 @@ def get_big_cone_readiness(company_id: int, big_cone_order_id: int) -> dict[str,
         blockers.append(f"Document status is {order['status']}; this screen does not change its status.")
     if not materials or not outputs:
         blockers.append("Material input or output lineage is incomplete.")
+    blockers.extend(_big_cone_stock_dimension_shortfalls(materials))
     for material in materials:
-        input_kg = Decimal(str(material["input_quantity_kg"]))
-        stock_kg = Decimal(str(material["current_source_stock_kg"]))
-        if stock_kg < input_kg:
-            blockers.append(
-                f"Input line {material['line_no']}: current DYEING-stage stock is {stock_kg} KG; draft input is {input_kg} KG."
-            )
         if material["ownership_code"] == "PARTY" and material["unit_cost"] is None:
             blockers.append(f"Input line {material['line_no']}: PARTY locked unit rate is missing.")
     if difference != 0:

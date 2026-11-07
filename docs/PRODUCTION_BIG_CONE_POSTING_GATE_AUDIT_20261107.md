@@ -38,3 +38,16 @@
 - GitHub mirror: branch `main`, clean and synchronized with `origin/main` at `15daa2620d0092b88b8f1f0a86d27b835d403b67` at audit time.
 
 **Conclusion:** Big Cone DRAFT lineage and source-allocation safeguards are in place. Approval/posting is intentionally not implemented yet because material reconciliation and process-cost allocation are unresolved accounting controls. The safe next step is a read-only readiness/preflight feature, followed by approval/posting only after those controls are defined.
+
+
+## Read-only readiness preflight added
+
+- Added `GET /modules/production/big-cone/{big_cone_order_id}/readiness`, protected by `production.view`.
+- Successful Big Cone DRAFT save now opens its read-only readiness report; it still performs no approval, reservation, posting, or stock movement.
+- The report shows document state, input/output totals, unreconciled difference (never measured wastage), process costs, exact input/output lineage, and current source stock.
+- Current source stock is checked using the exact stock-balance dimensions: company, item variant, batch, single physical location, ownership, owner party, and DYEING process stage.
+- The preflight aggregates all same-dimension lines and includes other active DRAFT/APPROVED Big Cone claims once, preventing two individually-small lines/drafts from each appearing affordable against the same balance.
+- PARTY locked-rate presence is rechecked. The screen always reports not-ready until reconciliation and process-cost allocation controls are approved and implemented.
+- All readiness SELECT statements were validated with PostgreSQL EXPLAIN inside a read-only transaction; no records were created or changed.
+- Validation: Python compilation PASS; Jinja template compilation PASS; OpenAPI route registration PASS; full suite **380 tests PASS**.
+- Deployment note: changes are on disk and GitHub. The currently running Uvicorn process was intentionally not restarted, so the new route becomes live only after an authorized controlled restart.

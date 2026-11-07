@@ -41,7 +41,7 @@
   <h2>Source material and current stock</h2>
   <div style="overflow-x:auto">
     <table class="bc-table">
-      <thead><tr><th>Line</th><th>Item / Batch</th><th>Ownership</th><th>Draft input KG</th><th>Current source stock KG</th><th>Other Big Cone allocations KG</th></tr></thead>
+      <thead><tr><th>Line</th><th>Item / Batch</th><th>Ownership</th><th>Draft input KG</th><th>Current source stock KG</th><th>Other active DRAFT allocations KG</th></tr></thead>
       <tbody>
       {% for line in data.materials %}
         <tr>
@@ -50,7 +50,7 @@
           <td>{{ line.ownership_code }}{% if line.party_name %}<br>{{ line.party_name }}{% endif %}</td>
           <td>{{ line.input_quantity_kg }}</td>
           <td>{{ line.current_source_stock_kg }}</td>
-          <td>{{ line.other_big_cone_allocations_kg }}</td>
+          <td>{{ line.other_active_draft_allocations_kg }}</td>
         </tr>
       {% else %}
         <tr><td colspan="6" class="bc-muted">No material input lines found.</td></tr>
