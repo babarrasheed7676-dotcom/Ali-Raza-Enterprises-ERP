@@ -6,6 +6,14 @@
     if (select.dataset.smartSearchReady || select.multiple || select.disabled) return;
     const options = [...select.options].filter(option => option.value);
     if (options.length < 25) return;
+    // Keep module-filtered selects native: their hidden state enforces valid
+    // PO, GRN, department, ownership and batch relationships.
+    const moduleFiltered = options.some(option =>
+      ["data-po","data-item","data-receipt","data-department-id",
+       "data-variant-id","data-ownership-type-id","data-owner-party-id"]
+        .some(attribute => option.hasAttribute(attribute))
+    );
+    if (moduleFiltered) return;
 
     select.dataset.smartSearchReady = "1";
     const label = (select.labels?.[0]?.textContent ||

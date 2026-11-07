@@ -53,6 +53,7 @@ Date: 2026-11-08
 ## Phase 3 — Searchable pickers and explicit DRAFT recovery
 - Added inline search inputs to opted-in native selects with 25 or more non-empty options. The original select remains the submitted control; no IDs or values are rewritten.
 - Search filters option text and optgroup labels, reports match counts, selects a unique match with Enter, focuses the native select with ArrowDown, and clears with Escape or after selection.
+- Selects whose options encode PO, GRN, department, batch, ownership or party dependencies remain native and untouched so the search layer cannot reveal invalid relationships.
 - A MutationObserver initializes pickers for newly added/cloned production and purchasing rows. Cloned search controls are rebuilt with fresh listeners rather than retaining inert copied UI.
 - Explicit Save recovery copy / Restore copy / Delete copy controls are enabled only on Goods Receipt and Purchase Return in this pilot.
 - Recovery uses the current browser tab's `sessionStorage` only, expires after 2 hours, is capped at 128 KB, and is never uploaded. It excludes hidden fields (including CSRF), password/file/submit controls, disabled/read-only controls and token-like names. No automatic save occurs.
