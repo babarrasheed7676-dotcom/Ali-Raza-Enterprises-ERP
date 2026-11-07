@@ -83,3 +83,15 @@ The table comparison is limited to application base-table names and does not pro
 A read-only catalog search across all application schemas found no base table whose name matches `%migration%`, `%schema_version%`, or `%alembic%`. The repository also has no Alembic migration runner/configuration in the active files scanned, and the README explicitly says SQL migrations are not run automatically. Therefore the database does not expose a migration ledger that can reliably prove which numbered scripts were applied or in what order.
 
 Do not infer applied migration status solely from the current table count or backup filename. For a future staging rebuild, record each migration filename, SHA-256 hash, execution timestamp, operator, result, and post-migration object checks in an external deployment manifest or a formally approved migration ledger. Create a database-resident ledger only through a reviewed migration and explicit approval; no such table was added during this audit.
+
+## Sequence inventory reconciliation
+
+The latest 125-table archive contains **123 distinct application sequence objects** in its TOC. The current live catalog contains **128 application sequences**. The five current-only sequence objects are exactly the identity sequences for the five tables introduced after that archive:
+
+- `purchasing.purchase_configuration_snapshots_id_seq`
+- `production.baby_cone_configuration_snapshots_id_seq`
+- `production.baby_cone_measurements_id_seq`
+- `production.ownership_use_requests_id_seq`
+- `production.dyeing_unit_conversion_snapshots_id_seq`
+
+No archive-only application sequence was found. This sequence delta matches the five-table delta and supports the identified migration boundary. It does not establish which runtime role should receive USAGE/SELECT/UPDATE; those privileges must be traced to actual insert/default behavior and validated on staging.
