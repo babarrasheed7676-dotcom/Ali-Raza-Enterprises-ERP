@@ -60,6 +60,24 @@
   </table></div>
 </section>
 
+<section class="production-panel" style="margin:16px 0">
+  <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+    <div><div class="eyebrow">BIG CONE DOCUMENT REGISTER</div><h2 style="margin:5px 0">Recent Big Cone drafts &amp; orders</h2><p class="production-muted" style="margin:0">Latest 10 company records · read-only · no stock movement</p></div>
+    {% if can_create_dyeing %}<a class="btn btn-secondary" href="/modules/production/big-cone/new">+ New Big Cone Draft</a>{% endif %}
+  </div>
+  <div style="overflow-x:auto;margin-top:12px"><table class="production-table" style="min-width:850px">
+    <thead><tr><th>Document</th><th>Date</th><th>Status</th><th>Input KG</th><th>Output KG</th><th>Unreconciled difference</th><th>Lines</th><th>Process cost</th><th>Readiness</th></tr></thead>
+    <tbody>{% for order in data.recent_big_cone_orders %}
+      <tr><td><strong>{{ order.big_cone_no }}</strong></td><td>{{ order.big_cone_date }}</td><td><span class="production-status">{{ order.status }}</span></td>
+      <td>{{ "%.3f"|format(order.input_quantity_kg) }}</td><td>{{ "%.3f"|format(order.output_quantity_kg) }}</td>
+      <td>{{ "%.3f"|format(order.unreconciled_difference_kg) }} KG</td>
+      <td>{{ order.material_line_count }} / {{ order.output_line_count }}</td><td>{{ "%.2f"|format(order.process_cost) }}</td>
+      <td><a href="/modules/production/big-cone/{{ order.id }}/readiness">View preflight</a></td></tr>
+    {% else %}<tr><td colspan="9" class="production-muted">No Big Cone orders have been saved yet.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="production-muted" style="margin:10px 0 0">Input/output difference is an unreconciled balance, not measured wastage. This register is read-only and does not approve, reserve, or post stock.</p>
+</section>
+
 <div class="production-grid">
   <section class="production-panel">
     <div class="eyebrow">PROCESS ACTIVITY</div>

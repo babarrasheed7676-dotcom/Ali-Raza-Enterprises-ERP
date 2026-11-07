@@ -998,3 +998,122 @@ def get_inventory_gl_mapping_readiness(company_id):
                  AND i.company_id = c.company_id
                 WHERE c.company_id = %s
                 GROUP BY c.id, c.code, c.name, c.is_active
+                ORDER BY c.code
+                """,
+                (company_id,),
+            )
+            categories = [dict(row) for row in cur.fetchall()]
+            cur.execute(
+                """
+                SELECT account_code, account_name, account_type, normal_balance,
+                       is_active, is_group, is_control
+                FROM accounting.accounts
+                WHERE company_id = %s
+                ORDER BY account_code
+                """,
+                (company_id,),
+            )
+            all_accounts = [dict(row) for row in cur.fetchall()]
+            account_rows = {
+                str(row["account_code"]): row for row in all_accounts
+                if str(row["account_code"]) in set(INVENTORY_CATEGORY_ACCOUNT_CANDIDATES.values())
+            }
+            purchase_counts = {}
+            for key, table in (("receipt_status_counts", "purchase_receipts"),
+                               ("return_status_counts", "purchase_returns")):
+                cur.execute(
+                    f"SELECT status, COUNT(*) AS count FROM purchasing.{table} "
+                    "WHERE company_id = %s GROUP BY status ORDER BY status",
+                    (company_id,),
+                )
+                purchase_counts[key] = [dict(row) for row in cur.fetchall()]
+            cur.execute(
+                """
+                SELECT COUNT(*) AS count
+                FROM purchasing.purchase_receipts
+                WHERE company_id = %s AND status = 'POSTED'
+                """,
+                (company_id,),
+            )
+            purchase_counts["posted_grn_count"] = int(cur.fetchone()["count"])
+            cur.execute(
+                """
+                SELECT COUNT(*) AS count
+                FROM purchasing.purchase_returns
+                WHERE company_id = %s AND status = 'POSTED'
+                """,
+                (company_id,),
+            )
+            purchase_counts["posted_return_count"] = int(cur.fetchone()["count"])
+            cur.execute(
+                """
+                SELECT currency_code, COUNT(*) AS count
+                FROM purchasing.purchase_orders
+                WHERE company_id = %s
+                GROUP BY currency_code
+                ORDER BY currency_code
+                """,
+                (company_id,),
+            )
+            purchase_counts["po_currency_counts"] = [dict(row) for row in cur.fetchall()]
+    return _inventory_gl_mapping_readiness(
+        transaction_types, categories, account_rows, all_accounts, purchase_counts
+    )
+
+
+def get_inventory_journal_review(company_id, limit=30):
+    """Read-only review of recent posted stock-document valuation bases."""
+    from .inventory_journal import get_stock_document_journal_basis
+
+    company_id = int(company_id)
+    limit = max(1, min(int(limit), 100))
+    reviews = []
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SET TRANSACTION READ ONLY")
+            cur.execute(
+                """
+                SELECT id, document_no, document_type, document_date, status
+                FROM inventory.stock_documents
+                WHERE company_id = %s AND status = 'POSTED'
+                ORDER BY document_date DESC, id DESC
+                LIMIT %s
+                """,
+                (company_id, limit),
+            )
+            documents = [dict(row) for row in cur.fetchall()]
+
+        for document in documents:
+            try:
+                basis = get_stock_document_journal_basis(
+                    conn,
+                    company_id=company_id,
+                    stock_document_id=int(document["id"]),
+                )
+                reviews.append(basis)
+            except (ValueError, TypeError) as exc:
+                reviews.append({
+                    "document_id": int(document["id"]),
+                    "document_no": document["document_no"],
+                    "document_type": document["document_type"],
+                    "document_date": document["document_date"],
+                    "status": document["status"],
+                    "categories": [],
+                    "total_inward_value": Decimal("0"),
+                    "total_outward_value": Decimal("0"),
+                    "net_stock_value_change": Decimal("0"),
+                    "gross_movement_value": Decimal("0"),
+                    "line_count": 0,
+                    "ready_for_mapping_review": False,
+                    "automatic_journal_approved": False,
+                    "blockers": [str(exc)],
+                })
+
+    return {
+        "documents": reviews,
+        "document_count": len(reviews),
+        "ready_count": sum(1 for item in reviews if item["ready_for_mapping_review"]),
+        "blocked_count": sum(1 for item in reviews if not item["ready_for_mapping_review"]),
+        "automatic_journal_approved": False,
+        "read_only": True,
+    }

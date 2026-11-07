@@ -1,54 +1,55 @@
-# Ali Raza Enterprises ERP
+# Ali Raza Enterprises ERP — Python application foundation
 
-Local-first ERP application for Ali Raza Enterprises, Faisalabad, Pakistan.
+This is the first runnable UI foundation for the local-first ERP. It uses Python, FastAPI, Jinja templates, CSS and PostgreSQL via psycopg. The application foundation is intentionally read-only: it checks database connectivity, reads inventory balances and shows a fixed-rule dashboard assistant. It does not create, alter, insert, update or delete ERP data.
 
-## Project overview
+## Prerequisites
 
-This repository contains the Python/FastAPI application, PostgreSQL migration scripts, automated tests, UI templates, and implementation notes for a small manufacturing operation. The system is developed and verified incrementally against the business's stock, production, purchasing, packing, and accounting workflows.
+- Windows 11
+- Python 3.11 or newer (`py -3 --version` in Command Prompt)
+- PostgreSQL 18 running locally with database `ali_raza_erp`
 
-## Technology
+## Start on Windows
 
-- Python 3.11+
-- FastAPI and Uvicorn
-- PostgreSQL 18+
-- psycopg 3
-- Jinja2 templates and CSS
-- Automated service and integration tests
+1. Extract this folder to a normal local folder, e.g. `C:\AliRazaERP\python_app`.
+2. Double-click `run_windows.bat`.
+3. On the first run, the script creates `.venv`, installs dependencies and creates `.env` from `.env.example`, then opens `.env` in Notepad.
+4. Set `DATABASE_PASSWORD` to your local PostgreSQL password and save the file. Do not send the password to anyone or commit/share `.env`.
+5. Double-click `run_windows.bat` again.
+6. Open `http://127.0.0.1:8000` in your browser.
+7. Health check: `http://127.0.0.1:8000/health`.
 
-## Functional areas
+Internet is needed once to install Python packages. The application itself runs locally. These dependencies are free/open-source.
 
-- Authentication, sessions, CSRF protection, permissions and audit helpers
-- Inventory and single-godown stock controls
-- Purchasing and goods-receipt workflow
-- Production workflows including Dyeing, Large Cone and Baby Cone
-- OWN and PARTY stock ownership controls
-- Packing and source-allocation workflows
-- General ledger, journal validation and accounting reports
-- Flexible configuration, measurement and unit-conversion services
+## Security and current limits
 
-Some workflows remain under development or are intentionally draft/read-only. A screen or route does not imply that every business process is production-ready. Consult the latest checkpoint and implementation notes before relying on a feature.
+- The server binds to `127.0.0.1` only. Do not change it to `0.0.0.0` or expose it to the factory LAN yet.
+- This foundation does not yet implement ERP user login/roles. Do not treat it as production-ready or allow other people to use it.
+- Do not use the PostgreSQL `postgres` superuser as the long-term application login. Before enabling transactional screens, we must create and test a least-privilege application role and define approved database access paths.
+- Module links are placeholders, not working transaction screens yet.
+- No SQL migration is run automatically. Existing ERP schema and test data are not modified.
+- Database errors shown on the dashboard are limited to the first line; never put a password into logs or screenshots.
 
-## Local setup (Windows)
+## Read-only dashboard assistant (new in this working copy)
 
-1. Install Python 3.11+ and PostgreSQL.
-2. Configure a local `.env` file using `.env.example` as a placeholder template.
-3. Never commit or share `.env` or database credentials.
-4. Run `run_windows.bat` from the project folder.
-5. Open `http://127.0.0.1:8000` on the same computer.
+- The dashboard includes a local, rule-based Inventory Assistant for total stock value, stock value by location, and searches against the existing item/variant/shade/party lookup.
+- It does not call a cloud AI service, generate SQL, or accept SQL from the user. It delegates to existing parameterized read-only inventory helpers and limits displayed matches.
+- It is not yet a generative AI assistant and does not answer accounting, bills, party-ledger, production-costing, HR or payroll questions.
+- Application login/roles are not implemented yet. Keep the app bound to `127.0.0.1`; do not expose this endpoint to a factory network until authentication, authorization and request controls are implemented and tested.
+- Database writes and financial posting are out of scope.
 
-Dependencies are listed in `requirements.txt`. Keep the application bound to localhost during development. Do not expose it to a factory network or the public internet until deployment security, least-privilege database access, backup/restore procedures and production acceptance tests are complete.
+## Current module placeholders
 
-## Database safety
+Inventory, Production, Packing, Sales & Dispatch, Purchasing, Accounting, Reports and Configuration. The Configuration page is a read-only design scaffold; see `docs_CONFIG_MODULE_BLUEPRINT.md` for the future-flexible data model and the Baby Cone/Nalki rules. These are connected to routes, but actual CRUD/transaction features will be implemented only after the existing schema/functions and business rules are mapped and tested.
 
-- Review SQL files under `database/migrations/` before applying them.
-- Never reset, recreate, or migrate a live database without an explicit backup and approved change plan.
-- Use a least-privilege database account for application runtime.
-- Test posting, rollback, audit trails and ledger reconciliation before enabling production transactions.
+## Next milestones
 
-## Repository hygiene
+1. Verify this application connects to the existing `ali_raza_erp` database.
+2. Map verified tables/functions and add safe, read-only inventory and packing views.
+3. Design login, roles and permissions; use a dedicated non-superuser DB role before any production usage.
+4. Add approved transactional workflows, validations, audit history and automated tests module-by-module.
+5. Design the flexible Configuration data model and approval/audit workflow; see `docs_CONFIG_MODULE_BLUEPRINT.md`.
+6. Add backup/restore verification before factory deployment.
 
-Environment files, virtual environments, logs, local database dumps, PDFs, generated backups and runtime artifacts are excluded from source synchronization. `.env.example` contains placeholders only.
 
-## Project status
-
-This is an active development project, not a packaged commercial release. Project notes record checkpoints, pending decisions, constraints and test evidence. Business rules must remain configurable where specified; posted transactions must retain the rule snapshots used at posting time.
+### Official logo asset (12 October 2026)
+The supplied HD Ali Raza Enterprises logo is installed at `app/static/ali-raza-logo-hd.png` and is used in the sidebar, top bar and overview welcome panel. The overview logo has a subtle 3D rotation with reduced-motion accessibility support.

@@ -998,3 +998,121 @@ def _get_dyeing_approval_readiness_with_cursor(cur, company_id: int, dyeing_orde
     checks["output_lines"]=len(output_rows)
     if not output_rows:
         blockers.append("At least one DYED_THREAD output line is required.")
+    for row in output_rows:
+        if not row["shade_variant_exists"]:
+            blockers.append(
+                f"Output line {row['line_no']} shade {row['shade_code']} ({row['shade_name']}): "
+                "configure an active YARN variant with the same yarn count/fiber and this exact brand/shade."
+            )
+        elif not row["output_variant_exact"]:
+            blockers.append(
+                f"Output line {row['line_no']} shade {row['shade_code']} ({row['shade_name']}): "
+                "this DRAFT still points to the raw Yarn variant; recreate it after configuring the exact shade-specific variant."
+            )
+        else:
+            checks["shade_variants_ready"]+=1
+        if row["output_batch_id"] is not None:
+            blockers.append(
+                f"Output line {row['line_no']}: output batch must remain unassigned until posting generates the DYEING-stage batch."
+            )
+
+    cur.execute(
+        """SELECT l.id,l.line_no,l.item_variant_id,l.batch_id,l.quantity,l.unit_id,
+                  l.ownership_type_id,l.owner_party_id,l.ownership_use_request_id,
+                  l.ownership_locked_unit_rate,l.ownership_cost_total,
+                  l.ownership_cost_snapshot,i.track_batch,
+                  l.source_material_line_id,
+                  source_material.line_no AS source_material_line_no,
+                  own.code AS ownership_code,s.status AS conversion_status,
+                  s.converted_quantity,su.code AS source_unit_code,bu.code AS base_unit_code,
+                  COALESCE(sb.quantity,0) AS available_quantity,sb.average_unit_cost,
+                  b.batch_no
+           FROM production.dyeing_consumption_lines l
+           JOIN production.dyeing_orders o ON o.id=l.dyeing_order_id
+           JOIN master.item_variants v ON v.id=l.item_variant_id
+           JOIN master.items i ON i.id=v.item_id
+           JOIN master.ownership_types own ON own.id=l.ownership_type_id
+           JOIN master.units su ON su.id=l.unit_id
+           JOIN master.units bu ON bu.id=i.base_unit_id
+           LEFT JOIN production.dyeing_unit_conversion_snapshots s
+             ON s.consumption_line_id=l.id AND s.company_id=o.company_id
+           LEFT JOIN production.dyeing_material_lines source_material
+             ON source_material.id=l.source_material_line_id
+            AND source_material.dyeing_order_id=l.dyeing_order_id
+           LEFT JOIN inventory.batches b ON b.id=l.batch_id
+           LEFT JOIN inventory.stock_balances sb
+             ON sb.company_id=o.company_id AND sb.item_variant_id=l.item_variant_id
+            AND sb.batch_id IS NOT DISTINCT FROM l.batch_id
+            AND sb.location_id=l.location_id
+            AND sb.process_stage_id=%s
+            AND sb.ownership_type_id=l.ownership_type_id
+            AND sb.owner_party_id IS NOT DISTINCT FROM l.owner_party_id
+           WHERE o.id=%s AND o.company_id=%s
+           ORDER BY l.line_no""",
+        (purchase_stage_id,dyeing_order_id,company_id),
+    )
+    chemical_rows=[dict(r) for r in cur.fetchall()]
+    checks["chemical_lines"]=len(chemical_rows)
+    if not chemical_rows:
+        blockers.append("At least one dye/chemical consumption line is required.")
+    for row in chemical_rows:
+        if row["source_material_line_id"] is None or row["source_material_line_no"] is None:
+            blockers.append(
+                f"Dye/chemical line {row['line_no']}: link this consumption to a raw-Yarn input line for fiber-specific costing."
+            )
+            continue
+        if row["conversion_status"] not in ("NOT_REQUIRED","APPROVED"):
+            blockers.append(
+                f"Dye/chemical line {row['line_no']}: unit conversion status is "
+                f"{row['conversion_status'] or 'MISSING'}; approve the exact conversion first."
+            )
+            continue
+        if row["track_batch"] and row["batch_id"] is None:
+            blockers.append(f"Dye/chemical line {row['line_no']}: assign a received batch before approval.")
+            continue
+        required=row["converted_quantity"] if row["converted_quantity"] is not None else row["quantity"]
+        if row["available_quantity"]<required:
+            blockers.append(
+                f"Dye/chemical line {row['line_no']}: available {row['available_quantity']} "
+                f"{row['base_unit_code']}; required {required} {row['base_unit_code']}."
+            )
+            continue
+        if row["ownership_code"]=="PARTY":
+            if (row["ownership_use_request_id"] is None or
+                row["ownership_locked_unit_rate"] is None or
+                row["ownership_cost_total"] is None or
+                row["ownership_cost_snapshot"] is None):
+                blockers.append(
+                    f"Dye/chemical line {row['line_no']}: PARTY use request, approval and locked-rate cost snapshot are incomplete."
+                )
+                continue
+        elif row["average_unit_cost"] is None:
+            blockers.append(f"Dye/chemical line {row['line_no']}: OWN stock has no verified unit-cost valuation.")
+            continue
+        checks["chemical_lines_ready"]+=1
+
+    if not order["total_process_cost"] or order["total_process_cost"]<=0:
+        warnings.append("Total process cost is zero; verify actual salary and overhead entries before posting.")
+    return {
+        "status":"READY_FOR_APPROVAL" if not blockers else "BLOCKED",
+        "ready":not blockers,
+        "blockers":blockers,
+        "warnings":warnings,
+        "checks":checks,
+        "stock_movement_performed":False,
+    }
+
+
+def get_dyeing_approval_readiness(company_id: int, dyeing_order_id: int, *, cursor=None) -> dict[str, Any] | None:
+    """Read-only preflight; an existing cursor is accepted for rollback-only integration tests."""
+    if cursor is not None:
+        return _get_dyeing_approval_readiness_with_cursor(
+            cursor, company_id, dyeing_order_id
+        )
+    with get_connection() as conn:
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute("SET TRANSACTION READ ONLY")
+                return _get_dyeing_approval_readiness_with_cursor(
+                    cur, company_id, dyeing_order_id
+                )

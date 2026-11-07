@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any
+from decimal import Decimal
 
 from psycopg import sql
 
@@ -27,6 +28,28 @@ def _status_summary(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         {"status": str(row["status"]), "count": int(row["total"])}
         for row in rows
     ]
+
+
+
+def _big_cone_register_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Normalize read-only Big Cone register rows without treating balance as wastage."""
+    result = []
+    for row in rows:
+        input_kg = Decimal(str(row.get("input_quantity_kg") or 0))
+        output_kg = Decimal(str(row.get("output_quantity_kg") or 0))
+        result.append({
+            "id": int(row["id"]),
+            "big_cone_no": str(row["big_cone_no"]),
+            "big_cone_date": row["big_cone_date"],
+            "status": str(row["status"]),
+            "input_quantity_kg": input_kg,
+            "output_quantity_kg": output_kg,
+            "unreconciled_difference_kg": input_kg - output_kg,
+            "process_cost": Decimal(str(row.get("total_process_cost") or 0)),
+            "material_line_count": int(row.get("material_line_count") or 0),
+            "output_line_count": int(row.get("output_line_count") or 0),
+        })
+    return result
 
 
 def get_production_dashboard_data(company_id: int) -> dict[str, Any]:
@@ -113,6 +136,21 @@ def get_production_dashboard_data(company_id: int) -> dict[str, Any]:
                 ]
 
                 cur.execute(
+                    """SELECT o.id,o.big_cone_no,o.big_cone_date,o.status,
+                              o.input_quantity_kg,o.output_quantity_kg,o.total_process_cost,
+                              (SELECT count(*) FROM production.big_cone_material_lines ml
+                               WHERE ml.big_cone_order_id=o.id) AS material_line_count,
+                              (SELECT count(*) FROM production.big_cone_output_lines ol
+                               WHERE ol.big_cone_order_id=o.id) AS output_line_count
+                       FROM production.big_cone_orders o
+                       WHERE o.company_id=%s
+                       ORDER BY o.created_at DESC,o.id DESC
+                       LIMIT 10""",
+                    (company_id,),
+                )
+                recent_big_cone_orders = _big_cone_register_rows(cur.fetchall())
+
+                cur.execute(
                     "SELECT count(*) AS total FROM master.machines WHERE company_id=%s AND is_active=true",
                     (company_id,),
                 )
@@ -144,6 +182,7 @@ def get_production_dashboard_data(company_id: int) -> dict[str, Any]:
         "recipes": recipes,
         "targets": targets,
         "recent_dyeing_orders": recent_dyeing_orders,
+        "recent_big_cone_orders": recent_big_cone_orders,
         "active_machines": active_machines,
         "active_departments": active_departments,
         "active_process_stages": len(stages),
