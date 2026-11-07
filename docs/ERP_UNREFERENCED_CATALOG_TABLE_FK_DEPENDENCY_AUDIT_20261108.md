@@ -81,8 +81,12 @@ Counts include inbound and outbound FK constraints touching each target relation
 2. **Do not grant runtime access merely because a relation has foreign keys.** Referential integrity proves structural relationships, not route reachability or application need.
 3. **Keep planned and dormant production workflows out of the runtime grant set** until a protected route and service path are implemented and tested.
 4. **core.system_settings remains a separate review item.** It has no FK edge, direct qualified source reference, or inspected routine dependency in the current evidence set. This still does not prove it is safe to remove; inspect migration history, settings conventions, deployment scripts and future configuration plans first.
-5. The next safe step is migration-history and schema-definition review for these 41 relations, then reconcile any unqualified references and feature roadmap dependencies before final privilege decisions.
+5. The current migration directory yielded no table-name hits. Remaining safe review is to inspect schema-definition/bootstrap artifacts, deployment scripts outside database/migrations, and feature-roadmap dependencies before final privilege decisions.
+
+## Migration-history name scan
+
+A second read-only source scan searched all 41 table names as whole identifiers (not only schema-qualified names) across 31 files under database/migrations with .sql, .py, and .md extensions. **No bare-name matches were found for any of the 41 relations.** This means the current migration directory does not provide a positive migration-file reference for these relations under the scanned file types. It does not prove the tables were never created or are unused: they may have been created by another bootstrap path, imported schema snapshot, manual SQL, external deployment artifact, or older source no longer present in the directory.
 
 ## Status
 
-Catalog FK dependency check complete for all 41 flagged relations. Live database remained read-only; no schema cleanup or privilege changes performed.
+Catalog FK dependency and migration-history name checks complete for all 41 flagged relations. Live database remained read-only; no schema cleanup or privilege changes performed.
