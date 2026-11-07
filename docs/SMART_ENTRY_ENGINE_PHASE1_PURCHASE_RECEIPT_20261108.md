@@ -166,3 +166,13 @@ This is **not** a stable identity across arbitrary row reordering. If a reorder 
 The exact scalar field allowlist is `dyeing_date`, `remarks`, `labour_cost`, `machine_cost`, `electricity_cost`, `water_cost`, `boiler_fuel_cost`, and `drying_cost`. The current form has `#dyeing-form`, `.smart-entry-toolbar`, `#material-lines`, `#output-lines`, `#chemical-lines`, and the three matching add buttons/template IDs expected by the adapter. `saved=1` is rendered as `saved` in the Jinja template; the route-integrated cleanup flag still needs to be deliberately passed by the template before activation. HTTP 422 retention and successful redirect cleanup remain unverified against the authenticated live route.
 
 No application template, adapter activation, service, route, database, stock, ledger, costing, posting, role, permission or accounting logic was changed in this clarification. No business document was submitted; no server restart.
+
+## Phase 11 — Dyeing route outcome contract inspection (2026-11-08)
+
+Read-only inspection of the current route confirms the exact recovery outcome boundary:
+- GET `/modules/production/dyeing/new` converts query parameter `saved=1` into template context `saved=True`.
+- POST validation failure catches `ValueError`, re-renders `dyeing_draft.html` with `saved=False`, and returns HTTP 422. Therefore the adapter must not clear its local copy on that response.
+- Successful DRAFT creation redirects with HTTP 303 to the same GET route and includes `saved=1` in the query string. The form can safely expose `data-smart-recovery-clear="true"` only when `saved` is true, provided the adapter script is loaded and the explicit session-recovery opt-in is later enabled.
+- The existing POST handler still enforces form content type, 64 KB request-body limit, URL-encoded field-count limit, CSRF validation and server-side service validation. No client recovery data is posted unless the operator manually submits the restored form.
+
+This confirms the route-level outcome semantics from source inspection, but it is not a live authenticated browser test. No template attribute, script include, recovery opt-in, route, service, database or business logic was changed. Activation remains gated pending authenticated-page browser verification. No business document was submitted; no server restart.
