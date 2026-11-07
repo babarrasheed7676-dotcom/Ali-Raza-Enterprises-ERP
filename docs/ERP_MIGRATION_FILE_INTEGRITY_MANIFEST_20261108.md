@@ -63,3 +63,18 @@ Counts are simple static token counts, not a full SQL parser. A migration may al
 ## Status
 
 Read-only migration file integrity inventory created. No migration was run and no database object was changed.
+
+## Transaction and rerun-safety characteristics
+
+A second static pass checked every migration file for transaction boundaries and object-removal statements:
+
+- **31/31** scripts contain explicit top-level `BEGIN;` and `COMMIT;` markers.
+- All **12/12** `CREATE TABLE` statements are plain `CREATE TABLE`, not `CREATE TABLE IF NOT EXISTS`. They are not safe to rerun blindly after successful application.
+- Three migrations intentionally drop existing objects before recreating/replacing them:
+  - `20261106_012_party_use_approval_gate.sql`: drops two named triggers and `production.assert_party_use_request_link()` using `IF EXISTS`.
+  - `20261107_019_dyeing_conversion_snapshot_integrity.sql`: drops `ck_dyeing_unit_conversion_status` before replacing the constraint.
+  - `20261107_024_production_source_line_immutability.sql`: drops two named source-line triggers using `IF EXISTS`.
+- No `DROP TABLE`, `TRUNCATE TABLE`, or `DELETE FROM` statement was found in the 31 files.
+- These properties do not establish full idempotency. Other `ALTER TABLE`, `CREATE INDEX`, constraint, function and trigger statements may also fail if replayed against an already-migrated schema.
+
+**Deployment rule:** on a restored staging database, determine the exact migration boundary first, then execute each missing migration once in filename order with preconditions, postconditions and recorded hash/result. Never replay the full directory against the live database or assume `BEGIN/COMMIT` makes a migration safe to rerun.
