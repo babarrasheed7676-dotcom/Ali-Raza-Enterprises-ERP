@@ -1,0 +1,9 @@
+/* Reusable Smart Entry presentation primitives */
+.smart-entry-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border:1px solid var(--border,#263449);border-radius:10px;background:var(--background,#0b1220)}
+.smart-entry-hints{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted,#8490a2)}
+.smart-entry-hints kbd{font:600 11px ui-monospace,monospace;padding:3px 6px;border:1px solid var(--border,#40506a);border-radius:5px;color:inherit;background:var(--surface,#111c2b)}
+.smart-entry-status{font-size:12px;color:var(--muted,#8490a2);min-height:18px}
+.smart-entry-action{padding:8px 11px;border:1px solid var(--border,#40506a);border-radius:8px;background:var(--surface,#111c2b);color:inherit;cursor:pointer}
+.smart-entry-action:hover{border-color:var(--accent,#2563eb)}
+.receipt-form [data-smart-field]:focus,.receipt-form input:focus,.receipt-form select:focus,.receipt-form textarea:focus{outline:2px solid var(--accent,#2563eb);outline-offset:1px}
+@media(max-width:700px){.smart-entry-toolbar{align-items:flex-start}.smart-entry-hints{gap:6px}}
