@@ -84,3 +84,23 @@ This document records the verified live PostgreSQL shape and the minimum safe ap
 ## Result
 
 The database currently supports basic child-row storage and numeric checks, but not safe lifecycle enforcement or full material-loss traceability. The next implementation must not add cost/loss write routes until the unresolved ARE rules are confirmed and the DRAFT-only protection is enforced transactionally (preferably in both application logic and DB triggers). No live server restart is part of this documentation milestone.
+
+## Existing application authorization and CSRF patterns checked
+
+A read-only application-code review confirmed:
+
+- `production.create`, `production.approve`, and `production.post` already exist in the permission catalog. The proposed role matrix assigns DRAFT creation to PRODUCTION_OPERATOR and approval/posting to PRODUCTION_HEAD. This is a design catalog, not proof that any live user has those permissions.
+- The existing Baby Cone measurement page and save route both require `production.create`. Its form POST validates `are_erp_csrf` cookie against the submitted `csrf_token` using constant-time comparison before calling the service.
+- The source preflight GET is protected by `production.view` and sends `Cache-Control: no-store`.
+- `write_audit_log` writes through the caller's transaction, so audit and child-row mutations can commit or roll back together.
+- No Baby Cone cost-line or loss-line routes were found. Existing measurement route does not implement cost/loss CRUD and must not be treated as a substitute.
+
+### Route-level blueprint (not implemented)
+
+- Keep cost/loss create, update, and delete under `production.create`; require the same CSRF validation used by the existing measurement form.
+- Resolve the user from the signed-in session. Accept only order ID and line payload; never accept company ID, user ID, status, audit actor, or stock dimensions as trusted authority from the browser.
+- In the service transaction, select the parent by `id + company_id FOR UPDATE`, then require status DRAFT before every child-row mutation.
+- Log each child mutation using `write_audit_log` with the exact table name, row ID, parent document number, old/new values, and a factual reason. Keep audit writes in the same transaction.
+- Do not expose approval or posting endpoints as part of the DRAFT cost/loss work. Existing permission codes do not authorize implementation or live permission changes by themselves.
+- Before enabling the UI, verify all role grants in the live database and add focused tests for cross-company access, CSRF failure, status races, child CRUD, audit rollback, and no stock/ledger side effects.
+
