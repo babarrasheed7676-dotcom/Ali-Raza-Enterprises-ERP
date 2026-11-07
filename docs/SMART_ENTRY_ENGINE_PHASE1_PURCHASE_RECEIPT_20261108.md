@@ -103,3 +103,31 @@ Continue searchable picker coverage across the remaining opted-in forms and exte
 - Safe implementation requires a form-specific adapter that restores yarn input rows first, rebuilds source-line choices, restores output/chemical rows, reapplies variant/ownership/party batch filtering, validates each saved source-line identity against a stable fingerprint, and warns/skips unavailable batch candidates. Current line-number-only references do not provide stable identity, so no recovery code was added.
 - Also reviewed remaining non-recovery forms: Configuration includes edit/create modes and AJAX-driven master/configuration editors; Production Masters uses hidden record identity and dynamic editor state; PARTY Stock Use Requests uses custom selection state; Journal Entry has accounting-sensitive dynamic rows; Supplier form contains financial/bank/credit details. These remain excluded from generic recovery pending dedicated adapters and security/data-minimization review.
 - No files outside this documentation note were changed in this review. No business document was submitted; no database/schema, stock, ledger, costing, posting, roles, permissions or accounting logic changed; no server restart.
+
+## Phase 7 — Dyeing recovery adapter design (implementation gate)
+Read-only review of `app/dyeing_draft_service.py` confirms the server accepts 1–100 yarn input lines, 1–100 dyed output lines and 1–100 dye/chemical lines. It normalizes yarn input `line_no` from current row order; each output and each chemical line references that line number. Output allocations are aggregated per source input and cannot exceed its entered KG quantity. The server remains authoritative for all validations.
+
+### Required client-side snapshot shape
+- Store three independent ordered sections: `materials`, `outputs`, and `chemicals`, plus order date, remarks and six actual process-cost fields.
+- Assign each material row a temporary recovery-only key at snapshot time. Do not add hidden form inputs or submit these keys to the server.
+- At save time, map each output/chemical `source_line_no` to the temporary key of the currently selected material row. Store the key, not just the mutable line number.
+- Retain each section's row values by explicit row position within that section. Store no CSRF, hidden IDs, server IDs, credentials or unrelated page fields.
+
+### Safe restore order
+1. Validate snapshot version, route, 2-hour expiry, size cap and section counts (1–100 each) before mutating the page.
+2. Recreate material rows first; restore variant, quantity, optional batch and notes; dispatch the existing native change events only where handlers exist.
+3. Rebuild output and chemical source-line selectors from the restored material row order. Convert saved material recovery keys to the new current line numbers; if a key is missing, leave that reference unselected and show a visible warning rather than guessing.
+4. Restore output shade, source-consumed KG, output KG and notes.
+5. Restore chemical variant, ownership, party, unit, quantity and notes in dependency order. Re-run the existing variant/ownership/party batch filter; restore a batch only if that exact option remains enabled after filtering. Otherwise leave batch blank and warn.
+6. Re-run the existing source-line selector synchronization after all material rows exist. Never submit automatically; require operator review and normal server validation.
+
+### Clear and failure behavior
+- Clear only after the successful redirect with `saved=1`; never clear on the HTTP 422 validation re-render.
+- If any section cannot be recreated, stop and preserve the snapshot; do not partially submit or silently discard unmatched rows.
+- If a source mapping or batch candidate is stale, restore all other safe values, leave that dependent selection blank and report exactly what needs review.
+- Preserve the explicit Save recovery copy / Restore copy / Delete copy controls; sessionStorage remains tab-local, expires after 2 hours, max 128 KB, not encrypted and never uploaded.
+
+### Implementation gate
+This adapter must be implemented as a dedicated `dyeing` branch in `app/static/smart-entry.js`; do not route the form through the generic single-line-container recovery path. Keep the form's existing `data-smart-entry="dyeing"`, native names, line-number contract, source filters and all server/service code unchanged. Before enabling `data-smart-recovery="session"`, test three independent row counts, multiple outputs from one input, deleted/reordered input references, changed batch availability, variant/ownership/party changes, missing options, 100-line boundary, malformed/oversized/expired snapshots, successful redirect cleanup and 422 retention in a real browser harness. No DB/schema migration or business-logic change is required or permitted for this adapter.
+
+- No application code changed in this design phase. No business document was submitted; no database/schema, stock, ledger, costing, posting, roles, permissions or accounting logic changed; no server restart.
