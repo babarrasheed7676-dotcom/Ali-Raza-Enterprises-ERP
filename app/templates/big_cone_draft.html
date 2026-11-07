@@ -44,7 +44,7 @@
 </div>
 {% endif %}
 
-<form method="post" action="/modules/production/big-cone/new" data-smart-entry="big-cone">
+<form method="post" action="/modules/production/big-cone/new" data-smart-entry="big-cone" data-smart-recovery="session">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save DRAFT</span></div><div class="smart-entry-status" id="smartEntryStatus" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
   <section class="bc-panel">

@@ -252,6 +252,15 @@
         });
       };
 
+      const collectRandomPackingAllocations = () => mode === "random-packing"
+        ? [...form.querySelectorAll("tr[data-source-type][data-source-line-id]")]
+            .filter(row => row.querySelector(".rnd-select")?.checked)
+            .map(row => ({
+              sourceType:row.dataset.sourceType,
+              sourceLineId:row.dataset.sourceLineId,
+              quantityPieces:row.querySelector(".rnd-qty")?.value ?? ""
+            }))
+        : null;
       saveRecovery.addEventListener("click", () => {
         try {
           const saved = {
@@ -260,7 +269,8 @@
             path:location.pathname,
             savedAt:Date.now(),
             rowCount:getRecoveryRows().length,
-            fields:collectRecoveryFields()
+            fields:collectRecoveryFields(),
+            allocations:collectRandomPackingAllocations()
           };
           const encoded = JSON.stringify(saved);
           if (encoded.length > 128000) {
@@ -311,8 +321,34 @@
               el.dispatchEvent(new Event("change", {bubbles:true})));
             restoreRecoveryFields(saved, () => true, ["unit_id"]);
           }
+          if (mode === "random-packing") {
+            const candidateRows = [...form.querySelectorAll("tr[data-source-type][data-source-line-id]")];
+            candidateRows.forEach(row => {
+              const check = row.querySelector(".rnd-select");
+              const quantity = row.querySelector(".rnd-qty");
+              if (check) check.checked = false;
+              if (quantity) { quantity.value = ""; quantity.disabled = true; }
+            });
+            let skippedAllocations = 0;
+            (Array.isArray(saved.allocations) ? saved.allocations : []).forEach(allocation => {
+              const row = candidateRows.find(candidate =>
+                candidate.dataset.sourceType === String(allocation.sourceType) &&
+                candidate.dataset.sourceLineId === String(allocation.sourceLineId)
+              );
+              if (!row) { skippedAllocations += 1; return; }
+              const check = row.querySelector(".rnd-select");
+              const quantity = row.querySelector(".rnd-qty");
+              if (!check || !quantity) { skippedAllocations += 1; return; }
+              check.checked = true;
+              quantity.disabled = false;
+              quantity.value = String(allocation.quantityPieces ?? "");
+            });
+            const count = document.getElementById("randomSelectedCount");
+            if (count) count.value = String(candidateRows.filter(row => row.querySelector(".rnd-select")?.checked).length);
+            if (skippedAllocations) saved.skippedAllocations = skippedAllocations;
+          }
           form.dispatchEvent(new Event("input", {bubbles:true}));
-          announce("Recovery copy restored. Review every field and server validation before saving.");
+          announce(mode === "random-packing" && saved.skippedAllocations ? "Recovery restored. " + saved.skippedAllocations + " source allocation(s) were unavailable and were skipped; review before saving." : "Recovery copy restored. Review every field and server validation before saving.");
         } catch (error) {
           announce("Recovery restore stopped safely: " + error.message);
         }
