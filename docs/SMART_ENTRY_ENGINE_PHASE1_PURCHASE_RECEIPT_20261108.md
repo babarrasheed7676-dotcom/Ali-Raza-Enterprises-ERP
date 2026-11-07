@@ -72,3 +72,13 @@ Date: 2026-11-08
 
 ## Next rollout
 Continue searchable picker coverage across the remaining opted-in forms and extend recovery only after each multi-section form's row-recreation and validation behavior is reviewed. Accounting forms require extra care: the engine must not calculate or alter debit/credit values, and the existing server-side balance/period guards remain authoritative.
+
+## Phase 4 — Baby Cone Measurement local recovery
+- Enabled the existing explicit session-only recovery controls on Baby Cone Measurement.
+- The measurement output-line selector is restored first and its existing change handler re-derives the hidden configuration snapshot ID from the selected output line. The hidden snapshot field remains excluded from recovery storage.
+- Gross weight, tare, measured yards, optional required yards and operator code are restored as ordinary named fields. The measurement preview recalculates from restored values; server-side profile and measurement validation remains authoritative.
+- The successful-save redirect returns to the same measurement page with `saved=1`; the template passes that state to the recovery engine so the previous local copy is cleared after a successful DRAFT save. Validation errors keep the copy available.
+- Big Cone and both Packing forms were reviewed but intentionally not enabled in this phase: Big Cone submits only the currently enabled source-order row group and returns to a separate readiness page after save; Packing forms also redirect away after save and Random Packing serializes selected source allocations into a hidden JSON field. They need form-specific recovery/cleanup adapters so stale allocations or disabled dependent rows cannot be restored ambiguously.
+- Backup: `app/templates/baby_cone_measurement.html.recovery_backup_20261108_025108`.
+- Verification: Baby Cone template Jinja compilation passed; `node --check app/static/smart-entry.js` passed; Chrome headless test `BABY_CONE_RECOVERY_BROWSER_TEST_OK` passed (selected output line restored, snapshot ID re-derived, measurement values restored, successful-save cleanup cleared session storage).
+- No business document was submitted; no database, schema, stock, ledger, permissions, accounting or production calculation logic changed; no server restart.

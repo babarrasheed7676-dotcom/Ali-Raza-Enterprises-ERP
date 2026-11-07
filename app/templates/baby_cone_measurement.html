@@ -29,7 +29,7 @@
     <div class="eyebrow">MEASUREMENT INPUT</div>
     <h2>Capture measured sample</h2>
     {% if data %}
-    <form method="post" action="/modules/production/baby-cone/measurements" data-smart-entry="baby-cone-measurement">
+    <form method="post" action="/modules/production/baby-cone/measurements" data-smart-entry="baby-cone-measurement" data-smart-recovery="session" data-smart-recovery-clear="{{ saved|tojson }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="smart-entry-toolbar"><div><div class="smart-entry-hints"><strong>SMART ENTRY</strong><span><kbd>Enter</kbd> Next field</span><span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Save DRAFT</span></div><div class="smart-entry-status" id="smartEntryStatus" role="status" aria-live="polite">Keyboard entry enabled.</div></div></div>
       <div class="bc-measure-grid">
