@@ -76,7 +76,7 @@
         <tbody>
         {% for order in data.source_orders %}
           {% for line in order.lines %}
-          <tr>
+          <tr data-source-order-id="{{ order.id }}">
             <td>{{ order.dyeing_no }}<input type="hidden" name="source_dyeing_output_line_id" value="{{ line.source_line_id }}"></td>
             <td><strong>#{{ line.line_no }} · {{ line.item_code }}</strong><br>{{ line.item_name }}<br><small>{{ line.variant_code }}</small></td>
             <td>{{ line.batch_no or "No batch" }}</td>
@@ -101,4 +101,20 @@
     <span class="production-muted">Save only · no approval · no posting · no stock movement</span>
   </div>
 </form>
+<script>
+(() => {
+  const sourceSelect = document.getElementById('source_dyeing_order_id');
+  const sourceRows = Array.from(document.querySelectorAll('tr[data-source-order-id]'));
+  const filterSourceRows = () => {
+    const selectedOrder = sourceSelect.value;
+    sourceRows.forEach(row => {
+      const active = Boolean(selectedOrder) && row.dataset.sourceOrderId === selectedOrder;
+      row.hidden = !active;
+      row.querySelectorAll('input, select').forEach(field => { field.disabled = !active; });
+    });
+  };
+  sourceSelect.addEventListener('change', filterSourceRows);
+  filterSourceRows();
+})();
+</script>
 {% endblock %}
